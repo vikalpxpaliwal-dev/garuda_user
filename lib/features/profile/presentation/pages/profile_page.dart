@@ -1,10 +1,12 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -187,16 +189,23 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 1.2,
                           ),
                         ),
-                        child: const CircleAvatar(
+                        child: CircleAvatar(
                           radius: 12,
-                          backgroundColor: Color(0xFFFFD1B5),
-                          child: Text(
-                            'U',
-                            style: TextStyle(
-                              color: AppColors.deepOrange,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          backgroundColor: const Color(0xFFFFD1B5),
+                          child: BlocBuilder<AuthBloc, AuthState>(
+                            builder: (context, state) {
+                              final initial = state.user?.name.isNotEmpty == true
+                                  ? state.user!.name[0].toUpperCase()
+                                  : 'U';
+                              return Text(
+                                initial,
+                                style: const TextStyle(
+                                  color: AppColors.deepOrange,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -347,65 +356,74 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.go('${AppRoutes.profile}/edit-profile'),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE8D7),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: AppColors.deepOrange.withValues(alpha: 0.12),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        final initial = state.user?.name.isNotEmpty == true
+            ? state.user!.name[0].toUpperCase()
+            : 'U';
+        final name = state.user?.name ?? 'Profile';
+
+        return GestureDetector(
+          onTap: () => context.go('${AppRoutes.profile}/edit-profile'),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE8D7),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: AppColors.deepOrange.withValues(alpha: 0.12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const Center(
-              child: Text(
-                'U',
-                style: TextStyle(
-                  color: AppColors.deepOrange,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      color: AppColors.deepOrange,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'ACTIVE MEMBER',
+                    style: TextStyle(
+                      color: AppColors.deepOrange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        const SizedBox(width: 14),
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'User Profile',
-              style: TextStyle(
-                color: AppColors.ink,
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                height: 1,
-                letterSpacing: -0.5,
-              ),
-            ),
-            SizedBox(height: 6),
-            Text(
-              'ACTIVE MEMBER',
-              style: TextStyle(
-                color: AppColors.deepOrange,
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+        );
+      },
+    );
   }
 }
 

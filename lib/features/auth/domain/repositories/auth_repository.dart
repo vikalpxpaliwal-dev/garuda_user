@@ -15,4 +15,5 @@ abstract interface class AuthRepository {
     String? photoPath,
   });
   Future<Result<void>> deleteAccount();
+  Future<UserEntity?> getUser();
 }

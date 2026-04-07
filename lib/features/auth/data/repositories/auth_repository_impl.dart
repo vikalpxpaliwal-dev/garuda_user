@@ -124,5 +124,10 @@ class AuthRepositoryImpl implements AuthRepository {
       return Error(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<UserEntity?> getUser() async {
+    return _localDataSource.getUser();
+  }
 }
 

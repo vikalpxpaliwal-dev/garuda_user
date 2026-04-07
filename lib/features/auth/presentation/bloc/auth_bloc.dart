@@ -19,16 +19,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await _authRepository.refreshToken();
 
     if (result is Success<String>) {
-      // For now, we don't have a "getMe" API, so we just set state to authenticated.
-      // In a real app, you'd fetch the user profile here.
-      emit(const AuthState(status: AuthStatus.authenticated));
+      final user = await _authRepository.getUser();
+      emit(AuthState(status: AuthStatus.authenticated, user: user));
     } else {
       emit(const AuthState(status: AuthStatus.unauthenticated));
     }
   }
 
   void _onUserLoggedIn(UserLoggedIn event, Emitter<AuthState> emit) {
-    emit(const AuthState(status: AuthStatus.authenticated));
+    emit(AuthState(status: AuthStatus.authenticated, user: event.user));
   }
 
   Future<void> _onUserLoggedOut(UserLoggedOut event, Emitter<AuthState> emit) async {

@@ -6,6 +6,8 @@ import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/data/models/login_request_model.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/login_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/login_event.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/login_state.dart';
@@ -62,6 +64,9 @@ class _LoginPageState extends State<LoginPage> {
                   backgroundColor: Colors.green,
                 ),
               );
+              if (state.user != null) {
+                context.read<AuthBloc>().add(UserLoggedIn(state.user!));
+              }
               context.go(AppRoutes.home);
             } else if (state.status == LoginStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(

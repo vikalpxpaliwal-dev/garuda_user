@@ -8,6 +8,11 @@ import 'package:garuda_user_app/features/home/data/datasources/home_local_data_s
 import 'package:garuda_user_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:garuda_user_app/features/home/domain/repositories/home_repository.dart';
 import 'package:garuda_user_app/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:garuda_user_app/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:garuda_user_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:garuda_user_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:garuda_user_app/features/auth/domain/usecases/signup_usecase.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:get_it/get_it.dart';
 
@@ -39,5 +44,11 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => HomeRepositoryImpl(localDataSource: sl()),
     )
     ..registerLazySingleton(() => GetHomeDashboard(sl()))
-    ..registerFactory(() => HomeBloc(getHomeDashboard: sl()));
+    ..registerFactory(() => HomeBloc(getHomeDashboard: sl()))
+    ..registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSourceImpl(sl()))
+    ..registerLazySingleton<AuthRepository>(
+      () => AuthRepositoryImpl(remoteDataSource: sl()),
+    )
+    ..registerLazySingleton(() => SignupUseCase(sl()))
+    ..registerFactory(() => SignupBloc(signupUseCase: sl()));
 }

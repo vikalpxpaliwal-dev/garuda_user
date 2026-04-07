@@ -73,11 +73,11 @@ class _SignupPageState extends State<SignupPage> {
             if (state.status == SignupStatus.success) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Signup successful! Welcome to Garuda.'),
+                  content: Text('Signup successful! Please login to continue.'),
                   backgroundColor: Colors.green,
                 ),
               );
-              context.go(AppRoutes.home);
+              context.pushReplacement(AppRoutes.login);
             } else if (state.status == SignupStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

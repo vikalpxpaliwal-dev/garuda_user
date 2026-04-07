@@ -8,13 +8,17 @@ import 'package:garuda_user_app/features/home/data/datasources/home_local_data_s
 import 'package:garuda_user_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:garuda_user_app/features/home/domain/repositories/home_repository.dart';
 import 'package:garuda_user_app/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:garuda_user_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:garuda_user_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:garuda_user_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:garuda_user_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:garuda_user_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/signup_usecase.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/login_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
 
@@ -26,6 +30,9 @@ Future<void> initializeDependencies({bool reset = false}) async {
   if (sl.isRegistered<HomeBloc>()) {
     return;
   }
+
+  final prefs = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferences>(() => prefs);
 
   sl
     ..registerLazySingleton<AuthInterceptor>(AuthInterceptor.new)
@@ -44,11 +51,17 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => HomeRepositoryImpl(localDataSource: sl()),
     )
     ..registerLazySingleton(() => GetHomeDashboard(sl()))
-    ..registerFactory(() => HomeBloc(getHomeDashboard: sl()))
     ..registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSourceImpl(sl()))
+    ..registerLazySingleton<AuthLocalDataSource>(() => AuthLocalDataSourceImpl(sl()))
     ..registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(remoteDataSource: sl()),
+      () => AuthRepositoryImpl(
+        remoteDataSource: sl(),
+        localDataSource: sl(),
+      ),
     )
     ..registerLazySingleton(() => SignupUseCase(sl()))
-    ..registerFactory(() => SignupBloc(signupUseCase: sl()));
+    ..registerLazySingleton(() => LoginUseCase(sl()))
+    ..registerFactory(() => HomeBloc(getHomeDashboard: sl()))
+    ..registerFactory(() => SignupBloc(signupUseCase: sl()))
+    ..registerFactory(() => LoginBloc(loginUseCase: sl()));
 }

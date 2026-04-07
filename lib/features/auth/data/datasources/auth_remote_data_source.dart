@@ -7,6 +7,7 @@ import 'package:garuda_user_app/features/auth/data/models/signup_response_model.
 abstract interface class AuthRemoteDataSource {
   Future<SignupResponseModel> signup(SignupRequestModel request);
   Future<LoginResponseModel> login(LoginRequestModel request);
+  Future<String> refresh(String refreshToken);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -32,5 +33,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
 
     return LoginResponseModel.fromJson(response.data!);
+  }
+
+  @override
+  Future<String> refresh(String refreshToken) async {
+    final response = await _apiService.post<Map<String, dynamic>>(
+      '/buyer/refresh',
+      data: {'refreshToken': refreshToken},
+    );
+
+    // Success response: {"success": true, "accessToken": "..."}
+    return response.data!['accessToken'] as String;
   }
 }

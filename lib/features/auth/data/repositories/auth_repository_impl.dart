@@ -55,5 +55,37 @@ class AuthRepositoryImpl implements AuthRepository {
       return Error(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Result<String>> refreshToken() async {
+    try {
+      final refreshToken = await _localDataSource.getRefreshToken();
+      if (refreshToken == null) {
+        return Error(const ServerFailure(message: 'No refresh token available'));
+      }
+
+      final newAccessToken = await _remoteDataSource.refresh(refreshToken);
+      await _localDataSource.saveTokens(
+        accessToken: newAccessToken,
+        refreshToken: refreshToken,
+      );
+
+      return Success(newAccessToken);
+    } on AppException catch (e) {
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<void> logout() async {
+    await _localDataSource.clear();
+  }
+
+  @override
+  Future<String?> getAccessToken() async {
+    return _localDataSource.getAccessToken();
+  }
 }
 

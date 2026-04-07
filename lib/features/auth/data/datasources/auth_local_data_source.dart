@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:garuda_user_app/features/auth/domain/entities/user_entity.dart';
 import 'package:garuda_user_app/features/auth/data/models/signup_response_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 abstract interface class AuthLocalDataSource {
   Future<void> saveTokens({required String accessToken, required String refreshToken});
@@ -13,9 +13,9 @@ abstract interface class AuthLocalDataSource {
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
-  const AuthLocalDataSourceImpl(this._prefs);
+  const AuthLocalDataSourceImpl(this._storage);
 
-  final SharedPreferences _prefs;
+  final FlutterSecureStorage _storage;
 
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
@@ -23,25 +23,22 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
-    await _prefs.setString(_accessTokenKey, accessToken);
-    await _prefs.setString(_refreshTokenKey, refreshToken);
+    await _storage.write(key: _accessTokenKey, value: accessToken);
+    await _storage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
   @override
   Future<String?> getAccessToken() async {
-    return _prefs.getString(_accessTokenKey);
+    return _storage.read(key: _accessTokenKey);
   }
 
   @override
   Future<String?> getRefreshToken() async {
-    return _prefs.getString(_refreshTokenKey);
+    return _storage.read(key: _refreshTokenKey);
   }
 
   @override
   Future<void> saveUser(UserEntity user) async {
-    // UserEntity is Equatable, and UserDataModel extends it.
-    // For storage, we can reuse UserDataModel's fromJson/toJson if we add toJson.
-    // Since UserEntity is domain, we usually convert to model before saving.
     final userMap = {
       'id': user.id,
       'name': user.name,
@@ -51,20 +48,20 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       'created_at': user.createdAt.toIso8601String(),
       'updated_at': user.updatedAt.toIso8601String(),
     };
-    await _prefs.setString(_userKey, jsonEncode(userMap));
+    await _storage.write(key: _userKey, value: jsonEncode(userMap));
   }
 
   @override
   Future<UserEntity?> getUser() async {
-    final userStr = _prefs.getString(_userKey);
+    final userStr = await _storage.read(key: _userKey);
     if (userStr == null) return null;
     return UserDataModel.fromJson(jsonDecode(userStr) as Map<String, dynamic>);
   }
 
   @override
   Future<void> clear() async {
-    await _prefs.remove(_accessTokenKey);
-    await _prefs.remove(_refreshTokenKey);
-    await _prefs.remove(_userKey);
+    await _storage.delete(key: _accessTokenKey);
+    await _storage.delete(key: _refreshTokenKey);
+    await _storage.delete(key: _userKey);
   }
 }

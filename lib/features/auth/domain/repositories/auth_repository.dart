@@ -6,4 +6,7 @@ import 'package:garuda_user_app/features/auth/domain/entities/user_entity.dart';
 abstract interface class AuthRepository {
   Future<Result<UserEntity>> signup(SignupRequestModel request);
   Future<Result<UserEntity>> login(LoginRequestModel request);
+  Future<Result<String>> refreshToken();
+  Future<void> logout();
+  Future<String?> getAccessToken();
 }

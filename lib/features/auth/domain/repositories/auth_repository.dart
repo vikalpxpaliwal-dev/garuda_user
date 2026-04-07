@@ -9,4 +9,10 @@ abstract interface class AuthRepository {
   Future<Result<String>> refreshToken();
   Future<void> logout();
   Future<String?> getAccessToken();
+  Future<Result<UserEntity>> updateProfile({
+    required String name,
+    required String phone,
+    String? photoPath,
+  });
+  Future<Result<void>> deleteAccount();
 }

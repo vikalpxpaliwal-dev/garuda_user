@@ -5,6 +5,8 @@ import 'package:garuda_user_app/core/widgets/app_shell_scaffold.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_event.dart';
 import 'package:garuda_user_app/features/home/presentation/pages/home_page.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/profile_page.dart';
 import 'package:garuda_user_app/features/auth/presentation/pages/login_page.dart';
 import 'package:garuda_user_app/features/auth/presentation/pages/signup_page.dart';
@@ -82,6 +84,19 @@ final class AppRouter {
                 pageBuilder: (context, state) {
                   return const NoTransitionPage<void>(child: ProfilePage());
                 },
+                routes: [
+                  GoRoute(
+                    path: AppRoutes.editProfile,
+                    pageBuilder: (context, state) {
+                      return NoTransitionPage<void>(
+                        child: BlocProvider<ProfileBloc>(
+                          create: (context) => sl<ProfileBloc>(),
+                          child: const EditProfilePage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

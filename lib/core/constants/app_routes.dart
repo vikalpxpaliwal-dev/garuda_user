@@ -8,6 +8,7 @@ final class AppRoutes {
   static const search = '/search';
   static const searchDetails = 'details';
   static const profile = '/profile';
+  static const editProfile = '/edit-profile';
 
   static String searchListingDetails(int index) =>
       '$search/$searchDetails/$index';

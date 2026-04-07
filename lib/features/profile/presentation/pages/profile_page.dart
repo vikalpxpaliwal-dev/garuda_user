@@ -174,26 +174,29 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: AppColors.ink,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(1.5),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.deepOrange.withValues(alpha: 0.18),
-                          width: 1.2,
+                  GestureDetector(
+                    onTap: () => context.go('${AppRoutes.profile}/edit-profile'),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(1.5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.deepOrange.withValues(alpha: 0.18),
+                            width: 1.2,
+                          ),
                         ),
-                      ),
-                      child: const CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Color(0xFFFFD1B5),
-                        child: Text(
-                          'U',
-                          style: TextStyle(
-                            color: AppColors.deepOrange,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
+                        child: const CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Color(0xFFFFD1B5),
+                          child: Text(
+                            'U',
+                            style: TextStyle(
+                              color: AppColors.deepOrange,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ),
@@ -344,34 +347,36 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFE8D7),
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: AppColors.deepOrange.withValues(alpha: 0.12),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              'U',
-              style: TextStyle(
-                color: AppColors.deepOrange,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+    return GestureDetector(
+      onTap: () => context.go('${AppRoutes.profile}/edit-profile'),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE8D7),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.deepOrange.withValues(alpha: 0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text(
+                'U',
+                style: TextStyle(
+                  color: AppColors.deepOrange,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
-        ),
         const SizedBox(width: 14),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +404,8 @@ class _ProfileHeader extends StatelessWidget {
           ],
         ),
       ],
-    );
+    ),
+  );
   }
 }
 

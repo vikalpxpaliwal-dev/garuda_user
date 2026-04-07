@@ -87,5 +87,42 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<String?> getAccessToken() async {
     return _localDataSource.getAccessToken();
   }
+
+  @override
+  Future<Result<UserEntity>> updateProfile({
+    required String name,
+    required String phone,
+    String? photoPath,
+  }) async {
+    try {
+      final response = await _remoteDataSource.updateProfile(
+        name: name,
+        phone: phone,
+        photoPath: photoPath,
+      );
+
+      // Update local storage with updated user data
+      await _localDataSource.saveUser(response.data);
+
+      return Success(response.data);
+    } on AppException catch (e) {
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteAccount() async {
+    try {
+      await _remoteDataSource.deleteAccount();
+      await _localDataSource.clear();
+      return const Success(null);
+    } on AppException catch (e) {
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
 }
 

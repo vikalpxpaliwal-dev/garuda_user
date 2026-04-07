@@ -1,7 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
+import 'package:garuda_user_app/core/router/go_router_refresh_stream.dart';
 import 'package:garuda_user_app/core/widgets/app_shell_scaffold.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_event.dart';
 import 'package:garuda_user_app/features/home/presentation/pages/home_page.dart';
@@ -20,6 +23,28 @@ final class AppRouter {
 
   static final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: GoRouterRefreshStream(sl<AuthBloc>().stream),
+    redirect: (context, state) {
+      final authState = context.read<AuthBloc>().state;
+      final status = authState.status;
+
+      final isLoggingIn = state.matchedLocation == AppRoutes.login;
+      final isSigningUp = state.matchedLocation == AppRoutes.signup;
+      final isSplashing = state.matchedLocation == AppRoutes.splash;
+
+      if (status == AuthStatus.initial) return null;
+
+      if (status == AuthStatus.unauthenticated) {
+        if (isLoggingIn || isSigningUp || isSplashing) return null;
+        return AppRoutes.login;
+      }
+
+      if (status == AuthStatus.authenticated) {
+        if (isLoggingIn || isSigningUp || isSplashing) return AppRoutes.home;
+      }
+
+      return null;
+    },
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.splash,

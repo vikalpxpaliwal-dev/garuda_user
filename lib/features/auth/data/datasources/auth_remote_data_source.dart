@@ -14,6 +14,7 @@ abstract interface class AuthRemoteDataSource {
     required String phone,
     String? photoPath,
   });
+  Future<void> logout(String refreshToken);
   Future<void> deleteAccount();
 }
 
@@ -66,6 +67,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       },
     );
     return UserResponseModel.fromJson(response.data);
+  }
+
+  @override
+  Future<void> logout(String refreshToken) async {
+    await _apiService.post(
+      '/buyer/logout',
+      data: {'refreshToken': refreshToken},
+    );
   }
 
   @override

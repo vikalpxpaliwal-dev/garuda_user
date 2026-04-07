@@ -39,11 +39,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void _onUpdate() {
     if (_formKey.currentState!.validate()) {
-      context.read<ProfileBloc>().add(UpdateProfileRequested(
-            name: _nameController.text,
-            phone: _phoneController.text,
-            photoPath: _selectedImage?.path,
-          ));
+      context.read<ProfileBloc>().add(
+        UpdateProfileRequested(
+          name: _nameController.text,
+          phone: _phoneController.text,
+          photoPath: _selectedImage?.path,
+        ),
+      );
     }
   }
 
@@ -144,8 +146,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         label: 'PHONE NUMBER',
                         icon: Icons.phone_android_rounded,
                         keyboardType: TextInputType.phone,
-                        validator: (v) =>
-                            v!.isEmpty ? 'Please enter your phone number' : null,
+                        validator: (v) => v!.isEmpty
+                            ? 'Please enter your phone number'
+                            : null,
                       ),
                       const SizedBox(height: 40),
                       _buildUpdateButton(),
@@ -161,15 +164,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         },
                       ),
                       const SizedBox(height: 12),
-                      _buildAccountAction(
-                        label: 'Delete Account',
-                        icon: Icons.delete_outline_rounded,
-                        color: Colors.redAccent,
-                        onTap: () {
-                          _showDeleteConfirmation(context);
-                        },
-                      ),
-                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
@@ -219,32 +213,45 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.lightLine),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.ink.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          validator: validator,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
           ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            validator: validator,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.white,
+            prefixIcon: Icon(icon, size: 20, color: AppColors.primaryOrange),
+            contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.lightLine),
             ),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, size: 20, color: AppColors.primaryOrange),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.lightLine),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primaryOrange, width: 1.2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+            ),
+            errorStyle: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.redAccent,
+              height: 1.2,
             ),
           ),
         ),
@@ -308,8 +315,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             const Spacer(),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 14, color: color.withValues(alpha: 0.5)),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: color.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),

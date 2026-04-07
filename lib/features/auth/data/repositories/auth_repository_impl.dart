@@ -79,8 +79,21 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> logout() async {
-    await _localDataSource.clear();
+  Future<Result<void>> logout() async {
+    try {
+      final refreshToken = await _localDataSource.getRefreshToken();
+      if (refreshToken != null) {
+        await _remoteDataSource.logout(refreshToken);
+      }
+      await _localDataSource.clear();
+      return const Success(null);
+    } catch (e) {
+      // Even if API fails, we should clear local data and return success 
+      // from the user's perspective, or return an error if we really need to.
+      // Usually, logout should be best effort remote + certain local clear.
+      await _localDataSource.clear();
+      return const Success(null);
+    }
   }
 
   @override

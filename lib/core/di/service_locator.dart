@@ -22,6 +22,11 @@ import 'package:garuda_user_app/features/home/domain/repositories/home_repositor
 import 'package:garuda_user_app/features/home/domain/usecases/get_home_dashboard.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:garuda_user_app/features/search/data/datasources/search_remote_data_source.dart';
+import 'package:garuda_user_app/features/search/data/repositories/search_repository_impl.dart';
+import 'package:garuda_user_app/features/search/domain/repositories/search_repository.dart';
+import 'package:garuda_user_app/features/search/domain/usecases/get_lands_usecase.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -93,5 +98,15 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => HomeRepositoryImpl(localDataSource: sl()),
     )
     ..registerLazySingleton(() => GetHomeDashboard(sl()))
-    ..registerFactory(() => HomeBloc(getHomeDashboard: sl()));
+    ..registerFactory(() => HomeBloc(getHomeDashboard: sl()))
+
+    // Search Feature
+    ..registerLazySingleton<SearchRemoteDataSource>(
+      () => SearchRemoteDataSourceImpl(sl()),
+    )
+    ..registerLazySingleton<SearchRepository>(
+      () => SearchRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => GetLandsUseCase(sl()))
+    ..registerFactory(() => SearchBloc(getLandsUseCase: sl()));
 }

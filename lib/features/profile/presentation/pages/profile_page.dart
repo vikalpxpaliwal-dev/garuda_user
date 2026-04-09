@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
@@ -282,7 +281,7 @@ class _ProfileHeader extends StatelessWidget {
         final name = state.user?.name ?? 'Profile';
 
         return GestureDetector(
-          onTap: () => context.go('${AppRoutes.profile}/edit-profile'),
+          onTap: () => context.go(AppRoutes.editProfile),
           child: Row(
             children: <Widget>[
               Container(

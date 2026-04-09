@@ -4,9 +4,37 @@ import 'package:garuda_user_app/app.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/profile_page.dart';
+import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_listing_detail_page.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_page.dart';
 import 'package:go_router/go_router.dart';
+
+const mockLand = LandEntity(
+  id: 1,
+  village: 'Shadnagar',
+  state: 'Telangana',
+  district: 'Rangareddy',
+  mandal: 'Shadnagar',
+  landStatus: ['AVAILABLE'],
+  urgencyListing: ['HIGH'],
+  landDetails: LandDetailsEntity(
+    totalAcres: 4.30,
+    guntas: 0,
+    pricePerAcres: 7400000,
+    totalValue: 31820000,
+    soilType: 'Red',
+    nearestRoadType: 'Highway',
+    landAttachedToRoad: 'Main Road',
+    fencingStatus: 'Side Fenced',
+    waterSource: ['Borewell'],
+    electricity: ['Available'],
+    residence: ['None'],
+    numberOfBores: 1,
+    farmPond: false,
+  ),
+  media: [],
+  documents: [],
+);
 
 void main() {
   testWidgets('renders the Garuda Lands home dashboard', (tester) async {
@@ -24,6 +52,7 @@ void main() {
   });
 
   testWidgets('renders the search listings dashboard', (tester) async {
+    await initializeDependencies(reset: true);
     await tester.pumpWidget(const MaterialApp(home: SearchPage()));
     await tester.pumpAndSettle();
 
@@ -46,10 +75,7 @@ void main() {
             GoRoute(
               path: '${AppRoutes.searchDetails}/:index',
               builder: (context, state) {
-                final index =
-                    int.tryParse(state.pathParameters['index'] ?? '') ?? 0;
-
-                return SearchListingDetailPage(listingIndex: index);
+                return const SearchListingDetailPage(land: mockLand);
               },
             ),
           ],
@@ -147,6 +173,7 @@ void main() {
   testWidgets('shows visit hub controls when visits hub tab is selected', (
     tester,
   ) async {
+    await initializeDependencies(reset: true);
     await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
     await tester.pumpAndSettle();
 

@@ -5,14 +5,15 @@ import 'package:garuda_user_app/core/router/go_router_refresh_stream.dart';
 import 'package:garuda_user_app/core/widgets/app_shell_scaffold.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:garuda_user_app/features/auth/presentation/pages/login_page.dart';
+import 'package:garuda_user_app/features/auth/presentation/pages/signup_page.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_event.dart';
 import 'package:garuda_user_app/features/home/presentation/pages/home_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/profile_page.dart';
-import 'package:garuda_user_app/features/auth/presentation/pages/login_page.dart';
-import 'package:garuda_user_app/features/auth/presentation/pages/signup_page.dart';
+import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_listing_detail_page.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_page.dart';
 import 'package:garuda_user_app/features/splash/presentation/pages/splash_page.dart';
@@ -87,14 +88,12 @@ final class AppRouter {
                 },
                 routes: <RouteBase>[
                   GoRoute(
-                    path: '${AppRoutes.searchDetails}/:index',
+                    path: 'details',
                     pageBuilder: (context, state) {
-                      final index =
-                          int.tryParse(state.pathParameters['index'] ?? '') ??
-                          0;
+                      final land = state.extra as LandEntity;
 
                       return NoTransitionPage<void>(
-                        child: SearchListingDetailPage(listingIndex: index),
+                        child: SearchListingDetailPage(land: land),
                       );
                     },
                   ),
@@ -111,7 +110,7 @@ final class AppRouter {
                 },
                 routes: [
                   GoRoute(
-                    path: AppRoutes.editProfile,
+                    path: 'edit-profile',
                     pageBuilder: (context, state) {
                       return NoTransitionPage<void>(
                         child: BlocProvider<ProfileBloc>(

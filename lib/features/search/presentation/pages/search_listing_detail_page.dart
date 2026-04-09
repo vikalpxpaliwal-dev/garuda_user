@@ -6,23 +6,19 @@ import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
-import 'package:garuda_user_app/features/search/presentation/data/search_listing_catalog.dart';
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
+import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
+import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.dart';
 import 'package:go_router/go_router.dart';
 
 class SearchListingDetailPage extends StatelessWidget {
-  const SearchListingDetailPage({required this.listingIndex, super.key});
+  const SearchListingDetailPage({required this.land, super.key});
 
-  final int listingIndex;
+  final LandEntity land;
 
   @override
   Widget build(BuildContext context) {
-    final index = listingIndex < 0
-        ? 0
-        : listingIndex >= searchListingCatalog.length
-        ? searchListingCatalog.length - 1
-        : listingIndex;
-    final listing = searchListingCatalog[index];
+    final listing = LandMapper.toUiModel(land);
 
     return Scaffold(
       body: Stack(
@@ -188,23 +184,7 @@ class SearchListingDetailPage extends StatelessWidget {
                           const SizedBox(height: 10),
                           _DetailReportCard(listing: listing),
                           const SizedBox(height: 12),
-                          _DetailFooterActions(
-                            currentIndex: index,
-                            onPrevious: index > 0
-                                ? () {
-                                    context.go(
-                                      AppRoutes.searchListingDetails(index - 1),
-                                    );
-                                  }
-                                : null,
-                            onNext: index < searchListingCatalog.length - 1
-                                ? () {
-                                    context.go(
-                                      AppRoutes.searchListingDetails(index + 1),
-                                    );
-                                  }
-                                : null,
-                          ),
+                          const _DetailFooterActions(),
                         ],
                       ),
                     ),
@@ -472,42 +452,32 @@ class _DocumentStatusChip extends StatelessWidget {
 }
 
 class _DetailFooterActions extends StatelessWidget {
-  const _DetailFooterActions({
-    required this.currentIndex,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  final int currentIndex;
-  final VoidCallback? onPrevious;
-  final VoidCallback? onNext;
+  const _DetailFooterActions();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       children: <Widget>[
         Expanded(
-          child: _FooterButton(
-            icon: Icons.chevron_left_rounded,
-            label: 'Previous Land',
-            onTap: onPrevious,
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Expanded(
           child: _FooterButton(
             icon: Icons.favorite_border_rounded,
             label: 'Add to Wishlist',
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Expanded(
           child: _FooterButton(
-            icon: Icons.chevron_right_rounded,
-            label: 'Next Land',
+            icon: Icons.share_rounded,
+            label: 'Share Land',
+          ),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: _FooterButton(
+            icon: Icons.call_rounded,
+            label: 'Contact Agent',
             isFilled: true,
             iconAtEnd: true,
-            onTap: onNext,
           ),
         ),
       ],

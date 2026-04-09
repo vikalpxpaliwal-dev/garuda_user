@@ -6,9 +6,9 @@ final class AppRoutes {
   static const signup = '/signup';
   static const home = '/';
   static const search = '/search';
-  static const searchDetails = 'details';
+  static const searchDetails = '/search/details';
   static const profile = '/profile';
-  static const editProfile = '/edit-profile';
+  static const editProfile = '/profile/edit-profile';
 
   static String searchListingDetails(int index) =>
       '$search/$searchDetails/$index';

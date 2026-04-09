@@ -1,10 +1,13 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
+import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
-import 'package:garuda_user_app/features/search/presentation/data/search_listing_catalog.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
+import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.dart';
 import 'package:garuda_user_app/features/search/presentation/widgets/search_filter_panel.dart';
 import 'package:garuda_user_app/features/search/presentation/widgets/search_listing_card.dart';
 import 'package:go_router/go_router.dart';
@@ -21,8 +24,10 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    return BlocProvider<SearchBloc>(
+      create: (context) => sl<SearchBloc>()..add(const GetLandsEvent()),
+      child: Scaffold(
+        body: Stack(
         children: [
           // Premium Mesh Gradient Background
           Positioned.fill(
@@ -151,29 +156,70 @@ class _SearchPageState extends State<SearchPage> {
                                       });
                                     },
                                   )
-                                : Column(
-                                    key: const ValueKey<String>('results'),
-                                    children: searchListingCatalog
-                                        .asMap()
-                                        .entries
-                                        .map(
-                                          (entry) => Padding(
+                                : BlocBuilder<SearchBloc, SearchState>(
+                                    builder: (context, state) {
+                                      if (state.status == SearchStatus.loading) {
+                                        return const Center(
+                                          child: Padding(
+                                            padding: EdgeInsets.all(40.0),
+                                            child: CircularProgressIndicator(
+                                              color: AppColors.primaryOrange,
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      if (state.status == SearchStatus.failure) {
+                                        return Center(
+                                          child: Column(
+                                            children: [
+                                              const Icon(Icons.error_outline,
+                                                  size: 48,
+                                                  color: AppColors.deepOrange),
+                                              const SizedBox(height: 16),
+                                              Text(state.errorMessage ??
+                                                  'Failed to load lands'),
+                                              TextButton(
+                                                onPressed: () => context
+                                                    .read<SearchBloc>()
+                                                    .add(const GetLandsEvent()),
+                                                child: const Text('Try Again'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+
+                                      if (state.lands.isEmpty) {
+                                        return const Center(
+                                          child: Padding(
+                                            padding: EdgeInsets.all(40.0),
+                                            child: Text('No lands found.'),
+                                          ),
+                                        );
+                                      }
+
+                                      return Column(
+                                        key: const ValueKey<String>('results'),
+                                        children: state.lands.map((land) {
+                                          final uiModel = LandMapper.toUiModel(land);
+                                          return Padding(
                                             padding: const EdgeInsets.only(
                                               bottom: 20,
                                             ),
                                             child: SearchListingCard(
-                                              listing: entry.value,
+                                              listing: uiModel,
                                               onViewDetails: () {
                                                 context.push(
-                                                  AppRoutes.searchListingDetails(
-                                                    entry.key,
-                                                  ),
+                                                  AppRoutes.searchDetails,
+                                                  extra: land,
                                                 );
                                               },
                                             ),
-                                          ),
-                                        )
-                                        .toList(),
+                                          );
+                                        }).toList(),
+                                      );
+                                    },
                                   ),
                           ),
                         ],
@@ -186,6 +232,7 @@ class _SearchPageState extends State<SearchPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

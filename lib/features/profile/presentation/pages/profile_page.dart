@@ -6,6 +6,10 @@ import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_entity.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/profile_state.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -16,40 +20,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  static const Map<_ProfileCollectionTab, List<_TrackedLandUiModel>> _journeys =
-      <_ProfileCollectionTab, List<_TrackedLandUiModel>>{
-        _ProfileCollectionTab.wishlist: <_TrackedLandUiModel>[
-          _TrackedLandUiModel(
-            title: '8 AC - CHEVELLA',
-            subtitle: 'S RANGAREDDY',
-            priceLabel: 'Rs.66.0L/ac',
-            pricePerAcreLabel: 'Rs.66.0 Lakhs',
-            fullBudgetLabel: 'Rs 49.4L (5.49 Cr)',
-            availabilityBadge: 'AVAILABLE FOR SALE',
-            palette: <Color>[
-              Color(0xFF041E42),
-              Color(0xFF0D5C5D),
-              Color(0xFFFFB34A),
-            ],
-          ),
-        ],
-        _ProfileCollectionTab.myLands: <_TrackedLandUiModel>[
-          _TrackedLandUiModel(
-            title: '12 AC - KHAJAGUDA',
-            subtitle: 'W HYDERABAD',
-            priceLabel: 'Rs.78.0L/ac',
-            pricePerAcreLabel: 'Rs.78.0 Lakhs',
-            fullBudgetLabel: 'Rs 93.6L (9.36 Cr)',
-            availabilityBadge: 'HIGH DEMAND LAND',
-            palette: <Color>[
-              Color(0xFF243B55),
-              Color(0xFF141E30),
-              Color(0xFFE98B2A),
-            ],
-          ),
-        ],
-      };
-
   static const List<_OwnedLandUiModel> _ownedLands = <_OwnedLandUiModel>[
     _OwnedLandUiModel(
       title: 'MANGO GROVE ESTATE',
@@ -89,142 +59,214 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final journeys = _journeys[_selectedTab]!;
-    final currentJourney = journeys[_selectedJourneyIndex];
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, state) {
+        final wishlistJourneys = _ProfileWishlistMapper.toUiModels(
+          state.wishlistItems,
+        );
+        final selectedJourneyIndex = _safeSelectedJourneyIndex(wishlistJourneys);
+        final hasWishlistJourneys = wishlistJourneys.isNotEmpty;
+        final currentJourney = hasWishlistJourneys
+            ? wishlistJourneys[selectedJourneyIndex]
+            : null;
 
-    return Material(
-      color: AppColors.softBackground,
-      child: Stack(
-        children: <Widget>[
-          // Mesh Background for premium boutique feel
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.softBackground,
-                gradient: RadialGradient(
-                  center: Alignment(0.8, -0.6),
-                  radius: 1.2,
-                  colors: <Color>[Color(0xFFFFF9F2), AppColors.softBackground],
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(-0.9, 0.8),
-                  radius: 1.4,
-                  colors: <Color>[
-                    AppColors.primaryOrange.withValues(alpha: 0.05),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: <Widget>[
-              const CommonSliverAppBar(showSearchAction: false),
-
-              SliverToBoxAdapter(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 24, 18, 120),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          const _ProfileHeader(),
-                          const SizedBox(height: 18),
-                          _CollectionTabs(
-                            selectedTab: _selectedTab,
-                            onChanged: (tab) {
-                              setState(() {
-                                _selectedTab = tab;
-                                _selectedJourneyIndex = 0;
-                                _selectedStage = _TrackingStage.availability;
-                                _selectedVisitsHubList =
-                                    _VisitsHubList.primaryVisit;
-                                _isTrackingJourney = false;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 18),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 220),
-                            child: _isTrackingJourney
-                                ? _TrackingJourneyPanel(
-                                    key: const ValueKey<String>('tracking'),
-                                    journey: currentJourney,
-                                    selectedStage: _selectedStage,
-                                    onBack: _closeTrackingJourney,
-                                    onStageChanged: (stage) {
-                                      setState(() {
-                                        _selectedStage = stage;
-                                        if (stage == _TrackingStage.visitsHub) {
-                                          _selectedVisitsHubList =
-                                              _VisitsHubList.primaryVisit;
-                                        }
-                                      });
-                                    },
-                                    selectedVisitsHubList:
-                                        _selectedVisitsHubList,
-                                    onVisitsHubListChanged: (list) {
-                                      setState(() {
-                                        _selectedVisitsHubList = list;
-                                      });
-                                    },
-                                  )
-                                : _selectedTab == _ProfileCollectionTab.wishlist
-                                ? _JourneySelectionPanel(
-                                    key: const ValueKey<String>('selection'),
-                                    journeys: journeys,
-                                    selectedJourneyIndex: _selectedJourneyIndex,
-                                    onJourneySelected: (index) {
-                                      setState(() {
-                                        _selectedJourneyIndex = index;
-                                      });
-                                    },
-                                  )
-                                : const _MyLandsPanel(
-                                    key: ValueKey<String>('my-lands'),
-                                    lands: _ownedLands,
-                                  ),
-                          ),
-                        ],
-                      ),
+        return Material(
+          color: AppColors.softBackground,
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AppColors.softBackground,
+                    gradient: RadialGradient(
+                      center: Alignment(0.8, -0.6),
+                      radius: 1.2,
+                      colors: <Color>[Color(0xFFFFF9F2), AppColors.softBackground],
                     ),
                   ),
                 ),
               ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(-0.9, 0.8),
+                      radius: 1.4,
+                      colors: <Color>[
+                        AppColors.primaryOrange.withValues(alpha: 0.05),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                slivers: <Widget>[
+                  const CommonSliverAppBar(showSearchAction: false),
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 24, 18, 120),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              const _ProfileHeader(),
+                              const SizedBox(height: 18),
+                              _CollectionTabs(
+                                selectedTab: _selectedTab,
+                                onChanged: (tab) {
+                                  if (tab == _ProfileCollectionTab.wishlist) {
+                                    context.read<ProfileBloc>().add(
+                                      const WishlistRequested(),
+                                    );
+                                  }
+
+                                  setState(() {
+                                    _selectedTab = tab;
+                                    _selectedJourneyIndex = 0;
+                                    _selectedStage =
+                                        _TrackingStage.availability;
+                                    _selectedVisitsHubList =
+                                        _VisitsHubList.primaryVisit;
+                                    _isTrackingJourney = false;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 18),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 220),
+                                child: _buildActivePanel(
+                                  context: context,
+                                  state: state,
+                                  journeys: wishlistJourneys,
+                                  selectedJourneyIndex: selectedJourneyIndex,
+                                  currentJourney: currentJourney,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                right: 16,
+                bottom: 18,
+                child: SafeArea(
+                  top: false,
+                  child: _isTrackingJourney && currentJourney != null
+                      ? _selectedStage == _TrackingStage.visitsHub
+                            ? const _VisitsHubFloatingActions()
+                            : _TrackingFloatingButton(onTap: _closeTrackingJourney)
+                      : _selectedTab == _ProfileCollectionTab.wishlist &&
+                            hasWishlistJourneys
+                      ? _StartTrackingCta(
+                          label:
+                              'START TRACKING ${selectedJourneyIndex + 1} LANDS',
+                          onTap: _openTrackingJourney,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
             ],
           ),
-          Positioned(
-            right: 16,
-            bottom: 18,
-            child: SafeArea(
-              top: false,
-              child: _isTrackingJourney
-                  ? _selectedStage == _TrackingStage.visitsHub
-                        ? const _VisitsHubFloatingActions()
-                        : _TrackingFloatingButton(onTap: _closeTrackingJourney)
-                  : _selectedTab == _ProfileCollectionTab.wishlist
-                  ? _StartTrackingCta(
-                      label:
-                          'START TRACKING ${_selectedJourneyIndex + 1} LANDS',
-                      onTap: _openTrackingJourney,
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  Widget _buildActivePanel({
+    required BuildContext context,
+    required ProfileState state,
+    required List<_TrackedLandUiModel> journeys,
+    required int selectedJourneyIndex,
+    required _TrackedLandUiModel? currentJourney,
+  }) {
+    if (_isTrackingJourney && currentJourney != null) {
+      return _TrackingJourneyPanel(
+        key: const ValueKey<String>('tracking'),
+        journey: currentJourney,
+        selectedStage: _selectedStage,
+        onBack: _closeTrackingJourney,
+        onStageChanged: (stage) {
+          setState(() {
+            _selectedStage = stage;
+            if (stage == _TrackingStage.visitsHub) {
+              _selectedVisitsHubList = _VisitsHubList.primaryVisit;
+            }
+          });
+        },
+        selectedVisitsHubList: _selectedVisitsHubList,
+        onVisitsHubListChanged: (list) {
+          setState(() {
+            _selectedVisitsHubList = list;
+          });
+        },
+      );
+    }
+
+    if (_selectedTab == _ProfileCollectionTab.myLands) {
+      return const _MyLandsPanel(
+        key: ValueKey<String>('my-lands'),
+        lands: _ownedLands,
+      );
+    }
+
+    if (state.wishlistStatus == ProfileWishlistStatus.loading &&
+        journeys.isEmpty) {
+      return const _WishlistLoadingPanel(
+        key: ValueKey<String>('wishlist-loading'),
+      );
+    }
+
+    if (state.wishlistStatus == ProfileWishlistStatus.failure &&
+        journeys.isEmpty) {
+      return _WishlistErrorPanel(
+        key: const ValueKey<String>('wishlist-failure'),
+        message: state.wishlistErrorMessage ?? 'Failed to load wishlist.',
+        onRetry: () => context.read<ProfileBloc>().add(const WishlistRequested()),
+      );
+    }
+
+    if (journeys.isEmpty) {
+      return const _WishlistEmptyPanel(
+        key: ValueKey<String>('wishlist-empty'),
+      );
+    }
+
+    return _JourneySelectionPanel(
+      key: const ValueKey<String>('selection'),
+      journeys: journeys,
+      selectedJourneyIndex: selectedJourneyIndex,
+      onJourneySelected: (index) {
+        setState(() {
+          _selectedJourneyIndex = index;
+        });
+      },
+    );
+  }
+
+  int _safeSelectedJourneyIndex(List<_TrackedLandUiModel> journeys) {
+    if (journeys.isEmpty) {
+      return 0;
+    }
+
+    if (_selectedJourneyIndex < 0) {
+      return 0;
+    }
+
+    if (_selectedJourneyIndex >= journeys.length) {
+      return journeys.length - 1;
+    }
+
+    return _selectedJourneyIndex;
   }
 }
 
@@ -238,18 +280,22 @@ class _TrackedLandUiModel {
   const _TrackedLandUiModel({
     required this.title,
     required this.subtitle,
-    required this.priceLabel,
-    required this.pricePerAcreLabel,
-    required this.fullBudgetLabel,
+    required this.trailingLabel,
+    required this.primaryMetricLabel,
+    required this.primaryMetricValue,
+    required this.secondaryMetricLabel,
+    required this.secondaryMetricValue,
     required this.availabilityBadge,
     required this.palette,
   });
 
   final String title;
   final String subtitle;
-  final String priceLabel;
-  final String pricePerAcreLabel;
-  final String fullBudgetLabel;
+  final String trailingLabel;
+  final String primaryMetricLabel;
+  final String primaryMetricValue;
+  final String secondaryMetricLabel;
+  final String secondaryMetricValue;
   final String availabilityBadge;
   final List<Color> palette;
 }
@@ -266,6 +312,68 @@ class _OwnedLandUiModel {
   final String subtitle;
   final String priceLabel;
   final List<Color> palette;
+}
+
+class _ProfileWishlistMapper {
+  static const List<List<Color>> _palettes = <List<Color>>[
+    <Color>[Color(0xFF041E42), Color(0xFF0D5C5D), Color(0xFFFFB34A)],
+    <Color>[Color(0xFF243B55), Color(0xFF141E30), Color(0xFFE98B2A)],
+    <Color>[Color(0xFF1E3A5F), Color(0xFF496989), Color(0xFFF4B860)],
+    <Color>[Color(0xFF233D4D), Color(0xFF4F6D7A), Color(0xFFFFB347)],
+  ];
+
+  static List<_TrackedLandUiModel> toUiModels(
+    List<WishlistItemEntity> items,
+  ) {
+    return items.asMap().entries.map((entry) {
+      final item = entry.value;
+      final land = item.land;
+      final palette = _palettes[entry.key % _palettes.length];
+      final availabilityBadge = _normalizeLabel(
+        land.landStatus.isNotEmpty ? land.landStatus.first : land.availability,
+        fallback: 'WISHLISTED',
+      );
+
+      return _TrackedLandUiModel(
+        title: '${_capitalize(land.village)} - ${_capitalize(land.mandal)}',
+        subtitle:
+            '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
+        trailingLabel: _normalizeLabel(
+          land.availability,
+          fallback: 'ACTIVE',
+        ),
+        primaryMetricLabel: 'FORM STATUS',
+        primaryMetricValue: _normalizeLabel(
+          land.formStatus,
+          fallback: 'UNKNOWN',
+        ),
+        secondaryMetricLabel: 'VERIFICATION',
+        secondaryMetricValue:
+            land.verificationPackage ? 'VERIFIED' : 'STANDARD',
+        availabilityBadge: availabilityBadge,
+        palette: palette,
+      );
+    }).toList();
+  }
+
+  static String _normalizeLabel(String value, {required String fallback}) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return fallback;
+    }
+
+    return trimmed.toUpperCase();
+  }
+
+  static String _capitalize(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return 'Land';
+    }
+
+    final lower = trimmed.toLowerCase();
+    return '${lower[0].toUpperCase()}${lower.substring(1)}';
+  }
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -500,6 +608,116 @@ class _JourneySelectionPanel extends StatelessWidget {
   }
 }
 
+class _WishlistLoadingPanel extends StatelessWidget {
+  const _WishlistLoadingPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      key: key,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: CircularProgressIndicator(color: AppColors.primaryOrange),
+      ),
+    );
+  }
+}
+
+class _WishlistErrorPanel extends StatelessWidget {
+  const _WishlistErrorPanel({
+    required this.message,
+    required this.onRetry,
+    super.key,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      key: key,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 8),
+        child: Column(
+          children: <Widget>[
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 42,
+              color: AppColors.deepOrange,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WishlistEmptyPanel extends StatelessWidget {
+  const _WishlistEmptyPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomCard(
+      key: key,
+      gradient: LinearGradient(
+        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.4)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
+      child: const Column(
+        children: <Widget>[
+          Icon(
+            Icons.favorite_border_rounded,
+            size: 34,
+            color: AppColors.deepOrange,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'YOUR WISHLIST IS EMPTY',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.ink,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Add lands from the search details screen to see them here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.mutedText,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MyLandsPanel extends StatelessWidget {
   const _MyLandsPanel({required this.lands, super.key});
 
@@ -713,7 +931,7 @@ class _JourneyCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                journey.priceLabel,
+                journey.trailingLabel,
                 style: const TextStyle(
                   color: AppColors.ink,
                   fontSize: 11,
@@ -1041,15 +1259,15 @@ class _TrackedJourneyDetailCard extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: _JourneyMetric(
-                        label: 'PRICE PER ACRE',
-                        value: journey.pricePerAcreLabel,
+                        label: journey.primaryMetricLabel,
+                        value: journey.primaryMetricValue,
                         alignment: CrossAxisAlignment.start,
                       ),
                     ),
                     Expanded(
                       child: _JourneyMetric(
-                        label: 'FULL BUDGET',
-                        value: journey.fullBudgetLabel,
+                        label: journey.secondaryMetricLabel,
+                        value: journey.secondaryMetricValue,
                         alignment: CrossAxisAlignment.end,
                         textAlign: TextAlign.end,
                       ),

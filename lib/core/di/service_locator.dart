@@ -21,6 +21,10 @@ import 'package:garuda_user_app/features/home/data/repositories/home_repository_
 import 'package:garuda_user_app/features/home/domain/repositories/home_repository.dart';
 import 'package:garuda_user_app/features/home/domain/usecases/get_home_dashboard.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
+import 'package:garuda_user_app/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:garuda_user_app/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:garuda_user_app/features/profile/domain/repositories/profile_repository.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/search/data/datasources/search_remote_data_source.dart';
 import 'package:garuda_user_app/features/search/data/repositories/search_repository_impl.dart';
@@ -85,10 +89,18 @@ Future<void> initializeDependencies({bool reset = false}) async {
     ..registerLazySingleton(() => DeleteAccountUseCase(sl()))
     ..registerFactory(() => SignupBloc(signupUseCase: sl()))
     ..registerFactory(() => LoginBloc(loginUseCase: sl()))
+    ..registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileRemoteDataSourceImpl(sl()),
+    )
+    ..registerLazySingleton<ProfileRepository>(
+      () => ProfileRepositoryImpl(sl()),
+    )
+    ..registerLazySingleton(() => GetWishlistUseCase(sl()))
     ..registerFactory(
       () => ProfileBloc(
         updateProfileUseCase: sl(),
         deleteAccountUseCase: sl(),
+        getWishlistUseCase: sl(),
         authBloc: sl(),
       ),
     )

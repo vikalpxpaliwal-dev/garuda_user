@@ -1,9 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/update_profile_usecase.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_state.dart';
 
@@ -11,18 +12,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc({
     required UpdateProfileUseCase updateProfileUseCase,
     required DeleteAccountUseCase deleteAccountUseCase,
+    required GetWishlistUseCase getWishlistUseCase,
     required AuthBloc authBloc,
   })  : _updateProfileUseCase = updateProfileUseCase,
         _deleteAccountUseCase = deleteAccountUseCase,
+        _getWishlistUseCase = getWishlistUseCase,
         _authBloc = authBloc,
         super(const ProfileState()) {
     on<UpdateProfileRequested>(_onUpdateProfileRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<DeleteAccountRequested>(_onDeleteAccountRequested);
+    on<WishlistRequested>(_onWishlistRequested);
   }
 
   final UpdateProfileUseCase _updateProfileUseCase;
   final DeleteAccountUseCase _deleteAccountUseCase;
+  final GetWishlistUseCase _getWishlistUseCase;
   final AuthBloc _authBloc;
 
   Future<void> _onUpdateProfileRequested(
@@ -69,6 +74,38 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         status: ProfileStatus.failure,
         errorMessage: (result as Error).failure.message,
       ));
+    }
+  }
+
+  Future<void> _onWishlistRequested(
+    WishlistRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        wishlistStatus: ProfileWishlistStatus.loading,
+        wishlistErrorMessage: null,
+      ),
+    );
+
+    final result = await _getWishlistUseCase();
+
+    switch (result) {
+      case Success(data: final wishlistItems):
+        emit(
+          state.copyWith(
+            wishlistStatus: ProfileWishlistStatus.success,
+            wishlistItems: wishlistItems,
+            wishlistErrorMessage: null,
+          ),
+        );
+      case Error(failure: final failure):
+        emit(
+          state.copyWith(
+            wishlistStatus: ProfileWishlistStatus.failure,
+            wishlistErrorMessage: failure.message,
+          ),
+        );
     }
   }
 }

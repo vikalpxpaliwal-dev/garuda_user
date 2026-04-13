@@ -1,31 +1,58 @@
 import 'package:equatable/equatable.dart';
 import 'package:garuda_user_app/features/auth/domain/entities/user_entity.dart';
+import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_entity.dart';
 
 enum ProfileStatus { initial, loading, success, failure }
+enum ProfileWishlistStatus { initial, loading, success, failure }
 
 class ProfileState extends Equatable {
+  static const Object _unset = Object();
+
   const ProfileState({
     this.status = ProfileStatus.initial,
     this.user,
     this.errorMessage,
+    this.wishlistStatus = ProfileWishlistStatus.initial,
+    this.wishlistItems = const <WishlistItemEntity>[],
+    this.wishlistErrorMessage,
   });
 
   final ProfileStatus status;
   final UserEntity? user;
   final String? errorMessage;
+  final ProfileWishlistStatus wishlistStatus;
+  final List<WishlistItemEntity> wishlistItems;
+  final String? wishlistErrorMessage;
 
   ProfileState copyWith({
     ProfileStatus? status,
     UserEntity? user,
-    String? errorMessage,
+    Object? errorMessage = _unset,
+    ProfileWishlistStatus? wishlistStatus,
+    List<WishlistItemEntity>? wishlistItems,
+    Object? wishlistErrorMessage = _unset,
   }) {
     return ProfileState(
       status: status ?? this.status,
       user: user ?? this.user,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: identical(errorMessage, _unset)
+          ? this.errorMessage
+          : errorMessage as String?,
+      wishlistStatus: wishlistStatus ?? this.wishlistStatus,
+      wishlistItems: wishlistItems ?? this.wishlistItems,
+      wishlistErrorMessage: identical(wishlistErrorMessage, _unset)
+          ? this.wishlistErrorMessage
+          : wishlistErrorMessage as String?,
     );
   }
 
   @override
-  List<Object?> get props => [status, user, errorMessage];
+  List<Object?> get props => [
+        status,
+        user,
+        errorMessage,
+        wishlistStatus,
+        wishlistItems,
+        wishlistErrorMessage,
+      ];
 }

@@ -11,6 +11,7 @@ import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_event.dart';
 import 'package:garuda_user_app/features/home/presentation/pages/home_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/profile_page.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
@@ -109,7 +110,12 @@ final class AppRouter {
               GoRoute(
                 path: AppRoutes.profile,
                 pageBuilder: (context, state) {
-                  return const NoTransitionPage<void>(child: ProfilePage());
+                  return NoTransitionPage<void>(
+                    child: BlocProvider<ProfileBloc>(
+                      create: (_) => sl<ProfileBloc>()..add(const WishlistRequested()),
+                      child: const ProfilePage(),
+                    ),
+                  );
                 },
                 routes: [
                   GoRoute(

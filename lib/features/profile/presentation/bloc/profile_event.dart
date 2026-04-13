@@ -25,3 +25,7 @@ class UpdateProfileRequested extends ProfileEvent {
 class LogoutRequested extends ProfileEvent {}
 
 class DeleteAccountRequested extends ProfileEvent {}
+
+class WishlistRequested extends ProfileEvent {
+  const WishlistRequested();
+}

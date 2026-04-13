@@ -23,13 +23,15 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final path = options.path;
-    final isAuthRequest = path.contains('/buyer/refresh') || 
-                         path.contains('/buyer/login') || 
-                         path.contains('/buyer/signup');
+    final isAuthRequest =
+        path.contains('/buyer/refresh') ||
+        path.contains('/buyer/login') ||
+        path.contains('/buyer/signup');
 
     if (!isAuthRequest) {
       final token = await _authRepository.getAccessToken();
       if (token != null && token.isNotEmpty) {
+        print('AccessToken: $token');
         options.headers['Authorization'] = 'Bearer $token';
       }
     }
@@ -38,11 +40,15 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final path = err.requestOptions.path;
-    final isAuthRequest = path.contains('/buyer/refresh') || 
-                         path.contains('/buyer/login') || 
-                         path.contains('/buyer/signup');
+    final isAuthRequest =
+        path.contains('/buyer/refresh') ||
+        path.contains('/buyer/login') ||
+        path.contains('/buyer/signup');
 
     if (err.response?.statusCode == 401 && !isAuthRequest) {
       if (_isRefreshing) {
@@ -61,11 +67,11 @@ class AuthInterceptor extends Interceptor {
         // 1. Retry original request
         final options = err.requestOptions;
         options.headers['Authorization'] = 'Bearer $newToken';
-        
+
         try {
           final response = await _dio.fetch(options);
           handler.resolve(response);
-          
+
           // 2. Retry queued requests
           _retryQueuedRequests(newToken);
         } catch (e) {
@@ -88,10 +94,12 @@ class AuthInterceptor extends Interceptor {
       final handler = entry.value;
       options.headers['Authorization'] = 'Bearer $token';
 
-      _dio.fetch(options).then(
-        (response) => handler.resolve(response),
-        onError: (e) => handler.reject(e as DioException),
-      );
+      _dio
+          .fetch(options)
+          .then(
+            (response) => handler.resolve(response),
+            onError: (e) => handler.reject(e as DioException),
+          );
     }
     _requestsQueue.clear();
   }

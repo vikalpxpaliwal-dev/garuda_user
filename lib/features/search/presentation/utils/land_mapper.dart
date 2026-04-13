@@ -1,6 +1,5 @@
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
-import 'dart:math';
 
 class LandMapper {
   static SearchListingUiModel toUiModel(LandEntity land) {

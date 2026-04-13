@@ -25,4 +25,19 @@ class SearchRepositoryImpl implements SearchRepository {
       return Error(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Result<String>> addToWishlist({required List<int> landIds}) async {
+    try {
+      final message = await _remoteDataSource.addToWishlist(landIds: landIds);
+      return Success(message);
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
+      }
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
 }

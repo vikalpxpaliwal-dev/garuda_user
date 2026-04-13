@@ -13,7 +13,7 @@ import 'package:garuda_user_app/features/home/presentation/pages/home_page.dart'
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/profile_page.dart';
-import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_listing_detail_page.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_page.dart';
 import 'package:garuda_user_app/features/splash/presentation/pages/splash_page.dart';
@@ -90,10 +90,13 @@ final class AppRouter {
                   GoRoute(
                     path: 'details',
                     pageBuilder: (context, state) {
-                      final land = state.extra as LandEntity;
+                      final args = state.extra as SearchListingDetailArgs;
 
                       return NoTransitionPage<void>(
-                        child: SearchListingDetailPage(land: land),
+                        child: BlocProvider<SearchBloc>.value(
+                          value: args.searchBloc,
+                          child: SearchListingDetailPage(land: args.land),
+                        ),
                       );
                     },
                   ),

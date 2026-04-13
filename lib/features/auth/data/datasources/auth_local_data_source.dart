@@ -4,7 +4,10 @@ import 'package:garuda_user_app/features/auth/domain/entities/user_entity.dart';
 import 'package:garuda_user_app/features/auth/data/models/signup_response_model.dart';
 
 abstract interface class AuthLocalDataSource {
-  Future<void> saveTokens({required String accessToken, required String refreshToken});
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  });
   Future<String?> getAccessToken();
   Future<String?> getRefreshToken();
   Future<void> saveUser(UserEntity user);
@@ -22,7 +25,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   static const _userKey = 'user_data';
 
   @override
-  Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
     await _storage.write(key: _accessTokenKey, value: accessToken);
     await _storage.write(key: _refreshTokenKey, value: refreshToken);
   }

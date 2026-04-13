@@ -2,14 +2,28 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
-import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
+import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.dart';
 import 'package:go_router/go_router.dart';
+
+class SearchListingDetailArgs {
+  const SearchListingDetailArgs({
+    required this.land,
+    required this.searchBloc,
+  });
+
+  final LandEntity land;
+  final SearchBloc searchBloc;
+}
 
 class SearchListingDetailPage extends StatelessWidget {
   const SearchListingDetailPage({required this.land, super.key});
@@ -20,180 +34,203 @@ class SearchListingDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final listing = LandMapper.toUiModel(land);
 
-    return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.softBackground,
-                gradient: RadialGradient(
-                  center: Alignment(0.8, -0.6),
-                  radius: 1.2,
-                  colors: <Color>[Color(0xFFFFF9F2), AppColors.softBackground],
+    return BlocListener<SearchBloc, SearchState>(
+      listenWhen: (previous, current) =>
+          previous.wishlistStatus != current.wishlistStatus ||
+          previous.wishlistMessage != current.wishlistMessage ||
+          previous.activeWishlistLandId != current.activeWishlistLandId,
+      listener: (context, state) {
+        if (state.activeWishlistLandId != land.id ||
+            state.wishlistMessage == null) {
+          return;
+        }
+
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(state.wishlistMessage!),
+            backgroundColor: state.wishlistStatus == WishlistStatus.failure
+                ? Colors.red.shade700
+                : AppColors.deepOrange,
+          ),
+        );
+      },
+      child: Scaffold(
+        body: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.softBackground,
+                  gradient: RadialGradient(
+                    center: Alignment(0.8, -0.6),
+                    radius: 1.2,
+                    colors: <Color>[Color(0xFFFFF9F2), AppColors.softBackground],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(-0.9, 0.8),
-                  radius: 1.4,
-                  colors: <Color>[
-                    AppColors.primaryOrange.withValues(alpha: 0.05),
-                    Colors.transparent,
-                  ],
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(-0.9, 0.8),
+                    radius: 1.4,
+                    colors: <Color>[
+                      AppColors.primaryOrange.withValues(alpha: 0.05),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: <Widget>[
-              SliverAppBar(
-                pinned: true,
-                toolbarHeight: 56,
-                backgroundColor: AppColors.softBackground.withValues(
-                  alpha: 0.72,
-                ),
-                surfaceTintColor: Colors.transparent,
-                flexibleSpace: ClipRRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(color: Colors.transparent),
+            CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: <Widget>[
+                SliverAppBar(
+                  pinned: true,
+                  toolbarHeight: 56,
+                  backgroundColor: AppColors.softBackground.withValues(
+                    alpha: 0.72,
                   ),
-                ),
-                shape: Border(
-                  bottom: BorderSide(
-                    color: AppColors.lightLine.withValues(alpha: 0.4),
-                  ),
-                ),
-                titleSpacing: 12,
-                title: Row(
-                  children: <Widget>[
-                    const Icon(
-                      Icons.home_work_outlined,
-                      size: 18,
-                      color: AppColors.deepOrange,
+                  surfaceTintColor: Colors.transparent,
+                  flexibleSpace: ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      child: Container(color: Colors.transparent),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      AppStrings.appName,
-                      style: const TextStyle(
+                  ),
+                  shape: Border(
+                    bottom: BorderSide(
+                      color: AppColors.lightLine.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  titleSpacing: 12,
+                  title: Row(
+                    children: <Widget>[
+                      const Icon(
+                        Icons.home_work_outlined,
+                        size: 18,
                         color: AppColors.deepOrange,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.2,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        AppStrings.appName,
+                        style: const TextStyle(
+                          color: AppColors.deepOrange,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    IconButton(
+                      onPressed: () => context.go(AppRoutes.search),
+                      icon: const Icon(
+                        Icons.search_rounded,
+                        size: 20,
+                        color: AppColors.ink,
                       ),
                     ),
-                  ],
-                ),
-                actions: <Widget>[
-                  IconButton(
-                    onPressed: () => context.go(AppRoutes.search),
-                    icon: const Icon(
-                      Icons.search_rounded,
-                      size: 20,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: GestureDetector(
-                      onTap: () => context.go(AppRoutes.profile),
-                      child: Container(
-                        padding: const EdgeInsets.all(1.5),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.deepOrange.withValues(alpha: 0.2),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const CircleAvatar(
-                          radius: 12,
-                          backgroundColor: Color(0xFFFFD1B5),
-                          child: Text(
-                            'U',
-                            style: TextStyle(
-                              color: AppColors.deepOrange,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: GestureDetector(
+                        onTap: () => context.go(AppRoutes.profile),
+                        child: Container(
+                          padding: const EdgeInsets.all(1.5),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.deepOrange.withValues(alpha: 0.2),
+                              width: 1.5,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 12, 10, 28),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                if (Navigator.of(context).canPop()) {
-                                  context.pop();
-                                } else {
-                                  context.go(AppRoutes.search);
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(999),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 8,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    const Icon(
-                                      Icons.arrow_back_rounded,
-                                      size: 16,
-                                      color: AppColors.ink,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Full Details'.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: AppColors.ink,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          child: const CircleAvatar(
+                            radius: 12,
+                            backgroundColor: Color(0xFFFFD1B5),
+                            child: Text(
+                              'U',
+                              style: TextStyle(
+                                color: AppColors.deepOrange,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          _DetailHeroCard(listing: listing),
-                          const SizedBox(height: 10),
-                          _DetailReportCard(listing: listing),
-                          const SizedBox(height: 12),
-                          const _DetailFooterActions(),
-                        ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 12, 10, 28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  if (Navigator.of(context).canPop()) {
+                                    context.pop();
+                                  } else {
+                                    context.go(AppRoutes.search);
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(999),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Icon(
+                                        Icons.arrow_back_rounded,
+                                        size: 16,
+                                        color: AppColors.ink,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Full Details'.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: AppColors.ink,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            _DetailHeroCard(listing: listing),
+                            const SizedBox(height: 10),
+                            _DetailReportCard(listing: listing),
+                            const SizedBox(height: 12),
+                            _DetailFooterActions(landId: land.id),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -452,26 +489,50 @@ class _DocumentStatusChip extends StatelessWidget {
 }
 
 class _DetailFooterActions extends StatelessWidget {
-  const _DetailFooterActions();
+  const _DetailFooterActions({required this.landId});
+
+  final int landId;
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: <Widget>[
         Expanded(
-          child: _FooterButton(
-            icon: Icons.favorite_border_rounded,
-            label: 'Add to Wishlist',
+          child: BlocBuilder<SearchBloc, SearchState>(
+            buildWhen: (previous, current) =>
+                previous.wishlistStatus != current.wishlistStatus ||
+                previous.activeWishlistLandId != current.activeWishlistLandId ||
+                previous.wishlistedLandIds != current.wishlistedLandIds,
+            builder: (context, state) {
+              final isLoading =
+                  state.wishlistStatus == WishlistStatus.loading &&
+                  state.activeWishlistLandId == landId;
+              final isWishlisted = state.wishlistedLandIds.contains(landId);
+
+              return _FooterButton(
+                icon: isWishlisted
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                label: isWishlisted ? 'Wishlisted' : 'Add to Wishlist',
+                isFilled: isWishlisted,
+                isLoading: isLoading,
+                onTap: isLoading || isWishlisted
+                    ? null
+                    : () => context.read<SearchBloc>().add(
+                          AddToWishlistEvent(landId: landId),
+                        ),
+              );
+            },
           ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Expanded(
           child: _FooterButton(
             icon: Icons.share_rounded,
             label: 'Share Land',
           ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Expanded(
           child: _FooterButton(
             icon: Icons.call_rounded,
@@ -492,6 +553,7 @@ class _FooterButton extends StatelessWidget {
     this.onTap,
     this.isFilled = false,
     this.iconAtEnd = false,
+    this.isLoading = false,
   });
 
   final IconData icon;
@@ -499,12 +561,14 @@ class _FooterButton extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isFilled;
   final bool iconAtEnd;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final foregroundColor = isFilled ? AppColors.white : AppColors.ink;
-    final effectiveColor = onTap == null && isFilled
-        ? foregroundColor.withValues(alpha: 0.6)
+    final isDisabled = onTap == null;
+    final effectiveColor = isDisabled
+        ? foregroundColor.withValues(alpha: isFilled ? 0.9 : 0.55)
         : foregroundColor;
 
     return Material(
@@ -515,7 +579,9 @@ class _FooterButton extends StatelessWidget {
         child: Container(
           height: 48,
           decoration: BoxDecoration(
-            color: isFilled ? AppColors.deepOrange : AppColors.white,
+            color: isFilled
+                ? AppColors.deepOrange.withValues(alpha: isDisabled ? 0.92 : 1)
+                : AppColors.white,
             gradient: isFilled
                 ? const LinearGradient(
                     colors: [AppColors.deepOrange, AppColors.primaryOrange],
@@ -547,37 +613,48 @@ class _FooterButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: iconAtEnd
-                      ? <Widget>[
-                          Text(
-                            label,
-                            style: TextStyle(
-                              color: effectiveColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.2,
-                            ),
+                child: isLoading
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            effectiveColor,
                           ),
-                          const SizedBox(width: 6),
-                          Icon(icon, size: 16, color: effectiveColor),
-                        ]
-                      : <Widget>[
-                          Icon(icon, size: 16, color: effectiveColor),
-                          const SizedBox(width: 6),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              color: effectiveColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                ),
-              ),
+                        ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: iconAtEnd
+                            ? <Widget>[
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    color: effectiveColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(icon, size: 16, color: effectiveColor),
+                              ]
+                            : <Widget>[
+                                Icon(icon, size: 16, color: effectiveColor),
+                                const SizedBox(width: 6),
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    color: effectiveColor,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                      ),
+            ),
             ),
           ),
         ),

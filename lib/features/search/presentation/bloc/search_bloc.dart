@@ -1,16 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
+import 'package:garuda_user_app/features/search/domain/usecases/add_to_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_lands_usecase.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
 
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final GetLandsUseCase _getLandsUseCase;
+  final AddToWishlistUseCase _addToWishlistUseCase;
 
-  SearchBloc({required GetLandsUseCase getLandsUseCase})
+  SearchBloc({
+    required GetLandsUseCase getLandsUseCase,
+    required AddToWishlistUseCase addToWishlistUseCase,
+  })
       : _getLandsUseCase = getLandsUseCase,
+        _addToWishlistUseCase = addToWishlistUseCase,
         super(const SearchState()) {
     on<GetLandsEvent>(_onGetLands);
+    on<AddToWishlistEvent>(_onAddToWishlist);
   }
 
   Future<void> _onGetLands(
@@ -32,6 +39,55 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
           status: SearchStatus.failure,
           errorMessage: f.message,
         ));
+    }
+  }
+
+  Future<void> _onAddToWishlist(
+    AddToWishlistEvent event,
+    Emitter<SearchState> emit,
+  ) async {
+    final isAlreadyWishlisted = state.wishlistedLandIds.contains(event.landId);
+    final isAlreadyLoading =
+        state.wishlistStatus == WishlistStatus.loading &&
+        state.activeWishlistLandId == event.landId;
+
+    if (isAlreadyWishlisted || isAlreadyLoading) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        wishlistStatus: WishlistStatus.loading,
+        activeWishlistLandId: event.landId,
+        wishlistMessage: null,
+      ),
+    );
+
+    final result = await _addToWishlistUseCase(landIds: <int>[event.landId]);
+
+    switch (result) {
+      case Success(data: final message):
+        final updatedWishlistedLandIds = <int>{
+          ...state.wishlistedLandIds,
+          event.landId,
+        }.toList();
+
+        emit(
+          state.copyWith(
+            wishlistStatus: WishlistStatus.success,
+            wishlistedLandIds: updatedWishlistedLandIds,
+            activeWishlistLandId: event.landId,
+            wishlistMessage: message,
+          ),
+        );
+      case Error(failure: final failure):
+        emit(
+          state.copyWith(
+            wishlistStatus: WishlistStatus.failure,
+            activeWishlistLandId: event.landId,
+            wishlistMessage: failure.message,
+          ),
+        );
     }
   }
 }

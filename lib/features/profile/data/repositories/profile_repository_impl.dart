@@ -27,4 +27,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return Error(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Result<String>> createAvailability({required List<int> landIds}) async {
+    try {
+      final message = await _remoteDataSource.createAvailability(landIds: landIds);
+      return Success(message);
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
+      }
+
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
 }

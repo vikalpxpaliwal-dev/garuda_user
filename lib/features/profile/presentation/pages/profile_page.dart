@@ -38,7 +38,8 @@ class _ProfilePageState extends State<ProfilePage> {
   _ProfileCollectionTab _selectedTab = _ProfileCollectionTab.wishlist;
   _TrackingStage _selectedStage = _TrackingStage.availability;
   _VisitsHubList _selectedVisitsHubList = _VisitsHubList.primaryVisit;
-  int _selectedJourneyIndex = 0;
+  final Set<int> _selectedLandIds = <int>{};
+  int _selectedTrackingIndex = 0;
   bool _isTrackingJourney = false;
 
   void _openTrackingJourney() {
@@ -64,15 +65,40 @@ class _ProfilePageState extends State<ProfilePage> {
         final wishlistJourneys = _ProfileWishlistMapper.toUiModels(
           state.wishlistItems,
         );
-        final selectedJourneyIndex = _safeSelectedJourneyIndex(wishlistJourneys);
+        final selectedTrackingIndex = _safeSelectedTrackingIndex(wishlistJourneys);
         final hasWishlistJourneys = wishlistJourneys.isNotEmpty;
         final currentJourney = hasWishlistJourneys
-            ? wishlistJourneys[selectedJourneyIndex]
+            ? wishlistJourneys[selectedTrackingIndex]
             : null;
 
-        return Material(
-          color: AppColors.softBackground,
-          child: Stack(
+        return BlocListener<ProfileBloc, ProfileState>(
+          listenWhen: (previous, current) =>
+              previous.availabilityStatus != current.availabilityStatus,
+          listener: (context, state) {
+            if (state.availabilityStatus == CreateAvailabilityStatus.success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Availability created successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              setState(() {
+                _selectedLandIds.clear();
+              });
+            } else if (state.availabilityStatus ==
+                CreateAvailabilityStatus.failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content:
+                      Text(state.availabilityErrorMessage ?? 'Failed to create availability'),
+                  backgroundColor: AppColors.deepOrange,
+                ),
+              );
+            }
+          },
+          child: Material(
+            color: AppColors.softBackground,
+            child: Stack(
             children: <Widget>[
               Positioned.fill(
                 child: Container(
@@ -128,7 +154,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                                   setState(() {
                                     _selectedTab = tab;
-                                    _selectedJourneyIndex = 0;
+                                    _selectedLandIds.clear();
                                     _selectedStage =
                                         _TrackingStage.availability;
                                     _selectedVisitsHubList =
@@ -144,7 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   context: context,
                                   state: state,
                                   journeys: wishlistJourneys,
-                                  selectedJourneyIndex: selectedJourneyIndex,
+                                  selectedTrackingIndex: selectedTrackingIndex,
                                   currentJourney: currentJourney,
                                 ),
                               ),
@@ -166,27 +192,34 @@ class _ProfilePageState extends State<ProfilePage> {
                             ? const _VisitsHubFloatingActions()
                             : _TrackingFloatingButton(onTap: _closeTrackingJourney)
                       : _selectedTab == _ProfileCollectionTab.wishlist &&
-                            hasWishlistJourneys
-                      ? _StartTrackingCta(
-                          label:
-                              'START TRACKING ${selectedJourneyIndex + 1} LANDS',
-                          onTap: _openTrackingJourney,
+                            hasWishlistJourneys && _selectedLandIds.isNotEmpty
+                      ? _AvailabilityArrowButton(
+                          onTap: () {
+                            context.read<ProfileBloc>().add(
+                                  CreateAvailabilityRequested(
+                                    landIds: _selectedLandIds.toList(),
+                                  ),
+                                );
+                          },
+                          isLoading: state.availabilityStatus ==
+                              CreateAvailabilityStatus.loading,
                         )
                       : const SizedBox.shrink(),
                 ),
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildActivePanel({
     required BuildContext context,
     required ProfileState state,
     required List<_TrackedLandUiModel> journeys,
-    required int selectedJourneyIndex,
+    required int selectedTrackingIndex,
     required _TrackedLandUiModel? currentJourney,
   }) {
     if (_isTrackingJourney && currentJourney != null) {
@@ -244,29 +277,39 @@ class _ProfilePageState extends State<ProfilePage> {
     return _JourneySelectionPanel(
       key: const ValueKey<String>('selection'),
       journeys: journeys,
-      selectedJourneyIndex: selectedJourneyIndex,
-      onJourneySelected: (index) {
+      selectedLandIds: _selectedLandIds,
+      onJourneyToggled: (id) {
         setState(() {
-          _selectedJourneyIndex = index;
+          if (_selectedLandIds.contains(id)) {
+            _selectedLandIds.remove(id);
+          } else {
+            _selectedLandIds.add(id);
+          }
+        });
+      },
+      onTrackJourney: (index) {
+        setState(() {
+          _selectedTrackingIndex = index;
+          _openTrackingJourney();
         });
       },
     );
   }
 
-  int _safeSelectedJourneyIndex(List<_TrackedLandUiModel> journeys) {
+  int _safeSelectedTrackingIndex(List<_TrackedLandUiModel> journeys) {
     if (journeys.isEmpty) {
       return 0;
     }
 
-    if (_selectedJourneyIndex < 0) {
+    if (_selectedTrackingIndex < 0) {
       return 0;
     }
 
-    if (_selectedJourneyIndex >= journeys.length) {
+    if (_selectedTrackingIndex >= journeys.length) {
       return journeys.length - 1;
     }
 
-    return _selectedJourneyIndex;
+    return _selectedTrackingIndex;
   }
 }
 
@@ -278,6 +321,7 @@ enum _VisitsHubList { primaryVisit, shortlist, finalList }
 
 class _TrackedLandUiModel {
   const _TrackedLandUiModel({
+    required this.id,
     required this.title,
     required this.subtitle,
     required this.trailingLabel,
@@ -289,6 +333,7 @@ class _TrackedLandUiModel {
     required this.palette,
   });
 
+  final int id;
   final String title;
   final String subtitle;
   final String trailingLabel;
@@ -335,6 +380,7 @@ class _ProfileWishlistMapper {
       );
 
       return _TrackedLandUiModel(
+        id: land.id,
         title: '${_capitalize(land.village)} - ${_capitalize(land.mandal)}',
         subtitle:
             '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
@@ -576,14 +622,16 @@ class _CollectionTabButton extends StatelessWidget {
 class _JourneySelectionPanel extends StatelessWidget {
   const _JourneySelectionPanel({
     required this.journeys,
-    required this.selectedJourneyIndex,
-    required this.onJourneySelected,
+    required this.selectedLandIds,
+    required this.onJourneyToggled,
+    required this.onTrackJourney,
     super.key,
   });
 
   final List<_TrackedLandUiModel> journeys;
-  final int selectedJourneyIndex;
-  final ValueChanged<int> onJourneySelected;
+  final Set<int> selectedLandIds;
+  final ValueChanged<int> onJourneyToggled;
+  final ValueChanged<int> onTrackJourney;
 
   @override
   Widget build(BuildContext context) {
@@ -598,8 +646,9 @@ class _JourneySelectionPanel extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 14),
             child: _JourneyCard(
               journey: entry.value,
-              isSelected: selectedJourneyIndex == entry.key,
-              onTap: () => onJourneySelected(entry.key),
+              isSelected: selectedLandIds.contains(entry.value.id),
+              onTap: () => onJourneyToggled(entry.value.id),
+              onTrackTap: () => onTrackJourney(entry.key),
             ),
           ),
         ),
@@ -838,11 +887,13 @@ class _JourneyCard extends StatelessWidget {
     required this.journey,
     required this.isSelected,
     required this.onTap,
+    required this.onTrackTap,
   });
 
   final _TrackedLandUiModel journey;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onTrackTap;
 
   @override
   Widget build(BuildContext context) {
@@ -930,13 +981,51 @@ class _JourneyCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                journey.trailingLabel,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    journey.trailingLabel,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: onTrackTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.deepOrange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.track_changes_rounded,
+                            size: 10,
+                            color: AppColors.deepOrange,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'TRACK',
+                            style: TextStyle(
+                              color: AppColors.deepOrange,
+                              fontSize: 7,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -2372,6 +2461,59 @@ class _TrackingFloatingButton extends StatelessWidget {
             size: 20,
             color: AppColors.white,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AvailabilityArrowButton extends StatelessWidget {
+  const _AvailabilityArrowButton({
+    required this.onTap,
+    required this.isLoading,
+  });
+
+  final VoidCallback onTap;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        width: 62,
+        height: 62,
+        decoration: BoxDecoration(
+          color: AppColors.deepOrange,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.deepOrange.withValues(alpha: 0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+          gradient: const LinearGradient(
+            colors: [AppColors.deepOrange, Color(0xFFFFA63C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: AppColors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: AppColors.white,
+                  size: 32,
+                ),
         ),
       ),
     );

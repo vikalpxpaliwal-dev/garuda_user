@@ -3,4 +3,5 @@ import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_e
 
 abstract interface class ProfileRepository {
   Future<Result<List<WishlistItemEntity>>> getWishlist();
+  Future<Result<String>> createAvailability({required List<int> landIds});
 }

@@ -29,3 +29,12 @@ class DeleteAccountRequested extends ProfileEvent {}
 class WishlistRequested extends ProfileEvent {
   const WishlistRequested();
 }
+
+class CreateAvailabilityRequested extends ProfileEvent {
+  const CreateAvailabilityRequested({required this.landIds});
+
+  final List<int> landIds;
+
+  @override
+  List<Object?> get props => [landIds];
+}

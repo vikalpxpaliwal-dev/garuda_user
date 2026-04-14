@@ -4,6 +4,7 @@ import 'package:garuda_user_app/features/auth/domain/usecases/delete_account_use
 import 'package:garuda_user_app/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/create_availability_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_state.dart';
@@ -13,21 +14,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     required UpdateProfileUseCase updateProfileUseCase,
     required DeleteAccountUseCase deleteAccountUseCase,
     required GetWishlistUseCase getWishlistUseCase,
+    required CreateAvailabilityUseCase createAvailabilityUseCase,
     required AuthBloc authBloc,
   })  : _updateProfileUseCase = updateProfileUseCase,
         _deleteAccountUseCase = deleteAccountUseCase,
         _getWishlistUseCase = getWishlistUseCase,
+        _createAvailabilityUseCase = createAvailabilityUseCase,
         _authBloc = authBloc,
         super(const ProfileState()) {
     on<UpdateProfileRequested>(_onUpdateProfileRequested);
     on<LogoutRequested>(_onLogoutRequested);
     on<DeleteAccountRequested>(_onDeleteAccountRequested);
     on<WishlistRequested>(_onWishlistRequested);
+    on<CreateAvailabilityRequested>(_onCreateAvailabilityRequested);
   }
 
   final UpdateProfileUseCase _updateProfileUseCase;
   final DeleteAccountUseCase _deleteAccountUseCase;
   final GetWishlistUseCase _getWishlistUseCase;
+  final CreateAvailabilityUseCase _createAvailabilityUseCase;
   final AuthBloc _authBloc;
 
   Future<void> _onUpdateProfileRequested(
@@ -104,6 +109,39 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           state.copyWith(
             wishlistStatus: ProfileWishlistStatus.failure,
             wishlistErrorMessage: failure.message,
+          ),
+        );
+    }
+  }
+
+  Future<void> _onCreateAvailabilityRequested(
+    CreateAvailabilityRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        availabilityStatus: CreateAvailabilityStatus.loading,
+        availabilityErrorMessage: null,
+      ),
+    );
+
+    final result = await _createAvailabilityUseCase(event.landIds);
+
+    switch (result) {
+      case Success():
+        emit(
+          state.copyWith(
+            availabilityStatus: CreateAvailabilityStatus.success,
+            availabilityErrorMessage: null,
+          ),
+        );
+        // Refresh wishlist after success
+        add(const WishlistRequested());
+      case Error(failure: final failure):
+        emit(
+          state.copyWith(
+            availabilityStatus: CreateAvailabilityStatus.failure,
+            availabilityErrorMessage: failure.message,
           ),
         );
     }

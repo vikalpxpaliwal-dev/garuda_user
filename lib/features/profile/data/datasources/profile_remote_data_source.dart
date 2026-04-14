@@ -3,6 +3,7 @@ import 'package:garuda_user_app/features/profile/data/models/wishlist_item_model
 
 abstract interface class ProfileRemoteDataSource {
   Future<List<WishlistItemModel>> getWishlist();
+  Future<String> createAvailability({required List<int> landIds});
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -29,5 +30,21 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
               WishlistItemModel.fromJson(json as Map<String, dynamic>),
         )
         .toList();
+  }
+
+  @override
+  Future<String> createAvailability({required List<int> landIds}) async {
+    final response = await _apiService.post<Map<String, dynamic>>(
+      '/buyer/availability',
+      data: <String, dynamic>{'land_id': landIds},
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      return 'Availability created successfully';
+    }
+
+    return responseData['message'] as String? ??
+        'Availability created successfully';
   }
 }

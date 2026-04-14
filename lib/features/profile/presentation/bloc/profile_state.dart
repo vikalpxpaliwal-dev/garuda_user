@@ -4,6 +4,7 @@ import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_e
 
 enum ProfileStatus { initial, loading, success, failure }
 enum ProfileWishlistStatus { initial, loading, success, failure }
+enum CreateAvailabilityStatus { initial, loading, success, failure }
 
 class ProfileState extends Equatable {
   static const Object _unset = Object();
@@ -15,6 +16,8 @@ class ProfileState extends Equatable {
     this.wishlistStatus = ProfileWishlistStatus.initial,
     this.wishlistItems = const <WishlistItemEntity>[],
     this.wishlistErrorMessage,
+    this.availabilityStatus = CreateAvailabilityStatus.initial,
+    this.availabilityErrorMessage,
   });
 
   final ProfileStatus status;
@@ -23,6 +26,8 @@ class ProfileState extends Equatable {
   final ProfileWishlistStatus wishlistStatus;
   final List<WishlistItemEntity> wishlistItems;
   final String? wishlistErrorMessage;
+  final CreateAvailabilityStatus availabilityStatus;
+  final String? availabilityErrorMessage;
 
   ProfileState copyWith({
     ProfileStatus? status,
@@ -31,6 +36,8 @@ class ProfileState extends Equatable {
     ProfileWishlistStatus? wishlistStatus,
     List<WishlistItemEntity>? wishlistItems,
     Object? wishlistErrorMessage = _unset,
+    CreateAvailabilityStatus? availabilityStatus,
+    Object? availabilityErrorMessage = _unset,
   }) {
     return ProfileState(
       status: status ?? this.status,
@@ -43,6 +50,10 @@ class ProfileState extends Equatable {
       wishlistErrorMessage: identical(wishlistErrorMessage, _unset)
           ? this.wishlistErrorMessage
           : wishlistErrorMessage as String?,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
+      availabilityErrorMessage: identical(availabilityErrorMessage, _unset)
+          ? this.availabilityErrorMessage
+          : availabilityErrorMessage as String?,
     );
   }
 
@@ -54,5 +65,7 @@ class ProfileState extends Equatable {
         wishlistStatus,
         wishlistItems,
         wishlistErrorMessage,
+        availabilityStatus,
+        availabilityErrorMessage,
       ];
 }

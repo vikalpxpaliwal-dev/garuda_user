@@ -24,6 +24,7 @@ import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:garuda_user_app/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:garuda_user_app/features/profile/domain/repositories/profile_repository.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/create_availability_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/search/data/datasources/search_remote_data_source.dart';
@@ -96,11 +97,13 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => ProfileRepositoryImpl(sl()),
     )
     ..registerLazySingleton(() => GetWishlistUseCase(sl()))
+    ..registerLazySingleton(() => CreateAvailabilityUseCase(sl()))
     ..registerFactory(
       () => ProfileBloc(
         updateProfileUseCase: sl(),
         deleteAccountUseCase: sl(),
         getWishlistUseCase: sl(),
+        createAvailabilityUseCase: sl(),
         authBloc: sl(),
       ),
     )

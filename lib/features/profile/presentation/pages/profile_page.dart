@@ -6,6 +6,8 @@ import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:garuda_user_app/features/profile/domain/entities/availability_entity.dart';
+import 'package:garuda_user_app/features/profile/domain/entities/cart_item_entity.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_entity.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
@@ -39,16 +41,12 @@ class _ProfilePageState extends State<ProfilePage> {
   _TrackingStage _selectedStage = _TrackingStage.availability;
   _VisitsHubList _selectedVisitsHubList = _VisitsHubList.primaryVisit;
   final Set<int> _selectedLandIds = <int>{};
+  // cart: lands the user has tapped "VISIT CART" on
+  final Set<int> _cartLandIds = <int>{};
   int _selectedTrackingIndex = 0;
   bool _isTrackingJourney = false;
-
-  void _openTrackingJourney() {
-    setState(() {
-      _isTrackingJourney = true;
-      _selectedStage = _TrackingStage.availability;
-      _selectedVisitsHubList = _VisitsHubList.primaryVisit;
-    });
-  }
+  String? _selectedVisitDate;
+  String? _selectedVisitTime;
 
   void _closeTrackingJourney() {
     setState(() {
@@ -59,38 +57,121 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Load wishlist and existing availability data when the screen first mounts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ProfileBloc>()
+        ..add(const WishlistRequested())
+        ..add(const GetAvailabilitiesRequested());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProfileBloc, ProfileState>(
       builder: (context, state) {
         final wishlistJourneys = _ProfileWishlistMapper.toUiModels(
           state.wishlistItems,
         );
-        final selectedTrackingIndex = _safeSelectedTrackingIndex(wishlistJourneys);
-        final hasWishlistJourneys = wishlistJourneys.isNotEmpty;
-        final currentJourney = hasWishlistJourneys
-            ? wishlistJourneys[selectedTrackingIndex]
+        final activeJourneys = _ProfileAvailabilityMapper.toUiModels(
+          state.availabilityItems,
+        );
+
+        // Keep wishlist (selectable) and active (tracked) lists separate.
+        // Selection panel shows wishlistJourneys only.
+        // Detail panel shows the current activeJourney.
+        final safeTrackingIndex = _safeSelectedTrackingIndex(activeJourneys);
+        final currentJourney = activeJourneys.isNotEmpty
+            ? activeJourneys[safeTrackingIndex]
             : null;
 
         return BlocListener<ProfileBloc, ProfileState>(
           listenWhen: (previous, current) =>
-              previous.availabilityStatus != current.availabilityStatus,
+              previous.availabilityStatus != current.availabilityStatus ||
+              previous.cartStatus != current.cartStatus,
           listener: (context, state) {
+            // ── POST Availability success: open tracking view ──────────────
             if (state.availabilityStatus == CreateAvailabilityStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Availability created successfully!'),
-                  backgroundColor: Colors.green,
-                ),
+              context.read<ProfileBloc>().add(
+                const GetAvailabilitiesRequested(),
               );
               setState(() {
                 _selectedLandIds.clear();
+                _selectedTrackingIndex = 0;
+                _isTrackingJourney = true;
+                _selectedStage = _TrackingStage.availability;
+                _selectedVisitsHubList = _VisitsHubList.primaryVisit;
               });
             } else if (state.availabilityStatus ==
                 CreateAvailabilityStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:
-                      Text(state.availabilityErrorMessage ?? 'Failed to create availability'),
+                  content: Text(
+                    state.availabilityErrorMessage ??
+                        'Failed to create availability',
+                  ),
+                  backgroundColor: AppColors.deepOrange,
+                ),
+              );
+            }
+
+            // ── POST Cart success: switch to Payment tab + fetch cart data
+            if (state.cartStatus == CreateCartStatus.success) {
+              context.read<ProfileBloc>().add(const GetCartRequested());
+              setState(() {
+                _selectedStage = _TrackingStage.payment;
+              });
+            } else if (state.cartStatus == CreateCartStatus.failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.cartErrorMessage ?? 'Failed to add to cart',
+                  ),
+                  backgroundColor: AppColors.deepOrange,
+                ),
+              );
+            }
+
+            // ── POST Payment success ──────────────────────────
+            if (state.paymentStatus == CreatePaymentStatus.success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Payment Successful! Now select date & time for visit.'),
+                  backgroundColor: AppColors.forestGreen,
+                ),
+              );
+              // We do not transition stage yet; user needs to pick date/time visually
+            } else if (state.paymentStatus == CreatePaymentStatus.failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.paymentErrorMessage ?? 'Payment failed',
+                  ),
+                  backgroundColor: AppColors.deepOrange,
+                ),
+              );
+            }
+
+            // ── POST Visit success ──────────────────────────
+            if (state.visitStatus == CreateVisitStatus.success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Visit Scheduled Successfully!'),
+                  backgroundColor: AppColors.forestGreen,
+                ),
+              );
+              setState(() {
+                _selectedStage = _TrackingStage.visitsHub;
+                _selectedVisitsHubList = _VisitsHubList.primaryVisit;
+              });
+            } else if (state.visitStatus == CreateVisitStatus.failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.visitErrorMessage ?? 'Failed to schedule visit',
+                  ),
                   backgroundColor: AppColors.deepOrange,
                 ),
               );
@@ -99,135 +180,243 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Material(
             color: AppColors.softBackground,
             child: Stack(
-            children: <Widget>[
-              Positioned.fill(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.softBackground,
-                    gradient: RadialGradient(
-                      center: Alignment(0.8, -0.6),
-                      radius: 1.2,
-                      colors: <Color>[Color(0xFFFFF9F2), AppColors.softBackground],
+              children: <Widget>[
+                Positioned.fill(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.softBackground,
+                      gradient: RadialGradient(
+                        center: Alignment(0.8, -0.6),
+                        radius: 1.2,
+                        colors: <Color>[
+                          Color(0xFFFFF9F2),
+                          AppColors.softBackground,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(-0.9, 0.8),
-                      radius: 1.4,
-                      colors: <Color>[
-                        AppColors.primaryOrange.withValues(alpha: 0.05),
-                        Colors.transparent,
-                      ],
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(-0.9, 0.8),
+                        radius: 1.4,
+                        colors: <Color>[
+                          AppColors.primaryOrange.withValues(alpha: 0.05),
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                slivers: <Widget>[
-                  const CommonSliverAppBar(showSearchAction: false),
-                  SliverToBoxAdapter(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 24, 18, 120),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              const _ProfileHeader(),
-                              const SizedBox(height: 18),
-                              _CollectionTabs(
-                                selectedTab: _selectedTab,
-                                onChanged: (tab) {
-                                  if (tab == _ProfileCollectionTab.wishlist) {
-                                    context.read<ProfileBloc>().add(
-                                      const WishlistRequested(),
-                                    );
-                                  }
+                CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: <Widget>[
+                    const CommonSliverAppBar(showSearchAction: false),
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 420),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 24, 18, 120),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                const _ProfileHeader(),
+                                const SizedBox(height: 18),
+                                _CollectionTabs(
+                                  selectedTab: _selectedTab,
+                                  onChanged: (tab) {
+                                    if (tab == _ProfileCollectionTab.wishlist) {
+                                      context.read<ProfileBloc>().add(
+                                        const WishlistRequested(),
+                                      );
+                                      context.read<ProfileBloc>().add(
+                                        const GetAvailabilitiesRequested(),
+                                      );
+                                    }
 
-                                  setState(() {
-                                    _selectedTab = tab;
-                                    _selectedLandIds.clear();
-                                    _selectedStage =
-                                        _TrackingStage.availability;
-                                    _selectedVisitsHubList =
-                                        _VisitsHubList.primaryVisit;
-                                    _isTrackingJourney = false;
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 18),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
-                                child: _buildActivePanel(
-                                  context: context,
-                                  state: state,
-                                  journeys: wishlistJourneys,
-                                  selectedTrackingIndex: selectedTrackingIndex,
-                                  currentJourney: currentJourney,
+                                    setState(() {
+                                      _selectedTab = tab;
+                                      _selectedLandIds.clear();
+                                      _selectedStage =
+                                          _TrackingStage.availability;
+                                      _selectedVisitsHubList =
+                                          _VisitsHubList.primaryVisit;
+                                      _isTrackingJourney = false;
+                                    });
+                                  },
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 18),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 220),
+                                  child: _buildActivePanel(
+                                    context: context,
+                                    state: state,
+                                    wishlistJourneys: wishlistJourneys,
+                                    activeJourneys: activeJourneys,
+                                    currentJourney: currentJourney,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Positioned(
-                right: 16,
-                bottom: 18,
-                child: SafeArea(
-                  top: false,
-                  child: _isTrackingJourney && currentJourney != null
-                      ? _selectedStage == _TrackingStage.visitsHub
-                            ? const _VisitsHubFloatingActions()
-                            : _TrackingFloatingButton(onTap: _closeTrackingJourney)
-                      : _selectedTab == _ProfileCollectionTab.wishlist &&
-                            hasWishlistJourneys && _selectedLandIds.isNotEmpty
-                      ? _AvailabilityArrowButton(
-                          onTap: () {
-                            context.read<ProfileBloc>().add(
-                                  CreateAvailabilityRequested(
-                                    landIds: _selectedLandIds.toList(),
-                                  ),
-                                );
-                          },
-                          isLoading: state.availabilityStatus ==
-                              CreateAvailabilityStatus.loading,
-                        )
-                      : const SizedBox.shrink(),
+                  ],
                 ),
-              ),
-            ],
+                Positioned(
+                  right: 16,
+                  bottom: 18,
+                  child: SafeArea(
+                    top: false,
+                    child: _isTrackingJourney
+                        // On Visits Hub tab → show visit hub actions
+                        ? _selectedStage == _TrackingStage.visitsHub
+                            ? const _VisitsHubFloatingActions()
+                            // On Payment tab with payment success -> Schedule Visit FAB
+                            : _selectedStage == _TrackingStage.payment &&
+                                    state.paymentStatus == CreatePaymentStatus.success
+                                ? _AvailabilityArrowButton(
+                                    onTap: () {
+                                      if (_selectedVisitDate == null || _selectedVisitTime == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Please select a visit date and time from the card.'),
+                                            backgroundColor: AppColors.deepOrange,
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                      context.read<ProfileBloc>().add(
+                                        CreateVisitRequested(
+                                          landIds: state.cartItems.map((e) => e.landId).toList(),
+                                          visitDate: _selectedVisitDate!,
+                                          time: _selectedVisitTime!,
+                                        ),
+                                      );
+                                    },
+                                    isLoading: state.visitStatus == CreateVisitStatus.loading,
+                                  )
+                            // On Availability tab with items in cart → PROCEED FAB
+                            : _selectedStage == _TrackingStage.availability &&
+                                  _cartLandIds.isNotEmpty
+                              ? _AvailabilityArrowButton(
+                                  onTap: () {
+                                    context.read<ProfileBloc>().add(
+                                      CreateCartRequested(
+                                        landIds: _cartLandIds.toList(),
+                                      ),
+                                    );
+                                  },
+                                  isLoading:
+                                      state.cartStatus ==
+                                      CreateCartStatus.loading,
+                                )
+                              // Otherwise → Back / close button
+                              : _TrackingFloatingButton(
+                                  onTap: _closeTrackingJourney,
+                                )
+                        // Selection view → Arrow FAB when lands selected
+                        : _selectedTab == _ProfileCollectionTab.wishlist &&
+                              _selectedLandIds.isNotEmpty
+                        ? _AvailabilityArrowButton(
+                            onTap: () {
+                              context.read<ProfileBloc>().add(
+                                CreateAvailabilityRequested(
+                                  landIds: _selectedLandIds.toList(),
+                                ),
+                              );
+                            },
+                            isLoading:
+                                state.availabilityStatus ==
+                                CreateAvailabilityStatus.loading,
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildActivePanel({
     required BuildContext context,
     required ProfileState state,
-    required List<_TrackedLandUiModel> journeys,
-    required int selectedTrackingIndex,
+    required List<_TrackedLandUiModel> wishlistJourneys,
+    required List<_TrackedLandUiModel> activeJourneys,
     required _TrackedLandUiModel? currentJourney,
   }) {
-    if (_isTrackingJourney && currentJourney != null) {
+    // ── Detail view (Availability / Payment / Visits Hub tabs) ──────────────
+    if (_isTrackingJourney) {
+      // Show spinner while GET API populates the list
+      if (state.getAvailabilityStatus == GetAvailabilityStatus.loading ||
+          activeJourneys.isEmpty) {
+        return const Center(
+          key: ValueKey<String>('tracking-loading'),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 48),
+            child: CircularProgressIndicator(color: AppColors.primaryOrange),
+          ),
+        );
+      }
+
       return _TrackingJourneyPanel(
         key: const ValueKey<String>('tracking'),
-        journey: currentJourney,
+        journeys: activeJourneys,
+        cartLandIds: _cartLandIds,
         selectedStage: _selectedStage,
         onBack: _closeTrackingJourney,
+        onVisitCart: (landId) {
+          // Toggle the land in/out of cart — do NOT auto-navigate
+          setState(() {
+            if (_cartLandIds.contains(landId)) {
+              _cartLandIds.remove(landId);
+            } else {
+              _cartLandIds.add(landId);
+            }
+          });
+        },
+        onCartProceed: _cartLandIds.isEmpty
+            ? null
+            : () {
+                context.read<ProfileBloc>().add(
+                  CreateCartRequested(landIds: _cartLandIds.toList()),
+                );
+              },
+        onPaymentProceed: state.cartItems.isEmpty
+            ? null
+            : () {
+                context.read<ProfileBloc>().add(
+                  CreatePaymentRequested(
+                    landIds: state.cartItems.map((e) => e.landId).toList(),
+                    amount: 50000,
+                  ),
+                );
+              },
+        isCartLoading: state.cartStatus == CreateCartStatus.loading,
+        cartItems: state.cartItems,
+        getCartStatus: state.getCartStatus,
+        paymentStatus: state.paymentStatus,
+        selectedVisitDate: _selectedVisitDate,
+        selectedVisitTime: _selectedVisitTime,
+        onVisitDateSelected: (date) {
+          setState(() {
+            _selectedVisitDate = date;
+          });
+        },
+        onVisitTimeSelected: (time) {
+          setState(() {
+            _selectedVisitTime = time;
+          });
+        },
         onStageChanged: (stage) {
           setState(() {
             _selectedStage = stage;
@@ -235,6 +424,10 @@ class _ProfilePageState extends State<ProfilePage> {
               _selectedVisitsHubList = _VisitsHubList.primaryVisit;
             }
           });
+          // Fetch cart data when user navigates to Payment tab
+          if (stage == _TrackingStage.payment) {
+            context.read<ProfileBloc>().add(const GetCartRequested());
+          }
         },
         selectedVisitsHubList: _selectedVisitsHubList,
         onVisitsHubListChanged: (list) {
@@ -245,6 +438,7 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
+    // ── My Lands tab ────────────────────────────────────────────────────────
     if (_selectedTab == _ProfileCollectionTab.myLands) {
       return const _MyLandsPanel(
         key: ValueKey<String>('my-lands'),
@@ -252,45 +446,41 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
+    // ── Wishlist tab – selection panel ───────────────────────────────────────
     if (state.wishlistStatus == ProfileWishlistStatus.loading &&
-        journeys.isEmpty) {
+        wishlistJourneys.isEmpty) {
       return const _WishlistLoadingPanel(
         key: ValueKey<String>('wishlist-loading'),
       );
     }
 
     if (state.wishlistStatus == ProfileWishlistStatus.failure &&
-        journeys.isEmpty) {
+        wishlistJourneys.isEmpty) {
       return _WishlistErrorPanel(
         key: const ValueKey<String>('wishlist-failure'),
         message: state.wishlistErrorMessage ?? 'Failed to load wishlist.',
-        onRetry: () => context.read<ProfileBloc>().add(const WishlistRequested()),
+        onRetry: () =>
+            context.read<ProfileBloc>().add(const WishlistRequested()),
       );
     }
 
-    if (journeys.isEmpty) {
-      return const _WishlistEmptyPanel(
-        key: ValueKey<String>('wishlist-empty'),
-      );
+    if (wishlistJourneys.isEmpty) {
+      return const _WishlistEmptyPanel(key: ValueKey<String>('wishlist-empty'));
     }
 
+    // All wishlist lands are selectable. Tapping toggles selection only.
     return _JourneySelectionPanel(
       key: const ValueKey<String>('selection'),
-      journeys: journeys,
+      journeys: wishlistJourneys,
       selectedLandIds: _selectedLandIds,
-      onJourneyToggled: (id) {
+      onJourneyTapped: (index) {
+        final id = wishlistJourneys[index].id;
         setState(() {
           if (_selectedLandIds.contains(id)) {
             _selectedLandIds.remove(id);
           } else {
             _selectedLandIds.add(id);
           }
-        });
-      },
-      onTrackJourney: (index) {
-        setState(() {
-          _selectedTrackingIndex = index;
-          _openTrackingJourney();
         });
       },
     );
@@ -359,6 +549,46 @@ class _OwnedLandUiModel {
   final List<Color> palette;
 }
 
+class _ProfileAvailabilityMapper {
+  static const List<List<Color>> _palettes = <List<Color>>[
+    <Color>[Color(0xFF041E42), Color(0xFF0D5C5D), Color(0xFFFFB34A)],
+    <Color>[Color(0xFF243B55), Color(0xFF141E30), Color(0xFFE98B2A)],
+    <Color>[Color(0xFF1E3A5F), Color(0xFF496989), Color(0xFFF4B860)],
+    <Color>[Color(0xFF233D4D), Color(0xFF4F6D7A), Color(0xFFFFB347)],
+  ];
+
+  static List<_TrackedLandUiModel> toUiModels(List<AvailabilityEntity> items) {
+    return items.asMap().entries.map((entry) {
+      final item = entry.value;
+      final land = item.land;
+      final palette = _palettes[entry.key % _palettes.length];
+
+      return _TrackedLandUiModel(
+        id: land.id,
+        title:
+            '${_ProfileWishlistMapper._capitalize(land.village)} - ${_ProfileWishlistMapper._capitalize(land.mandal)}',
+        subtitle:
+            '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
+        trailingLabel: _ProfileWishlistMapper._normalizeLabel(
+          item.status,
+          fallback: 'ACTIVE',
+        ),
+        primaryMetricLabel: 'FORM STATUS',
+        primaryMetricValue: _ProfileWishlistMapper._normalizeLabel(
+          land.formStatus,
+          fallback: 'UNKNOWN',
+        ),
+        secondaryMetricLabel: 'VERIFICATION',
+        secondaryMetricValue: land.verificationPackage
+            ? 'VERIFIED'
+            : 'STANDARD',
+        availabilityBadge: 'TRACKING',
+        palette: palette,
+      );
+    }).toList();
+  }
+}
+
 class _ProfileWishlistMapper {
   static const List<List<Color>> _palettes = <List<Color>>[
     <Color>[Color(0xFF041E42), Color(0xFF0D5C5D), Color(0xFFFFB34A)],
@@ -367,9 +597,7 @@ class _ProfileWishlistMapper {
     <Color>[Color(0xFF233D4D), Color(0xFF4F6D7A), Color(0xFFFFB347)],
   ];
 
-  static List<_TrackedLandUiModel> toUiModels(
-    List<WishlistItemEntity> items,
-  ) {
+  static List<_TrackedLandUiModel> toUiModels(List<WishlistItemEntity> items) {
     return items.asMap().entries.map((entry) {
       final item = entry.value;
       final land = item.land;
@@ -384,18 +612,16 @@ class _ProfileWishlistMapper {
         title: '${_capitalize(land.village)} - ${_capitalize(land.mandal)}',
         subtitle:
             '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
-        trailingLabel: _normalizeLabel(
-          land.availability,
-          fallback: 'ACTIVE',
-        ),
+        trailingLabel: _normalizeLabel(land.availability, fallback: 'ACTIVE'),
         primaryMetricLabel: 'FORM STATUS',
         primaryMetricValue: _normalizeLabel(
           land.formStatus,
           fallback: 'UNKNOWN',
         ),
         secondaryMetricLabel: 'VERIFICATION',
-        secondaryMetricValue:
-            land.verificationPackage ? 'VERIFIED' : 'STANDARD',
+        secondaryMetricValue: land.verificationPackage
+            ? 'VERIFIED'
+            : 'STANDARD',
         availabilityBadge: availabilityBadge,
         palette: palette,
       );
@@ -444,7 +670,9 @@ class _ProfileHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFE8D7),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: AppColors.lightLine.withValues(alpha: 0.5),
+                  ),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
                       color: AppColors.deepOrange.withValues(alpha: 0.12),
@@ -573,7 +801,10 @@ class _CollectionTabButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             gradient: isSelected
                 ? LinearGradient(
-                    colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.5)],
+                    colors: [
+                      AppColors.white,
+                      AppColors.softBackground.withValues(alpha: 0.5),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -623,15 +854,13 @@ class _JourneySelectionPanel extends StatelessWidget {
   const _JourneySelectionPanel({
     required this.journeys,
     required this.selectedLandIds,
-    required this.onJourneyToggled,
-    required this.onTrackJourney,
+    required this.onJourneyTapped,
     super.key,
   });
 
   final List<_TrackedLandUiModel> journeys;
   final Set<int> selectedLandIds;
-  final ValueChanged<int> onJourneyToggled;
-  final ValueChanged<int> onTrackJourney;
+  final ValueChanged<int> onJourneyTapped;
 
   @override
   Widget build(BuildContext context) {
@@ -647,8 +876,7 @@ class _JourneySelectionPanel extends StatelessWidget {
             child: _JourneyCard(
               journey: entry.value,
               isSelected: selectedLandIds.contains(entry.value.id),
-              onTap: () => onJourneyToggled(entry.value.id),
-              onTrackTap: () => onTrackJourney(entry.key),
+              onTap: () => onJourneyTapped(entry.key),
             ),
           ),
         ),
@@ -706,10 +934,7 @@ class _WishlistErrorPanel extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('Try Again'),
-            ),
+            TextButton(onPressed: onRetry, child: const Text('Try Again')),
           ],
         ),
       ),
@@ -725,7 +950,10 @@ class _WishlistEmptyPanel extends StatelessWidget {
     return CustomCard(
       key: key,
       gradient: LinearGradient(
-        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.4)],
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.4),
+        ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -887,13 +1115,11 @@ class _JourneyCard extends StatelessWidget {
     required this.journey,
     required this.isSelected,
     required this.onTap,
-    required this.onTrackTap,
   });
 
   final _TrackedLandUiModel journey;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onTrackTap;
 
   @override
   Widget build(BuildContext context) {
@@ -912,19 +1138,23 @@ class _JourneyCard extends StatelessWidget {
                 AppColors.white,
                 isSelected
                     ? AppColors.softBackground.withValues(alpha: 0.5)
-                    : AppColors.white
+                    : AppColors.white,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.deepOrange : AppColors.lightLine.withValues(alpha: 0.6),
+              color: isSelected
+                  ? AppColors.deepOrange
+                  : AppColors.lightLine.withValues(alpha: 0.6),
               width: isSelected ? 1.5 : 1,
             ),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: AppColors.ink.withValues(alpha: isSelected ? 0.08 : 0.04),
+                color: AppColors.ink.withValues(
+                  alpha: isSelected ? 0.08 : 0.04,
+                ),
                 blurRadius: isSelected ? 20 : 12,
                 offset: const Offset(0, 6),
               ),
@@ -938,9 +1168,7 @@ class _JourneyCard extends StatelessWidget {
                 height: 18,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isSelected
-                      ? AppColors.deepOrange
-                      : Colors.transparent,
+                  color: isSelected ? AppColors.deepOrange : Colors.transparent,
                   border: Border.all(
                     color: isSelected
                         ? AppColors.deepOrange
@@ -981,51 +1209,13 @@ class _JourneyCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    journey.trailingLabel,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  InkWell(
-                    onTap: onTrackTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.deepOrange.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.track_changes_rounded,
-                            size: 10,
-                            color: AppColors.deepOrange,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'TRACK',
-                            style: TextStyle(
-                              color: AppColors.deepOrange,
-                              fontSize: 7,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                journey.trailingLabel,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -1044,7 +1234,10 @@ class _OwnedLandCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomCard(
       gradient: LinearGradient(
-        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.3)],
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.3),
+        ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -1108,18 +1301,42 @@ class _OwnedLandCard extends StatelessWidget {
 
 class _TrackingJourneyPanel extends StatelessWidget {
   const _TrackingJourneyPanel({
-    required this.journey,
+    required this.journeys,
+    required this.cartLandIds,
     required this.selectedStage,
     required this.onBack,
+    required this.onVisitCart,
+    required this.onCartProceed,
+    required this.onPaymentProceed,
+    required this.isCartLoading,
+    required this.cartItems,
+    required this.getCartStatus,
+    required this.paymentStatus,
+    required this.selectedVisitDate,
+    required this.selectedVisitTime,
+    required this.onVisitDateSelected,
+    required this.onVisitTimeSelected,
     required this.onStageChanged,
     required this.selectedVisitsHubList,
     required this.onVisitsHubListChanged,
     super.key,
   });
 
-  final _TrackedLandUiModel journey;
+  final List<_TrackedLandUiModel> journeys;
+  final Set<int> cartLandIds;
   final _TrackingStage selectedStage;
   final VoidCallback onBack;
+  final ValueChanged<int> onVisitCart;
+  final VoidCallback? onCartProceed;
+  final VoidCallback? onPaymentProceed;
+  final bool isCartLoading;
+  final List<CartItemEntity> cartItems;
+  final GetCartStatus getCartStatus;
+  final CreatePaymentStatus paymentStatus;
+  final String? selectedVisitDate;
+  final String? selectedVisitTime;
+  final ValueChanged<String> onVisitDateSelected;
+  final ValueChanged<String> onVisitTimeSelected;
   final ValueChanged<_TrackingStage> onStageChanged;
   final _VisitsHubList selectedVisitsHubList;
   final ValueChanged<_VisitsHubList> onVisitsHubListChanged;
@@ -1169,12 +1386,33 @@ class _TrackingJourneyPanel extends StatelessWidget {
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 220),
           child: switch (selectedStage) {
-            _TrackingStage.availability => _TrackedJourneyDetailCard(
+            _TrackingStage.availability => Column(
               key: const ValueKey<String>('availability-stage'),
-              journey: journey,
+              children: journeys
+                  .map(
+                    (j) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: _TrackedJourneyDetailCard(
+                        journey: j,
+                        isInCart: cartLandIds.contains(j.id),
+                        onVisitCart: () => onVisitCart(j.id),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
-            _TrackingStage.payment => const _TrackedJourneyPaymentCard(
-              key: ValueKey<String>('payment-stage'),
+            _TrackingStage.payment => _TrackedJourneyPaymentCard(
+              key: const ValueKey<String>('payment-stage'),
+              cartCount: cartItems.length,
+              onProceed: onPaymentProceed,
+              isLoading: paymentStatus == CreatePaymentStatus.loading,
+              cartItems: cartItems,
+              getCartStatus: getCartStatus,
+              paymentStatus: paymentStatus,
+              selectedVisitDate: selectedVisitDate,
+              selectedVisitTime: selectedVisitTime,
+              onVisitDateSelected: onVisitDateSelected,
+              onVisitTimeSelected: onVisitTimeSelected,
             ),
             _TrackingStage.visitsHub => _VisitsHubCard(
               key: const ValueKey<String>('visits-stage'),
@@ -1275,7 +1513,10 @@ class _TrackingStageButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             gradient: isSelected
                 ? LinearGradient(
-                    colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.5)],
+                    colors: [
+                      AppColors.white,
+                      AppColors.softBackground.withValues(alpha: 0.5),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -1296,9 +1537,7 @@ class _TrackingStageButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 13,
-                color: isSelected
-                    ? AppColors.deepOrange
-                    : AppColors.mutedText,
+                color: isSelected ? AppColors.deepOrange : AppColors.mutedText,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -1322,15 +1561,24 @@ class _TrackingStageButton extends StatelessWidget {
 }
 
 class _TrackedJourneyDetailCard extends StatelessWidget {
-  const _TrackedJourneyDetailCard({required this.journey, super.key});
+  const _TrackedJourneyDetailCard({
+    required this.journey,
+    required this.isInCart,
+    required this.onVisitCart,
+  });
 
   final _TrackedLandUiModel journey;
+  final bool isInCart;
+  final VoidCallback onVisitCart;
 
   @override
   Widget build(BuildContext context) {
     return CustomCard(
       gradient: LinearGradient(
-        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.4)],
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.4),
+        ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -1375,9 +1623,10 @@ class _TrackedJourneyDetailCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _TrackingActionButton(
-                        label: 'VISIT CART'.toUpperCase(),
-                        isFilled: true,
-                        onTap: () {},
+                        label: isInCart ? '✓ IN CART' : 'VISIT CART',
+                        isFilled: !isInCart,
+                        foregroundColor: isInCart ? AppColors.deepOrange : null,
+                        onTap: onVisitCart,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1400,25 +1649,58 @@ class _TrackedJourneyDetailCard extends StatelessWidget {
 }
 
 class _TrackedJourneyPaymentCard extends StatelessWidget {
-  const _TrackedJourneyPaymentCard({super.key});
+  const _TrackedJourneyPaymentCard({
+    required this.cartCount,
+    required this.onProceed,
+    required this.isLoading,
+    required this.cartItems,
+    required this.getCartStatus,
+    required this.paymentStatus,
+    required this.selectedVisitDate,
+    required this.selectedVisitTime,
+    required this.onVisitDateSelected,
+    required this.onVisitTimeSelected,
+    super.key,
+  });
 
-  static const List<({String date, String day, bool isSelected})> _visitDates =
-      <({String date, String day, bool isSelected})>[
-        (date: '4', day: 'SAT', isSelected: true),
-        (date: '5', day: 'SUN', isSelected: false),
-        (date: '6', day: 'MON', isSelected: false),
-        (date: '7', day: 'TUE', isSelected: false),
-        (date: '8', day: 'WED', isSelected: false),
-        (date: '9', day: 'THU', isSelected: false),
-        (date: '10', day: 'FRI', isSelected: false),
+  final int cartCount;
+  final VoidCallback? onProceed;
+  final bool isLoading;
+  final List<CartItemEntity> cartItems;
+  final GetCartStatus getCartStatus;
+  final CreatePaymentStatus paymentStatus;
+  final String? selectedVisitDate;
+  final String? selectedVisitTime;
+  final ValueChanged<String> onVisitDateSelected;
+  final ValueChanged<String> onVisitTimeSelected;
+
+  static const List<({String date, String day})> _visitDates =
+      <({String date, String day})>[
+        (date: '4', day: 'SAT'),
+        (date: '5', day: 'SUN'),
+        (date: '6', day: 'MON'),
+        (date: '7', day: 'TUE'),
+        (date: '8', day: 'WED'),
+        (date: '9', day: 'THU'),
+        (date: '10', day: 'FRI'),
       ];
+
+  static const List<String> _visitTimes = <String>[
+    '10:30',
+    '11:30',
+    '14:00',
+    '16:30',
+  ];
 
   @override
   Widget build(BuildContext context) {
     return CustomCard(
       key: key,
       gradient: LinearGradient(
-        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.5)],
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.5),
+        ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -1430,7 +1712,11 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
         children: <Widget>[
           const Row(
             children: <Widget>[
-              Icon(Icons.access_time_rounded, size: 15, color: AppColors.deepOrange),
+              Icon(
+                Icons.access_time_rounded,
+                size: 15,
+                color: AppColors.deepOrange,
+              ),
               SizedBox(width: 8),
               Text(
                 'CONSOLIDATED VISIT DATE',
@@ -1460,22 +1746,73 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
               children: _visitDates
                   .map(
                     (visitDate) => Expanded(
-                      child: _VisitDateChip(
-                        date: visitDate.date,
-                        day: visitDate.day,
-                        isSelected: visitDate.isSelected,
+                      child: GestureDetector(
+                        onTap: () {
+                          // formatting date for the API payload "2026-04-xx"
+                          final numericDate = visitDate.date.padLeft(2, '0');
+                          onVisitDateSelected('2026-04-$numericDate');
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: _VisitDateChip(
+                          date: visitDate.date,
+                          day: visitDate.day,
+                          isSelected: selectedVisitDate?.endsWith(visitDate.date.padLeft(2, '0')) ?? false,
+                        ),
                       ),
                     ),
                   )
                   .toList(),
             ),
           ),
+          const SizedBox(height: 18),
+          const Row(
+            children: <Widget>[
+              Icon(
+                Icons.schedule_rounded,
+                size: 15,
+                color: AppColors.deepOrange,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'VISIT TIME',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: _visitTimes
+                .map(
+                  (time) => Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: GestureDetector(
+                        onTap: () {
+                          onVisitTimeSelected('$time:00'); // append seconds for API
+                        },
+                        child: _VisitTimeChip(
+                          time: time,
+                          isSelected: selectedVisitTime?.startsWith(time) ?? false,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
           const SizedBox(height: 14),
           Container(
             decoration: BoxDecoration(
               color: AppColors.white.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.4)),
+              border: Border.all(
+                color: AppColors.lightLine.withValues(alpha: 0.4),
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -1502,9 +1839,9 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const _PaymentSummaryRow(
+                  _PaymentSummaryRow(
                     label: 'SELECTED PROPERTIES',
-                    value: '0 LANDS',
+                    value: '$cartCount LAND${cartCount == 1 ? '' : 'S'}',
                   ),
                   const SizedBox(height: 8),
                   const _PaymentSummaryRow(
@@ -1529,20 +1866,23 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
             child: SizedBox(
               width: 200,
               child: FilledButton(
-                onPressed: () {},
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.deepOrange,
-                  foregroundColor: AppColors.white,
-                  minimumSize: const Size.fromHeight(48),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 8,
-                  shadowColor: AppColors.deepOrange.withValues(alpha: 0.4),
-                ).copyWith(
-                  backgroundColor: WidgetStateProperty.all(AppColors.deepOrange),
-                ),
+                onPressed: isLoading || paymentStatus == CreatePaymentStatus.success ? null : onProceed,
+                style:
+                    FilledButton.styleFrom(
+                      backgroundColor: AppColors.deepOrange,
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 8,
+                      shadowColor: AppColors.deepOrange.withValues(alpha: 0.4),
+                    ).copyWith(
+                      backgroundColor: WidgetStateProperty.all(
+                        AppColors.deepOrange,
+                      ),
+                    ),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -1552,24 +1892,40 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.account_balance_wallet_rounded, size: 16),
-                      SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          'PAY SERVICE FEE (Rs 0)',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.4,
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: AppColors.white,
+                            strokeWidth: 2,
                           ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            const Icon(
+                              Icons.account_balance_wallet_rounded,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                paymentStatus == CreatePaymentStatus.success
+                                    ? 'PAYMENT COMPLETED'
+                                    : cartCount == 0
+                                        ? 'ADD LANDS TO CART'
+                                        : 'PROCEED TO PAYMENT ($cartCount LAND${cartCount == 1 ? '' : 'S'})',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -1587,7 +1943,278 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
               ),
             ),
           ),
+          // ── Cart land list from GET /buyer/cart ────────────────────────────
+          const SizedBox(height: 20),
+          if (getCartStatus == GetCartStatus.loading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryOrange,
+                ),
+              ),
+            )
+          else if (cartItems.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Text(
+                  'NO ITEMS IN CART',
+                  style: TextStyle(
+                    color: AppColors.mutedText,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: cartItems
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: _CartLandRow(item: item),
+                    ),
+                  )
+                  .toList(),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Cart land row card (matches design: hero image, badges, action buttons) ─
+class _CartLandRow extends StatelessWidget {
+  const _CartLandRow({required this.item});
+
+  final CartItemEntity item;
+
+  static const List<List<Color>> _palettes = <List<Color>>[
+    <Color>[Color(0xFF041E42), Color(0xFF0D5C5D), Color(0xFFFFB34A)],
+    <Color>[Color(0xFF243B55), Color(0xFF141E30), Color(0xFFE98B2A)],
+    <Color>[Color(0xFF1E3A5F), Color(0xFF496989), Color(0xFFF4B860)],
+    <Color>[Color(0xFF233D4D), Color(0xFF4F6D7A), Color(0xFFFFB347)],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final land = item.land;
+    final palette = _palettes[item.id % _palettes.length];
+    final title =
+        '${land.village.isEmpty ? 'Land' : land.village} - ${land.mandal.isEmpty ? '' : land.mandal}';
+    final subtitle =
+        '${land.district.toUpperCase()} • ${land.state.toUpperCase()}';
+    final badge = land.landStatus.isNotEmpty
+        ? land.landStatus.first.toUpperCase()
+        : land.availability.toUpperCase();
+    final formStatus = land.formStatus.toUpperCase();
+
+    return CustomCard(
+      gradient: LinearGradient(
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.4),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: <Widget>[
+          // Hero artwork
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(27)),
+            child: Container(
+              height: 130,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: palette,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Stack(
+                children: <Widget>[
+                  // Dot indicator
+                  const Positioned(
+                    top: 14,
+                    left: 14,
+                    child: CircleAvatar(
+                      radius: 7,
+                      backgroundColor: Colors.white24,
+                    ),
+                  ),
+                  // Status badge
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.forestGreen,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        badge,
+                        style: const TextStyle(
+                          color: AppColors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Title + subtitle
+                  Positioned(
+                    bottom: 14,
+                    left: 14,
+                    right: 14,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: <Widget>[
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 11,
+                              color: AppColors.primaryOrange,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                color: AppColors.primaryOrange,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Body: metrics + action buttons
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _JourneyMetric(
+                        label: 'FORM STATUS',
+                        value: formStatus,
+                        alignment: CrossAxisAlignment.start,
+                      ),
+                    ),
+                    Expanded(
+                      child: _JourneyMetric(
+                        label: 'VERIFICATION',
+                        value: land.verificationPackage
+                            ? 'VERIFIED'
+                            : 'STANDARD',
+                        alignment: CrossAxisAlignment.end,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _TrackingActionButton(
+                        label: 'VIEW FULL DETAILS',
+                        onTap: () {},
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _TrackingActionButton(
+                        label: 'REMOVE FROM LIST',
+                        foregroundColor: AppColors.deepOrange,
+                        onTap: () {},
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VisitTimeChip extends StatelessWidget {
+  const _VisitTimeChip({
+    required this.time,
+    required this.isSelected,
+    super.key,
+  });
+
+  final String time;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppColors.white
+            : AppColors.softBackground.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected
+              ? AppColors.deepOrange
+              : AppColors.lightLine.withValues(alpha: 0.6),
+          width: isSelected ? 1.5 : 1,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: AppColors.deepOrange.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Text(
+          time,
+          style: TextStyle(
+            color: isSelected ? AppColors.deepOrange : AppColors.mutedText,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
       ),
     );
   }
@@ -1612,27 +2239,31 @@ class _VisitDateChip extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.white : AppColors.softBackground.withValues(alpha: 0.5),
+            color: isSelected
+                ? AppColors.white
+                : AppColors.softBackground.withValues(alpha: 0.5),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isSelected ? AppColors.deepOrange : AppColors.lightLine.withValues(alpha: 0.6),
+              color: isSelected
+                  ? AppColors.deepOrange
+                  : AppColors.lightLine.withValues(alpha: 0.6),
               width: isSelected ? 1.5 : 1,
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: AppColors.deepOrange.withValues(alpha: 0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ] : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.deepOrange.withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Center(
             child: Text(
               date,
               style: TextStyle(
-                color: isSelected
-                    ? AppColors.deepOrange
-                    : AppColors.mutedText,
+                color: isSelected ? AppColors.deepOrange : AppColors.mutedText,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
               ),
@@ -1797,7 +2428,10 @@ class _VisitsHubTabButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             gradient: isSelected
                 ? LinearGradient(
-                    colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.5)],
+                    colors: [
+                      AppColors.white,
+                      AppColors.softBackground.withValues(alpha: 0.5),
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -2308,7 +2942,9 @@ class _TrackingActionButton extends StatelessWidget {
                 : null,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isFilled ? AppColors.deepOrange : AppColors.lightLine.withValues(alpha: 0.6),
+              color: isFilled
+                  ? AppColors.deepOrange
+                  : AppColors.lightLine.withValues(alpha: 0.6),
             ),
             boxShadow: [
               if (isFilled)
@@ -2349,79 +2985,6 @@ class _TrackingActionButton extends StatelessWidget {
   }
 }
 
-class _StartTrackingCta extends StatelessWidget {
-  const _StartTrackingCta({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.ink.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Text(
-                label.toUpperCase(),
-                style: const TextStyle(
-                  color: AppColors.deepOrange,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: AppColors.deepOrange,
-                gradient: const LinearGradient(
-                  colors: [AppColors.deepOrange, AppColors.primaryOrange],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: AppColors.deepOrange.withValues(alpha: 0.35),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                size: 22,
-                color: AppColors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _TrackingFloatingButton extends StatelessWidget {
   const _TrackingFloatingButton({required this.onTap});
 
@@ -2442,7 +3005,7 @@ class _TrackingFloatingButton extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 const Color(0xFFF6A67C),
-                const Color(0xFFF6A67C).withValues(alpha: 0.8)
+                const Color(0xFFF6A67C).withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

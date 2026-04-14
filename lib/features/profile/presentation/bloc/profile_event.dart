@@ -38,3 +38,54 @@ class CreateAvailabilityRequested extends ProfileEvent {
   @override
   List<Object?> get props => [landIds];
 }
+
+class GetAvailabilitiesRequested extends ProfileEvent {
+  const GetAvailabilitiesRequested();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class CreateCartRequested extends ProfileEvent {
+  const CreateCartRequested({required this.landIds});
+
+  final List<int> landIds;
+
+  @override
+  List<Object?> get props => [landIds];
+}
+
+class GetCartRequested extends ProfileEvent {
+  const GetCartRequested();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class CreatePaymentRequested extends ProfileEvent {
+  const CreatePaymentRequested({
+    required this.landIds,
+    required this.amount,
+  });
+
+  final List<int> landIds;
+  final int amount;
+
+  @override
+  List<Object?> get props => [landIds, amount];
+}
+
+class CreateVisitRequested extends ProfileEvent {
+  const CreateVisitRequested({
+    required this.landIds,
+    required this.visitDate,
+    required this.time,
+  });
+
+  final List<int> landIds;
+  final String visitDate;
+  final String time;
+
+  @override
+  List<Object?> get props => [landIds, visitDate, time];
+}

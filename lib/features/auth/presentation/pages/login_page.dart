@@ -35,8 +35,10 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLoginPressed(BuildContext context) {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
+      _showScaffoldMessage(
+        context: context,
+        message: 'Please enter email and password',
+        isSuccess: false,
       );
       return;
     }
@@ -49,6 +51,70 @@ class _LoginPageState extends State<LoginPage> {
     context.read<LoginBloc>().add(LoginRequested(request));
   }
 
+  void _showScaffoldMessage({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    final accentColor = isSuccess ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
+    final icon = isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: EdgeInsets.zero,
+          elevation: 0,
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.transparent,
+          content: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.98),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: accentColor.withValues(alpha: 0.25),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.ink.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  height: 26,
+                  width: 26,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Icon(icon, size: 16, color: accentColor),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -58,22 +124,20 @@ class _LoginPageState extends State<LoginPage> {
         body: BlocConsumer<LoginBloc, LoginState>(
           listener: (context, state) {
             if (state.status == LoginStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Login successful!'),
-                  backgroundColor: Colors.green,
-                ),
+              _showScaffoldMessage(
+                context: context,
+                message: 'Login successful!',
+                isSuccess: true,
               );
               if (state.user != null) {
                 context.read<AuthBloc>().add(UserLoggedIn(state.user!));
               }
               context.go(AppRoutes.home);
             } else if (state.status == LoginStatus.failure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.errorMessage ?? 'Login failed'),
-                  backgroundColor: Colors.red,
-                ),
+              _showScaffoldMessage(
+                context: context,
+                message: state.errorMessage ?? 'Login failed',
+                isSuccess: false,
               );
             }
           },
@@ -119,10 +183,36 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: 40),
-                            const Icon(
-                              Icons.home_work_rounded,
-                              size: 48,
-                              color: AppColors.deepOrange,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: AppColors.white.withValues(alpha: 0.9),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.home_work_rounded,
+                                    size: 18,
+                                    color: AppColors.deepOrange,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'GARUDA STAYS',
+                                    style: TextStyle(
+                                      color: AppColors.ink,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 16),
                             const Text(
@@ -137,18 +227,18 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'LOG IN TO YOUR PREMIUM ACCOUNT',
+                              'Sign in to continue booking your next stay.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: AppColors.mutedText,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 2,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
                               ),
                             ),
                             const SizedBox(height: 48),
                             CustomCard(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(28),
                               gradient: LinearGradient(
                                 colors: [
                                   AppColors.white.withValues(alpha: 0.8),
@@ -159,23 +249,45 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               border: Border.all(
                                 color: AppColors.white.withValues(alpha: 0.8),
-                                width: 1.5,
+                                width: 1.2,
                               ),
                               padding: const EdgeInsets.all(24),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(32),
+                                borderRadius: BorderRadius.circular(28),
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
+                                      const Text(
+                                        'Account Details',
+                                        style: TextStyle(
+                                          color: AppColors.ink,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Use your email and password to continue.',
+                                        style: TextStyle(
+                                          color: AppColors.mutedText,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      _buildFieldLabel('Email'),
+                                      const SizedBox(height: 8),
                                       _buildTextField(
                                         controller: _emailController,
-                                        hint: 'Email or phone',
+                                        hint: 'Enter your email',
                                         icon: Icons.person_outline_rounded,
                                         keyboardType: TextInputType.emailAddress,
                                       ),
                                       const SizedBox(height: 16),
+                                      _buildFieldLabel('Password'),
+                                      const SizedBox(height: 8),
                                       _buildTextField(
                                         controller: _passwordController,
                                         hint: 'Password',
@@ -236,47 +348,31 @@ class _LoginPageState extends State<LoginPage> {
                                                 ),
                                               ),
                                       ),
+                                      const SizedBox(height: 14),
+                                      Row(
+                                        children: const [
+                                          Icon(
+                                            Icons.lock_rounded,
+                                            size: 16,
+                                            color: AppColors.mutedText,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Your credentials are encrypted and secure.',
+                                              style: TextStyle(
+                                                color: AppColors.mutedText,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 32),
-                            Row(
-                              children: [
-                                const Expanded(child: Divider()),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text(
-                                    'OR CONTINUE WITH',
-                                    style: TextStyle(
-                                      color: AppColors.mutedText,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ),
-                                const Expanded(child: Divider()),
-                              ],
-                            ),
-                            const SizedBox(height: 32),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildSocialButton(
-                                    iconPath: Icons.g_mobiledata_rounded,
-                                    label: 'Google',
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildSocialButton(
-                                    iconPath: Icons.apple_rounded,
-                                    label: 'Apple',
-                                  ),
-                                ),
-                              ],
                             ),
                             const SizedBox(height: 48),
                             Row(
@@ -369,34 +465,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildSocialButton({
-    required IconData iconPath,
-    required String label,
-  }) {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.ink,
-        minimumSize: const Size.fromHeight(56),
-        side: const BorderSide(color: AppColors.white, width: 1.5),
-        backgroundColor: AppColors.white.withValues(alpha: 0.4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(iconPath, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
+  Widget _buildFieldLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.ink,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
       ),
     );
   }

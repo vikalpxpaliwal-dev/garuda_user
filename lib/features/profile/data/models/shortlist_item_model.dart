@@ -21,6 +21,7 @@ class ShortlistItemModel {
       land: WishlistLandModel.fromJson(
         json['shortlistLand'] as Map<String, dynamic>? ??
             json['finalLand'] as Map<String, dynamic>? ??
+            json['finalizeLand'] as Map<String, dynamic>? ??
             json['land'] as Map<String, dynamic>? ??
             <String, dynamic>{},
       ),

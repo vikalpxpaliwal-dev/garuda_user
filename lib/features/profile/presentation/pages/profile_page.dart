@@ -25,21 +25,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  static const List<_OwnedLandUiModel> _ownedLands = <_OwnedLandUiModel>[
-    _OwnedLandUiModel(
-      title: 'MANGO GROVE ESTATE',
-      subtitle: 'VIKARABAD + 3 AC',
-      priceLabel: 'Rs42.0L',
-      palette: <Color>[Color(0xFF11253D), Color(0xFF526B7E), Color(0xFFDEE8F0)],
-    ),
-    _OwnedLandUiModel(
-      title: 'HILLVIEW AGRI PLOT',
-      subtitle: 'CHEVELLA + 2 AC',
-      priceLabel: 'Rs25.0L',
-      palette: <Color>[Color(0xFF23495C), Color(0xFF7CA5B8), Color(0xFFF6E6B3)],
-    ),
-  ];
-
   _ProfileCollectionTab _selectedTab = _ProfileCollectionTab.wishlist;
   _TrackingStage _selectedStage = _TrackingStage.availability;
   _VisitsHubList _selectedVisitsHubList = _VisitsHubList.primaryVisit;
@@ -67,7 +52,8 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       context.read<ProfileBloc>()
         ..add(const WishlistRequested())
-        ..add(const GetAvailabilitiesRequested());
+        ..add(const GetAvailabilitiesRequested())
+        ..add(const GetFinalsRequested());
     });
   }
 
@@ -80,6 +66,9 @@ class _ProfilePageState extends State<ProfilePage> {
         );
         final activeJourneys = _ProfileAvailabilityMapper.toUiModels(
           state.availabilityItems,
+        );
+        final finalLandsJourneys = _ProfileOwnedLandMapper.toUiModels(
+          state.finalItems,
         );
 
         // Keep wishlist (selectable) and active (tracked) lists separate.
@@ -96,7 +85,8 @@ class _ProfilePageState extends State<ProfilePage> {
               listenWhen: (previous, current) =>
                   previous.availabilityStatus != current.availabilityStatus,
               listener: (context, state) {
-                if (state.availabilityStatus == CreateAvailabilityStatus.success) {
+                if (state.availabilityStatus ==
+                    CreateAvailabilityStatus.success) {
                   context.read<ProfileBloc>().add(
                     const GetAvailabilitiesRequested(),
                   );
@@ -310,6 +300,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                       context.read<ProfileBloc>().add(
                                         const GetAvailabilitiesRequested(),
                                       );
+                                    } else if (tab ==
+                                        _ProfileCollectionTab.myLands) {
+                                      context.read<ProfileBloc>().add(
+                                        const GetFinalsRequested(),
+                                      );
                                     }
 
                                     setState(() {
@@ -332,6 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     wishlistJourneys: wishlistJourneys,
                                     activeJourneys: activeJourneys,
                                     currentJourney: currentJourney,
+                                    finalLandsJourneys: finalLandsJourneys,
                                   ),
                                 ),
                               ],
@@ -350,53 +346,61 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: _isTrackingJourney
                         // On Visits Hub tab → show visit hub actions
                         ? _selectedStage == _TrackingStage.visitsHub
-                            ? const _VisitsHubFloatingActions()
-                            // On Payment tab with payment success -> Schedule Visit FAB
-                            : _selectedStage == _TrackingStage.payment &&
-                                    state.paymentStatus == CreatePaymentStatus.success
-                                ? _AvailabilityArrowButton(
-                                    onTap: () {
-                                      if (_selectedVisitDate == null || _selectedVisitTime == null) {
-                                        AppScaffoldMessage.showError(
-                                          context,
-                                          'Please select a visit date and time from the card.',
-                                        );
-                                        return;
-                                      }
-
-                                      final parsedVisitDate = DateTime.tryParse(_selectedVisitDate!);
-                                      final today = DateTime.now();
-                                      final todayDateOnly = DateTime(
-                                        today.year,
-                                        today.month,
-                                        today.day,
+                              ? const _VisitsHubFloatingActions()
+                              // On Payment tab with payment success -> Schedule Visit FAB
+                              : _selectedStage == _TrackingStage.payment &&
+                                    state.paymentStatus ==
+                                        CreatePaymentStatus.success
+                              ? _AvailabilityArrowButton(
+                                  onTap: () {
+                                    if (_selectedVisitDate == null ||
+                                        _selectedVisitTime == null) {
+                                      AppScaffoldMessage.showError(
+                                        context,
+                                        'Please select a visit date and time from the card.',
                                       );
-                                      if (parsedVisitDate == null ||
-                                          DateTime(
-                                            parsedVisitDate.year,
-                                            parsedVisitDate.month,
-                                            parsedVisitDate.day,
-                                          ).isBefore(todayDateOnly)) {
-                                        AppScaffoldMessage.showError(
-                                          context,
-                                          'Please select today or a future visit date.',
-                                        );
-                                        return;
-                                      }
+                                      return;
+                                    }
 
-                                      context.read<ProfileBloc>().add(
-                                        CreateVisitRequested(
-                                          landIds: state.cartItems.map((e) => e.landId).toList(),
-                                          visitDate: _selectedVisitDate!,
-                                          time: _selectedVisitTime!,
-                                        ),
+                                    final parsedVisitDate = DateTime.tryParse(
+                                      _selectedVisitDate!,
+                                    );
+                                    final today = DateTime.now();
+                                    final todayDateOnly = DateTime(
+                                      today.year,
+                                      today.month,
+                                      today.day,
+                                    );
+                                    if (parsedVisitDate == null ||
+                                        DateTime(
+                                          parsedVisitDate.year,
+                                          parsedVisitDate.month,
+                                          parsedVisitDate.day,
+                                        ).isBefore(todayDateOnly)) {
+                                      AppScaffoldMessage.showError(
+                                        context,
+                                        'Please select today or a future visit date.',
                                       );
-                                    },
-                                    isLoading: state.visitStatus == CreateVisitStatus.loading,
-                                  )
-                            // On Availability tab with items in cart → PROCEED FAB
-                            : _selectedStage == _TrackingStage.availability &&
-                                  _cartLandIds.isNotEmpty
+                                      return;
+                                    }
+
+                                    context.read<ProfileBloc>().add(
+                                      CreateVisitRequested(
+                                        landIds: state.cartItems
+                                            .map((e) => e.landId)
+                                            .toList(),
+                                        visitDate: _selectedVisitDate!,
+                                        time: _selectedVisitTime!,
+                                      ),
+                                    );
+                                  },
+                                  isLoading:
+                                      state.visitStatus ==
+                                      CreateVisitStatus.loading,
+                                )
+                              // On Availability tab with items in cart → PROCEED FAB
+                              : _selectedStage == _TrackingStage.availability &&
+                                    _cartLandIds.isNotEmpty
                               ? _AvailabilityArrowButton(
                                   onTap: () {
                                     context.read<ProfileBloc>().add(
@@ -445,6 +449,7 @@ class _ProfilePageState extends State<ProfilePage> {
     required List<_TrackedLandUiModel> wishlistJourneys,
     required List<_TrackedLandUiModel> activeJourneys,
     required _TrackedLandUiModel? currentJourney,
+    required List<_OwnedLandUiModel> finalLandsJourneys,
   }) {
     // ── Detail view (Availability / Payment / Visits Hub tabs) ──────────────
     if (_isTrackingJourney) {
@@ -550,9 +555,24 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // ── My Lands tab ────────────────────────────────────────────────────────
     if (_selectedTab == _ProfileCollectionTab.myLands) {
-      return const _MyLandsPanel(
-        key: ValueKey<String>('my-lands'),
-        lands: _ownedLands,
+      if (state.getFinalsStatus == GetFinalsStatus.loading &&
+          finalLandsJourneys.isEmpty) {
+        return const Center(
+          key: ValueKey<String>('my-lands-loading'),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 48),
+            child: CircularProgressIndicator(color: AppColors.primaryOrange),
+          ),
+        );
+      }
+
+      if (finalLandsJourneys.isEmpty) {
+        return const _WishlistEmptyPanel(key: ValueKey<String>('myland-empty'));
+      }
+
+      return _MyLandsPanel(
+        key: const ValueKey<String>('my-lands'),
+        lands: finalLandsJourneys,
       );
     }
 
@@ -693,6 +713,30 @@ class _ProfileAvailabilityMapper {
             ? 'VERIFIED'
             : 'STANDARD',
         availabilityBadge: 'TRACKING',
+        palette: palette,
+      );
+    }).toList();
+  }
+}
+
+class _ProfileOwnedLandMapper {
+  static const List<List<Color>> _palettes = <List<Color>>[
+    <Color>[Color(0xFF11253D), Color(0xFF526B7E), Color(0xFFDEE8F0)],
+    <Color>[Color(0xFF23495C), Color(0xFF7CA5B8), Color(0xFFF6E6B3)],
+  ];
+
+  static List<_OwnedLandUiModel> toUiModels(List<ShortlistItemEntity> items) {
+    return items.asMap().entries.map((entry) {
+      final item = entry.value;
+      final land = item.land;
+      final palette = _palettes[entry.key % _palettes.length];
+
+      return _OwnedLandUiModel(
+        title:
+            '${_ProfileWishlistMapper._capitalize(land.village)} - ${_ProfileWishlistMapper._capitalize(land.mandal)}',
+        subtitle:
+            '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
+        priceLabel: 'TBD',
         palette: palette,
       );
     }).toList();
@@ -1829,37 +1873,38 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
     '16:30',
   ];
 
-  List<({String apiDate, String date, String day, bool isPast})> _dynamicVisitDates() {
+  List<({String apiDate, String date, String day, bool isPast})>
+  _dynamicVisitDates() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    return List<({String apiDate, String date, String day, bool isPast})>.generate(
-      _visitWindowDays,
-      (index) {
-        final visitDate = today.add(Duration(days: index));
-        final apiDate =
-            '${visitDate.year}-${visitDate.month.toString().padLeft(2, '0')}-${visitDate.day.toString().padLeft(2, '0')}';
+    return List<
+      ({String apiDate, String date, String day, bool isPast})
+    >.generate(_visitWindowDays, (index) {
+      final visitDate = today.add(Duration(days: index));
+      final apiDate =
+          '${visitDate.year}-${visitDate.month.toString().padLeft(2, '0')}-${visitDate.day.toString().padLeft(2, '0')}';
 
-        return (
-          apiDate: apiDate,
-          date: visitDate.day.toString(),
-          day: _weekdayLabels[visitDate.weekday - 1],
-          isPast: visitDate.isBefore(today),
-        );
-      },
-    );
+      return (
+        apiDate: apiDate,
+        date: visitDate.day.toString(),
+        day: _weekdayLabels[visitDate.weekday - 1],
+        isPast: visitDate.isBefore(today),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final visitDates = _dynamicVisitDates();
     final isPaymentCompleted = paymentStatus == CreatePaymentStatus.success;
-    final isActionDisabled = isLoading || isPaymentCompleted || onProceed == null;
+    final isActionDisabled =
+        isLoading || isPaymentCompleted || onProceed == null;
     final buttonLabel = isPaymentCompleted
         ? 'PAYMENT COMPLETED'
         : cartCount == 0
-            ? 'ADD LANDS TO CART'
-            : 'PROCEED TO PAYMENT ($cartCount LAND${cartCount == 1 ? '' : 'S'})';
+        ? 'ADD LANDS TO CART'
+        : 'PROCEED TO PAYMENT ($cartCount LAND${cartCount == 1 ? '' : 'S'})';
 
     return CustomCard(
       key: key,
@@ -1961,11 +2006,14 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: GestureDetector(
                         onTap: () {
-                          onVisitTimeSelected('$time:00'); // append seconds for API
+                          onVisitTimeSelected(
+                            '$time:00',
+                          ); // append seconds for API
                         },
                         child: _VisitTimeChip(
                           time: time,
-                          isSelected: selectedVisitTime?.startsWith(time) ?? false,
+                          isSelected:
+                              selectedVisitTime?.startsWith(time) ?? false,
                         ),
                       ),
                     ),
@@ -2058,7 +2106,10 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
                           end: Alignment.bottomRight,
                         )
                       : const LinearGradient(
-                          colors: [AppColors.deepOrange, AppColors.primaryOrange],
+                          colors: [
+                            AppColors.deepOrange,
+                            AppColors.primaryOrange,
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -2075,7 +2126,10 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
                 ),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   child: isLoading
                       ? const Center(
                           child: SizedBox(
@@ -2384,19 +2438,25 @@ class _PrimaryVisitLandRow extends StatelessWidget {
     final title =
         '${land.village.isEmpty ? 'LAND' : land.village.toUpperCase()}${land.mandal.isEmpty ? '' : ' • ${land.mandal.toUpperCase()}'}';
     final subtitle = land.district.toUpperCase();
-    final wasShortlistedFromApi = item.meetingStatus.toLowerCase() == 'shortlisted';
+    final wasShortlistedFromApi =
+        item.meetingStatus.toLowerCase() == 'shortlisted';
     final isShortlisted =
-        wasShortlistedFromApi || profileState.shortlistedLandIds.contains(item.landId);
+        wasShortlistedFromApi ||
+        profileState.shortlistedLandIds.contains(item.landId);
     final isShortlistLoading =
         profileState.shortlistStatus == CreateShortlistStatus.loading &&
         profileState.activeShortlistLandId == item.landId;
     final isDeleteShortlistLoading =
         profileState.deleteShortlistStatus == DeleteShortlistStatus.loading &&
         profileState.activeDeleteShortlistLandId == item.landId;
-    final badge = isShortlisted ? 'SHORTLISTED' : item.meetingStatus.toUpperCase();
+    final badge = isShortlisted
+        ? 'SHORTLISTED'
+        : item.meetingStatus.toUpperCase();
     final availabilityBadge = land.landStatus.isNotEmpty
         ? land.landStatus.first.toUpperCase()
         : land.availability.toUpperCase();
+
+    //not getting response for price
     final visitDate = item.visitDate.year == 1970
         ? 'TBD'
         : '${item.visitDate.day.toString().padLeft(2, '0')}/${item.visitDate.month.toString().padLeft(2, '0')}/${item.visitDate.year}';
@@ -2444,7 +2504,10 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.forestGreen,
                             borderRadius: BorderRadius.circular(999),
@@ -2462,7 +2525,10 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                         if (isShortlisted) ...[
                           const SizedBox(height: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.deepOrange,
                               borderRadius: BorderRadius.circular(999),
@@ -2592,7 +2658,9 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                               ? null
                               : () {
                                   context.read<ProfileBloc>().add(
-                                    CreateShortlistRequested(landId: item.landId),
+                                    CreateShortlistRequested(
+                                      landId: item.landId,
+                                    ),
                                   );
                                 },
                         ),
@@ -2625,10 +2693,7 @@ class _PrimaryVisitLandRow extends StatelessWidget {
 }
 
 class _VisitTimeChip extends StatelessWidget {
-  const _VisitTimeChip({
-    required this.time,
-    required this.isSelected,
-  });
+  const _VisitTimeChip({required this.time, required this.isSelected});
 
   final String time;
   final bool isSelected;
@@ -3087,10 +3152,7 @@ class _ShortlistHubList extends StatelessWidget {
 }
 
 class _ShortlistLandRow extends StatelessWidget {
-  const _ShortlistLandRow({
-    required this.item,
-    required this.showFinalChoice,
-  });
+  const _ShortlistLandRow({required this.item, required this.showFinalChoice});
 
   final ShortlistItemEntity item;
   final bool showFinalChoice;
@@ -3308,19 +3370,23 @@ class _ShortlistLandRow extends StatelessWidget {
                             : isDeleteShortlistLoading,
                         onTap: showFinalChoice
                             ? (isDeleteFinalLoading
-                                ? null
-                                : () {
-                                    context.read<ProfileBloc>().add(
-                                      DeleteFinalRequested(landId: item.landId),
-                                    );
-                                  })
+                                  ? null
+                                  : () {
+                                      context.read<ProfileBloc>().add(
+                                        DeleteFinalRequested(
+                                          landId: item.landId,
+                                        ),
+                                      );
+                                    })
                             : (isDeleteShortlistLoading
-                                ? null
-                                : () {
-                                    context.read<ProfileBloc>().add(
-                                      DeleteShortlistRequested(landId: item.landId),
-                                    );
-                                  }),
+                                  ? null
+                                  : () {
+                                      context.read<ProfileBloc>().add(
+                                        DeleteShortlistRequested(
+                                          landId: item.landId,
+                                        ),
+                                      );
+                                    }),
                       ),
                     ),
                   ],
@@ -3335,10 +3401,7 @@ class _ShortlistLandRow extends StatelessWidget {
 }
 
 class _HeroBadge extends StatelessWidget {
-  const _HeroBadge({
-    required this.label,
-    required this.backgroundColor,
-  });
+  const _HeroBadge({required this.label, required this.backgroundColor});
 
   final String label;
   final Color backgroundColor;

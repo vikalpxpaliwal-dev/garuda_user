@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
@@ -45,16 +46,11 @@ class SearchListingDetailPage extends StatelessWidget {
           return;
         }
 
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.hideCurrentSnackBar();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(state.wishlistMessage!),
-            backgroundColor: state.wishlistStatus == WishlistStatus.failure
-                ? Colors.red.shade700
-                : AppColors.deepOrange,
-          ),
-        );
+        if (state.wishlistStatus == WishlistStatus.failure) {
+          AppScaffoldMessage.showError(context, state.wishlistMessage!);
+        } else {
+          AppScaffoldMessage.showSuccess(context, state.wishlistMessage!);
+        }
       },
       child: Scaffold(
         body: Stack(

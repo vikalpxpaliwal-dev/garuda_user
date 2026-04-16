@@ -7,11 +7,19 @@ class SearchListingCard extends StatelessWidget {
   const SearchListingCard({
     required this.listing,
     required this.onViewDetails,
+    this.isWishlisted = false,
+    this.isWishlistSelected = false,
+    this.isWishlistLoading = false,
+    this.onWishlistTap,
     super.key,
   });
 
   final SearchListingUiModel listing;
   final VoidCallback onViewDetails;
+  final bool isWishlisted;
+  final bool isWishlistSelected;
+  final bool isWishlistLoading;
+  final VoidCallback? onWishlistTap;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +74,16 @@ class SearchListingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Positioned(top: 10, right: 10, child: _ShortlistPill()),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: _ShortlistPill(
+                  isWishlisted: isWishlisted,
+                  isSelected: isWishlistSelected,
+                  isLoading: isWishlistLoading,
+                  onTap: onWishlistTap,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -239,39 +256,91 @@ class _ListingStat extends StatelessWidget {
 }
 
 class _ShortlistPill extends StatelessWidget {
-  const _ShortlistPill();
+  const _ShortlistPill({
+    required this.isWishlisted,
+    required this.isSelected,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final bool isWishlisted;
+  final bool isSelected;
+  final bool isLoading;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.95),
+    final canTap = onTap != null && !isWishlisted && !isLoading;
+    final backgroundColor = isWishlisted
+        ? AppColors.deepOrange.withValues(alpha: 0.95)
+        : AppColors.white.withValues(alpha: 0.95);
+    final foregroundColor = isWishlisted ? AppColors.white : AppColors.ink;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: canTap ? onTap : null,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.4)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(Icons.favorite_rounded, size: 11, color: AppColors.deepOrange),
-          SizedBox(width: 5),
-          Text(
-            'SHORTLIST',
-            style: TextStyle(
-              color: AppColors.ink,
-              fontSize: 8.5,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.4,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isWishlisted
+                  ? AppColors.deepOrange
+                  : AppColors.lightLine.withValues(alpha: 0.4),
             ),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
+          child: isLoading
+              ? SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+                  ),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(
+                      isWishlisted
+                          ? Icons.favorite_rounded
+                          : isSelected
+                              ? Icons.check_circle_rounded
+                              : Icons.favorite_border_rounded,
+                      size: 12,
+                      color: isSelected && !isWishlisted
+                          ? AppColors.deepOrange
+                          : foregroundColor,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      isWishlisted
+                          ? 'WISHLISTED'
+                          : isSelected
+                              ? 'SELECTED'
+                              : 'ADD WISHLIST',
+                      style: TextStyle(
+                        color: isSelected && !isWishlisted
+                            ? AppColors.deepOrange
+                            : foregroundColor,
+                        fontSize: 8.2,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

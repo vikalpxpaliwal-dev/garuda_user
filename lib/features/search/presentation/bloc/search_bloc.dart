@@ -18,6 +18,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         super(const SearchState()) {
     on<GetLandsEvent>(_onGetLands);
     on<AddToWishlistEvent>(_onAddToWishlist);
+    on<AddSelectedToWishlistEvent>(_onAddSelectedToWishlist);
   }
 
   Future<void> _onGetLands(
@@ -85,6 +86,62 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
           state.copyWith(
             wishlistStatus: WishlistStatus.failure,
             activeWishlistLandId: event.landId,
+            wishlistMessage: failure.message,
+          ),
+        );
+    }
+  }
+
+  Future<void> _onAddSelectedToWishlist(
+    AddSelectedToWishlistEvent event,
+    Emitter<SearchState> emit,
+  ) async {
+    final uniqueLandIds = event.landIds.toSet().toList();
+    final filteredLandIds = uniqueLandIds
+        .where((landId) => !state.wishlistedLandIds.contains(landId))
+        .toList();
+
+    if (filteredLandIds.isEmpty) {
+      emit(
+        state.copyWith(
+          wishlistStatus: WishlistStatus.failure,
+          activeWishlistLandId: null,
+          wishlistMessage: 'Please select lands that are not already wishlisted.',
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        wishlistStatus: WishlistStatus.loading,
+        activeWishlistLandId: null,
+        wishlistMessage: null,
+      ),
+    );
+
+    final result = await _addToWishlistUseCase(landIds: filteredLandIds);
+
+    switch (result) {
+      case Success(data: final message):
+        final updatedWishlistedLandIds = <int>{
+          ...state.wishlistedLandIds,
+          ...filteredLandIds,
+        }.toList();
+
+        emit(
+          state.copyWith(
+            wishlistStatus: WishlistStatus.success,
+            wishlistedLandIds: updatedWishlistedLandIds,
+            activeWishlistLandId: null,
+            wishlistMessage: message,
+          ),
+        );
+      case Error(failure: final failure):
+        emit(
+          state.copyWith(
+            wishlistStatus: WishlistStatus.failure,
+            activeWishlistLandId: null,
             wishlistMessage: failure.message,
           ),
         );

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/features/auth/presentation/widgets/profile_image_picker.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
@@ -71,14 +72,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
       ),
       body: BlocListener<ProfileBloc, ProfileState>(
+        listenWhen: (previous, current) => previous.status != current.status,
         listener: (context, state) {
           if (state.status == ProfileStatus.success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully!')),
+            AppScaffoldMessage.showSuccess(
+              context,
+              'Profile updated successfully!',
             );
           } else if (state.status == ProfileStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage ?? 'Update failed')),
+            AppScaffoldMessage.showError(
+              context,
+              state.errorMessage ?? 'Update failed',
             );
           }
         },
@@ -322,31 +326,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account?'),
-        content: const Text(
-          'This action is permanent and cannot be undone. Are you sure you want to proceed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<ProfileBloc>().add(DeleteAccountRequested());
-            },
-            child: const Text('DELETE', style: TextStyle(color: Colors.red)),
-          ),
-        ],
       ),
     );
   }

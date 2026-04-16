@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/data/models/signup_request_model.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
@@ -69,63 +70,11 @@ class _SignupPageState extends State<SignupPage> {
     required String message,
     required bool isSuccess,
   }) {
-    final messenger = ScaffoldMessenger.of(context);
-    final accentColor = isSuccess ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
-    final icon = isSuccess ? Icons.check_circle_rounded : Icons.error_rounded;
-
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          padding: EdgeInsets.zero,
-          elevation: 0,
-          duration: const Duration(seconds: 3),
-          backgroundColor: Colors.transparent,
-          content: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.25),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  height: 26,
-                  width: 26,
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Icon(icon, size: 16, color: accentColor),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+    if (isSuccess) {
+      AppScaffoldMessage.showSuccess(context, message);
+    } else {
+      AppScaffoldMessage.showError(context, message);
+    }
   }
 
   @override

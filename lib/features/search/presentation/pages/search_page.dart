@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
@@ -22,14 +23,85 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   bool _isFilterOpen = false;
+  final Set<int> _selectedWishlistLandIds = <int>{};
+
+  void _showScaffoldMessage({
+    required BuildContext context,
+    required String message,
+    required bool isSuccess,
+  }) {
+    if (isSuccess) {
+      AppScaffoldMessage.showSuccess(context, message);
+    } else {
+      AppScaffoldMessage.showError(context, message);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SearchBloc>(
       create: (_) => sl<SearchBloc>()..add(const GetLandsEvent()),
-      child: Scaffold(
-        body: Stack(
-          children: [
+      child: BlocConsumer<SearchBloc, SearchState>(
+        listenWhen: (previous, current) =>
+            previous.wishlistStatus != current.wishlistStatus &&
+            current.activeWishlistLandId == null,
+        listener: (context, state) {
+          if (state.wishlistStatus == WishlistStatus.success) {
+            _selectedWishlistLandIds.clear();
+            _showScaffoldMessage(
+              context: context,
+              message: state.wishlistMessage ?? 'Wishlist updated successfully.',
+              isSuccess: true,
+            );
+            context.go(AppRoutes.profile);
+          } else if (state.wishlistStatus == WishlistStatus.failure &&
+              state.wishlistMessage != null) {
+            _showScaffoldMessage(
+              context: context,
+              message: state.wishlistMessage!,
+              isSuccess: false,
+            );
+          }
+        },
+        builder: (context, state) {
+          final isBulkWishlistLoading =
+              state.wishlistStatus == WishlistStatus.loading &&
+              state.activeWishlistLandId == null;
+          final canShowWishlistFab =
+              !_isFilterOpen && state.status == SearchStatus.success && state.lands.isNotEmpty;
+
+          return Scaffold(
+            floatingActionButton: canShowWishlistFab
+                ? FloatingActionButton.extended(
+                    backgroundColor: AppColors.deepOrange,
+                    foregroundColor: AppColors.white,
+                    onPressed: isBulkWishlistLoading || _selectedWishlistLandIds.isEmpty
+                        ? null
+                        : () => context.read<SearchBloc>().add(
+                              AddSelectedToWishlistEvent(
+                                landIds: _selectedWishlistLandIds.toList(),
+                              ),
+                            ),
+                    icon: isBulkWishlistLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : const Icon(Icons.favorite_rounded),
+                    label: Text(
+                      _selectedWishlistLandIds.isEmpty
+                          ? 'Select lands'
+                          : 'Add Wishlist (${_selectedWishlistLandIds.length})',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  )
+                : null,
+            body: Stack(
+              children: [
             Positioned.fill(
               child: Container(
                 decoration: const BoxDecoration(
@@ -156,81 +228,85 @@ class _SearchPageState extends State<SearchPage> {
                                         });
                                       },
                                     )
-                                  : BlocBuilder<SearchBloc, SearchState>(
-                                      builder: (context, state) {
-                                        if (state.status ==
-                                            SearchStatus.loading) {
-                                          return const _SearchSkeletonList();
-                                        }
+                                  : () {
+                                      if (state.status == SearchStatus.loading) {
+                                        return const _SearchSkeletonList();
+                                      }
 
-                                        if (state.status ==
-                                            SearchStatus.failure) {
-                                          return Center(
-                                            child: Column(
-                                              children: [
-                                                const Icon(
-                                                  Icons.error_outline,
-                                                  size: 48,
-                                                  color: AppColors.deepOrange,
-                                                ),
-                                                const SizedBox(height: 16),
-                                                Text(
-                                                  state.errorMessage ??
-                                                      'Failed to load lands',
-                                                ),
-                                                TextButton(
-                                                  onPressed: () => context
-                                                      .read<SearchBloc>()
-                                                      .add(
-                                                        const GetLandsEvent(),
-                                                      ),
-                                                  child:
-                                                      const Text('Try Again'),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }
-
-                                        if (state.lands.isEmpty) {
-                                          return const Center(
-                                            child: Padding(
-                                              padding: EdgeInsets.all(40),
-                                              child: Text('No lands found.'),
-                                            ),
-                                          );
-                                        }
-
-                                        return Column(
-                                          key:
-                                              const ValueKey<String>('results'),
-                                          children: state.lands.map((land) {
-                                            final uiModel =
-                                                LandMapper.toUiModel(land);
-
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 20,
+                                      if (state.status == SearchStatus.failure) {
+                                        return Center(
+                                          child: Column(
+                                            children: [
+                                              const Icon(
+                                                Icons.error_outline,
+                                                size: 48,
+                                                color: AppColors.deepOrange,
                                               ),
-                                              child: SearchListingCard(
-                                                listing: uiModel,
-                                                onViewDetails: () {
-                                                  context.push(
-                                                    AppRoutes.searchDetails,
-                                                    extra:
-                                                        SearchListingDetailArgs(
-                                                      land: land,
-                                                      searchBloc: context
-                                                          .read<SearchBloc>(),
+                                              const SizedBox(height: 16),
+                                              Text(
+                                                state.errorMessage ?? 'Failed to load lands',
+                                              ),
+                                              TextButton(
+                                                onPressed: () => context.read<SearchBloc>().add(
+                                                      const GetLandsEvent(),
                                                     ),
-                                                  );
-                                                },
+                                                child: const Text('Try Again'),
                                               ),
-                                            );
-                                          }).toList(),
+                                            ],
+                                          ),
                                         );
-                                      },
-                                    ),
+                                      }
+
+                                      if (state.lands.isEmpty) {
+                                        return const Center(
+                                          child: Padding(
+                                            padding: EdgeInsets.all(40),
+                                            child: Text('No lands found.'),
+                                          ),
+                                        );
+                                      }
+
+                                      return Column(
+                                        key: const ValueKey<String>('results'),
+                                        children: state.lands.map((land) {
+                                          final uiModel = LandMapper.toUiModel(land);
+                                          final isWishlisted =
+                                              state.wishlistedLandIds.contains(land.id);
+                                          final isSelected =
+                                              _selectedWishlistLandIds.contains(land.id);
+
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 20),
+                                            child: SearchListingCard(
+                                              listing: uiModel,
+                                              isWishlisted: isWishlisted,
+                                              isWishlistSelected: isSelected,
+                                              isWishlistLoading: isBulkWishlistLoading,
+                                              onWishlistTap: isWishlisted || isBulkWishlistLoading
+                                                  ? null
+                                                  : () {
+                                                      setState(() {
+                                                        if (isSelected) {
+                                                          _selectedWishlistLandIds.remove(land.id);
+                                                        } else {
+                                                          _selectedWishlistLandIds.add(land.id);
+                                                        }
+                                                      });
+                                                    },
+                                              onViewDetails: () {
+                                                context.push(
+                                                  AppRoutes.searchDetails,
+                                                  extra: SearchListingDetailArgs(
+                                                    land: land,
+                                                    searchBloc: context.read<SearchBloc>(),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        }).toList(),
+                                      );
+                                    }(),
                             ),
                           ],
                         ),
@@ -240,8 +316,10 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ],
             ),
-          ],
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

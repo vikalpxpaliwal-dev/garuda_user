@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/availability_entity.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/cart_item_entity.dart';
+import 'package:garuda_user_app/features/profile/domain/entities/shortlist_item_entity.dart';
+import 'package:garuda_user_app/features/profile/domain/entities/visit_item_entity.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_entity.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
@@ -87,96 +90,166 @@ class _ProfilePageState extends State<ProfilePage> {
             ? activeJourneys[safeTrackingIndex]
             : null;
 
-        return BlocListener<ProfileBloc, ProfileState>(
-          listenWhen: (previous, current) =>
-              previous.availabilityStatus != current.availabilityStatus ||
-              previous.cartStatus != current.cartStatus,
-          listener: (context, state) {
-            // ── POST Availability success: open tracking view ──────────────
-            if (state.availabilityStatus == CreateAvailabilityStatus.success) {
-              context.read<ProfileBloc>().add(
-                const GetAvailabilitiesRequested(),
-              );
-              setState(() {
-                _selectedLandIds.clear();
-                _selectedTrackingIndex = 0;
-                _isTrackingJourney = true;
-                _selectedStage = _TrackingStage.availability;
-                _selectedVisitsHubList = _VisitsHubList.primaryVisit;
-              });
-            } else if (state.availabilityStatus ==
-                CreateAvailabilityStatus.failure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
+        return MultiBlocListener(
+          listeners: [
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.availabilityStatus != current.availabilityStatus,
+              listener: (context, state) {
+                if (state.availabilityStatus == CreateAvailabilityStatus.success) {
+                  context.read<ProfileBloc>().add(
+                    const GetAvailabilitiesRequested(),
+                  );
+                  setState(() {
+                    _selectedLandIds.clear();
+                    _selectedTrackingIndex = 0;
+                    _isTrackingJourney = true;
+                    _selectedStage = _TrackingStage.availability;
+                    _selectedVisitsHubList = _VisitsHubList.primaryVisit;
+                  });
+                } else if (state.availabilityStatus ==
+                    CreateAvailabilityStatus.failure) {
+                  AppScaffoldMessage.showError(
+                    context,
                     state.availabilityErrorMessage ??
                         'Failed to create availability',
-                  ),
-                  backgroundColor: AppColors.deepOrange,
-                ),
-              );
-            }
-
-            // ── POST Cart success: switch to Payment tab + fetch cart data
-            if (state.cartStatus == CreateCartStatus.success) {
-              context.read<ProfileBloc>().add(const GetCartRequested());
-              setState(() {
-                _selectedStage = _TrackingStage.payment;
-              });
-            } else if (state.cartStatus == CreateCartStatus.failure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
+                  );
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.cartStatus != current.cartStatus,
+              listener: (context, state) {
+                if (state.cartStatus == CreateCartStatus.success) {
+                  context.read<ProfileBloc>().add(const GetCartRequested());
+                  setState(() {
+                    _selectedStage = _TrackingStage.payment;
+                  });
+                } else if (state.cartStatus == CreateCartStatus.failure) {
+                  AppScaffoldMessage.showError(
+                    context,
                     state.cartErrorMessage ?? 'Failed to add to cart',
-                  ),
-                  backgroundColor: AppColors.deepOrange,
-                ),
-              );
-            }
-
-            // ── POST Payment success ──────────────────────────
-            if (state.paymentStatus == CreatePaymentStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Payment Successful! Now select date & time for visit.'),
-                  backgroundColor: AppColors.forestGreen,
-                ),
-              );
-              // We do not transition stage yet; user needs to pick date/time visually
-            } else if (state.paymentStatus == CreatePaymentStatus.failure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
+                  );
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.paymentStatus != current.paymentStatus,
+              listener: (context, state) {
+                if (state.paymentStatus == CreatePaymentStatus.success) {
+                  AppScaffoldMessage.showSuccess(
+                    context,
+                    'Payment successful! Now select date and time for visit.',
+                  );
+                } else if (state.paymentStatus == CreatePaymentStatus.failure) {
+                  AppScaffoldMessage.showError(
+                    context,
                     state.paymentErrorMessage ?? 'Payment failed',
-                  ),
-                  backgroundColor: AppColors.deepOrange,
-                ),
-              );
-            }
-
-            // ── POST Visit success ──────────────────────────
-            if (state.visitStatus == CreateVisitStatus.success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Visit Scheduled Successfully!'),
-                  backgroundColor: AppColors.forestGreen,
-                ),
-              );
-              setState(() {
-                _selectedStage = _TrackingStage.visitsHub;
-                _selectedVisitsHubList = _VisitsHubList.primaryVisit;
-              });
-            } else if (state.visitStatus == CreateVisitStatus.failure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
+                  );
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.visitStatus != current.visitStatus,
+              listener: (context, state) {
+                if (state.visitStatus == CreateVisitStatus.success) {
+                  AppScaffoldMessage.showSuccess(
+                    context,
+                    'Visit scheduled successfully!',
+                  );
+                  setState(() {
+                    _selectedStage = _TrackingStage.visitsHub;
+                    _selectedVisitsHubList = _VisitsHubList.primaryVisit;
+                  });
+                  context.read<ProfileBloc>().add(const GetVisitsRequested());
+                } else if (state.visitStatus == CreateVisitStatus.failure) {
+                  AppScaffoldMessage.showError(
+                    context,
                     state.visitErrorMessage ?? 'Failed to schedule visit',
-                  ),
-                  backgroundColor: AppColors.deepOrange,
-                ),
-              );
-            }
-          },
+                  );
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.shortlistStatus != current.shortlistStatus,
+              listener: (context, state) {
+                if (state.shortlistStatus == CreateShortlistStatus.success &&
+                    state.shortlistMessage != null) {
+                  AppScaffoldMessage.showSuccess(
+                    context,
+                    state.shortlistMessage!,
+                  );
+                } else if (state.shortlistStatus ==
+                        CreateShortlistStatus.failure &&
+                    state.shortlistMessage != null) {
+                  AppScaffoldMessage.showError(
+                    context,
+                    state.shortlistMessage!,
+                  );
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.deleteShortlistStatus !=
+                  current.deleteShortlistStatus,
+              listener: (context, state) {
+                if (state.deleteShortlistStatus ==
+                        DeleteShortlistStatus.success &&
+                    state.deleteShortlistMessage != null) {
+                  AppScaffoldMessage.showSuccess(
+                    context,
+                    state.deleteShortlistMessage!,
+                  );
+                } else if (state.deleteShortlistStatus ==
+                        DeleteShortlistStatus.failure &&
+                    state.deleteShortlistMessage != null) {
+                  AppScaffoldMessage.showError(
+                    context,
+                    state.deleteShortlistMessage!,
+                  );
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.createFinalStatus != current.createFinalStatus,
+              listener: (context, state) {
+                if (state.createFinalStatus == CreateFinalStatus.success &&
+                    state.finalMessage != null) {
+                  AppScaffoldMessage.showSuccess(context, state.finalMessage!);
+                } else if (state.createFinalStatus ==
+                        CreateFinalStatus.failure &&
+                    state.finalMessage != null) {
+                  AppScaffoldMessage.showError(context, state.finalMessage!);
+                }
+              },
+            ),
+            BlocListener<ProfileBloc, ProfileState>(
+              listenWhen: (previous, current) =>
+                  previous.deleteFinalStatus != current.deleteFinalStatus,
+              listener: (context, state) {
+                if (state.deleteFinalStatus == DeleteFinalStatus.success &&
+                    state.deleteFinalMessage != null) {
+                  AppScaffoldMessage.showSuccess(
+                    context,
+                    state.deleteFinalMessage!,
+                  );
+                } else if (state.deleteFinalStatus ==
+                        DeleteFinalStatus.failure &&
+                    state.deleteFinalMessage != null) {
+                  AppScaffoldMessage.showError(
+                    context,
+                    state.deleteFinalMessage!,
+                  );
+                }
+              },
+            ),
+          ],
           child: Material(
             color: AppColors.softBackground,
             child: Stack(
@@ -284,14 +357,33 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ? _AvailabilityArrowButton(
                                     onTap: () {
                                       if (_selectedVisitDate == null || _selectedVisitTime == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Please select a visit date and time from the card.'),
-                                            backgroundColor: AppColors.deepOrange,
-                                          ),
+                                        AppScaffoldMessage.showError(
+                                          context,
+                                          'Please select a visit date and time from the card.',
                                         );
                                         return;
                                       }
+
+                                      final parsedVisitDate = DateTime.tryParse(_selectedVisitDate!);
+                                      final today = DateTime.now();
+                                      final todayDateOnly = DateTime(
+                                        today.year,
+                                        today.month,
+                                        today.day,
+                                      );
+                                      if (parsedVisitDate == null ||
+                                          DateTime(
+                                            parsedVisitDate.year,
+                                            parsedVisitDate.month,
+                                            parsedVisitDate.day,
+                                          ).isBefore(todayDateOnly)) {
+                                        AppScaffoldMessage.showError(
+                                          context,
+                                          'Please select today or a future visit date.',
+                                        );
+                                        return;
+                                      }
+
                                       context.read<ProfileBloc>().add(
                                         CreateVisitRequested(
                                           landIds: state.cartItems.map((e) => e.landId).toList(),
@@ -427,6 +519,8 @@ class _ProfilePageState extends State<ProfilePage> {
           // Fetch cart data when user navigates to Payment tab
           if (stage == _TrackingStage.payment) {
             context.read<ProfileBloc>().add(const GetCartRequested());
+          } else if (stage == _TrackingStage.visitsHub) {
+            context.read<ProfileBloc>().add(const GetVisitsRequested());
           }
         },
         selectedVisitsHubList: _selectedVisitsHubList,
@@ -434,7 +528,23 @@ class _ProfilePageState extends State<ProfilePage> {
           setState(() {
             _selectedVisitsHubList = list;
           });
+          if (list == _VisitsHubList.primaryVisit) {
+            context.read<ProfileBloc>().add(const GetVisitsRequested());
+          } else if (list == _VisitsHubList.shortlist) {
+            context.read<ProfileBloc>().add(const GetShortlistsRequested());
+          } else if (list == _VisitsHubList.finalList) {
+            context.read<ProfileBloc>().add(const GetFinalsRequested());
+          }
         },
+        visitItems: state.visitItems,
+        getVisitsStatus: state.getVisitsStatus,
+        visitItemsErrorMessage: state.visitItemsErrorMessage,
+        shortlistItems: state.shortlistItems,
+        getShortlistsStatus: state.getShortlistsStatus,
+        shortlistItemsErrorMessage: state.shortlistItemsErrorMessage,
+        finalItems: state.finalItems,
+        getFinalsStatus: state.getFinalsStatus,
+        finalItemsErrorMessage: state.finalItemsErrorMessage,
       );
     }
 
@@ -1319,6 +1429,15 @@ class _TrackingJourneyPanel extends StatelessWidget {
     required this.onStageChanged,
     required this.selectedVisitsHubList,
     required this.onVisitsHubListChanged,
+    required this.visitItems,
+    required this.getVisitsStatus,
+    required this.visitItemsErrorMessage,
+    required this.shortlistItems,
+    required this.getShortlistsStatus,
+    required this.shortlistItemsErrorMessage,
+    required this.finalItems,
+    required this.getFinalsStatus,
+    required this.finalItemsErrorMessage,
     super.key,
   });
 
@@ -1340,6 +1459,15 @@ class _TrackingJourneyPanel extends StatelessWidget {
   final ValueChanged<_TrackingStage> onStageChanged;
   final _VisitsHubList selectedVisitsHubList;
   final ValueChanged<_VisitsHubList> onVisitsHubListChanged;
+  final List<VisitItemEntity> visitItems;
+  final GetVisitsStatus getVisitsStatus;
+  final String? visitItemsErrorMessage;
+  final List<ShortlistItemEntity> shortlistItems;
+  final GetShortlistsStatus getShortlistsStatus;
+  final String? shortlistItemsErrorMessage;
+  final List<ShortlistItemEntity> finalItems;
+  final GetFinalsStatus getFinalsStatus;
+  final String? finalItemsErrorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -1418,6 +1546,15 @@ class _TrackingJourneyPanel extends StatelessWidget {
               key: const ValueKey<String>('visits-stage'),
               selectedList: selectedVisitsHubList,
               onChanged: onVisitsHubListChanged,
+              visitItems: visitItems,
+              getVisitsStatus: getVisitsStatus,
+              visitItemsErrorMessage: visitItemsErrorMessage,
+              shortlistItems: shortlistItems,
+              getShortlistsStatus: getShortlistsStatus,
+              shortlistItemsErrorMessage: shortlistItemsErrorMessage,
+              finalItems: finalItems,
+              getFinalsStatus: getFinalsStatus,
+              finalItemsErrorMessage: finalItemsErrorMessage,
             ),
           },
         ),
@@ -1674,16 +1811,16 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
   final ValueChanged<String> onVisitDateSelected;
   final ValueChanged<String> onVisitTimeSelected;
 
-  static const List<({String date, String day})> _visitDates =
-      <({String date, String day})>[
-        (date: '4', day: 'SAT'),
-        (date: '5', day: 'SUN'),
-        (date: '6', day: 'MON'),
-        (date: '7', day: 'TUE'),
-        (date: '8', day: 'WED'),
-        (date: '9', day: 'THU'),
-        (date: '10', day: 'FRI'),
-      ];
+  static const int _visitWindowDays = 7;
+  static const List<String> _weekdayLabels = <String>[
+    'MON',
+    'TUE',
+    'WED',
+    'THU',
+    'FRI',
+    'SAT',
+    'SUN',
+  ];
 
   static const List<String> _visitTimes = <String>[
     '10:30',
@@ -1692,8 +1829,38 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
     '16:30',
   ];
 
+  List<({String apiDate, String date, String day, bool isPast})> _dynamicVisitDates() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return List<({String apiDate, String date, String day, bool isPast})>.generate(
+      _visitWindowDays,
+      (index) {
+        final visitDate = today.add(Duration(days: index));
+        final apiDate =
+            '${visitDate.year}-${visitDate.month.toString().padLeft(2, '0')}-${visitDate.day.toString().padLeft(2, '0')}';
+
+        return (
+          apiDate: apiDate,
+          date: visitDate.day.toString(),
+          day: _weekdayLabels[visitDate.weekday - 1],
+          isPast: visitDate.isBefore(today),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final visitDates = _dynamicVisitDates();
+    final isPaymentCompleted = paymentStatus == CreatePaymentStatus.success;
+    final isActionDisabled = isLoading || isPaymentCompleted || onProceed == null;
+    final buttonLabel = isPaymentCompleted
+        ? 'PAYMENT COMPLETED'
+        : cartCount == 0
+            ? 'ADD LANDS TO CART'
+            : 'PROCEED TO PAYMENT ($cartCount LAND${cartCount == 1 ? '' : 'S'})';
+
     return CustomCard(
       key: key,
       gradient: LinearGradient(
@@ -1743,20 +1910,21 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
               ),
             ),
             child: Row(
-              children: _visitDates
+              children: visitDates
                   .map(
                     (visitDate) => Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          // formatting date for the API payload "2026-04-xx"
-                          final numericDate = visitDate.date.padLeft(2, '0');
-                          onVisitDateSelected('2026-04-$numericDate');
-                        },
+                        onTap: visitDate.isPast
+                            ? null
+                            : () {
+                                onVisitDateSelected(visitDate.apiDate);
+                              },
                         behavior: HitTestBehavior.opaque,
                         child: _VisitDateChip(
                           date: visitDate.date,
                           day: visitDate.day,
-                          isSelected: selectedVisitDate?.endsWith(visitDate.date.padLeft(2, '0')) ?? false,
+                          isSelected: selectedVisitDate == visitDate.apiDate,
+                          isDisabled: visitDate.isPast,
                         ),
                       ),
                     ),
@@ -1862,65 +2030,90 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Center(
-            child: SizedBox(
-              width: 200,
-              child: FilledButton(
-                onPressed: isLoading || paymentStatus == CreatePaymentStatus.success ? null : onProceed,
-                style:
-                    FilledButton.styleFrom(
-                      backgroundColor: AppColors.deepOrange,
-                      foregroundColor: AppColors.white,
-                      minimumSize: const Size.fromHeight(48),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 8,
-                      shadowColor: AppColors.deepOrange.withValues(alpha: 0.4),
-                    ).copyWith(
-                      backgroundColor: WidgetStateProperty.all(
-                        AppColors.deepOrange,
-                      ),
-                    ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: isActionDisabled ? null : onProceed,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                padding: EdgeInsets.zero,
+                foregroundColor: AppColors.white,
+                backgroundColor: Colors.transparent,
+                disabledBackgroundColor: Colors.transparent,
+                disabledForegroundColor: AppColors.white,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: isActionDisabled
+                      ? LinearGradient(
+                          colors: [
+                            AppColors.mutedText.withValues(alpha: 0.55),
+                            AppColors.mutedText.withValues(alpha: 0.45),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : const LinearGradient(
+                          colors: [AppColors.deepOrange, AppColors.primaryOrange],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: isActionDisabled
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: AppColors.deepOrange.withValues(alpha: 0.35),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                ),
                 child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.deepOrange, AppColors.primaryOrange],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: AppColors.white,
-                            strokeWidth: 2,
+                      ? const Center(
+                          child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: AppColors.white,
+                              strokeWidth: 2.2,
+                            ),
                           ),
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            const Icon(
-                              Icons.account_balance_wallet_rounded,
-                              size: 16,
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: AppColors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isPaymentCompleted
+                                    ? Icons.verified_rounded
+                                    : Icons.account_balance_wallet_rounded,
+                                size: 14,
+                                color: AppColors.white,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
-                                paymentStatus == CreatePaymentStatus.success
-                                    ? 'PAYMENT COMPLETED'
-                                    : cartCount == 0
-                                        ? 'ADD LANDS TO CART'
-                                        : 'PROCEED TO PAYMENT ($cartCount LAND${cartCount == 1 ? '' : 'S'})',
+                                buttonLabel,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.4,
+                                  letterSpacing: 0.45,
                                 ),
                               ),
                             ),
@@ -2171,11 +2364,270 @@ class _CartLandRow extends StatelessWidget {
   }
 }
 
+class _PrimaryVisitLandRow extends StatelessWidget {
+  const _PrimaryVisitLandRow({required this.item});
+
+  final VisitItemEntity item;
+
+  static const List<List<Color>> _palettes = <List<Color>>[
+    <Color>[Color(0xFF041E42), Color(0xFF0D5C5D), Color(0xFFFFB34A)],
+    <Color>[Color(0xFF243B55), Color(0xFF141E30), Color(0xFFE98B2A)],
+    <Color>[Color(0xFF1E3A5F), Color(0xFF496989), Color(0xFFF4B860)],
+    <Color>[Color(0xFF233D4D), Color(0xFF4F6D7A), Color(0xFFFFB347)],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final land = item.land;
+    final profileState = context.watch<ProfileBloc>().state;
+    final palette = _palettes[item.id % _palettes.length];
+    final title =
+        '${land.village.isEmpty ? 'LAND' : land.village.toUpperCase()}${land.mandal.isEmpty ? '' : ' • ${land.mandal.toUpperCase()}'}';
+    final subtitle = land.district.toUpperCase();
+    final wasShortlistedFromApi = item.meetingStatus.toLowerCase() == 'shortlisted';
+    final isShortlisted =
+        wasShortlistedFromApi || profileState.shortlistedLandIds.contains(item.landId);
+    final isShortlistLoading =
+        profileState.shortlistStatus == CreateShortlistStatus.loading &&
+        profileState.activeShortlistLandId == item.landId;
+    final isDeleteShortlistLoading =
+        profileState.deleteShortlistStatus == DeleteShortlistStatus.loading &&
+        profileState.activeDeleteShortlistLandId == item.landId;
+    final badge = isShortlisted ? 'SHORTLISTED' : item.meetingStatus.toUpperCase();
+    final availabilityBadge = land.landStatus.isNotEmpty
+        ? land.landStatus.first.toUpperCase()
+        : land.availability.toUpperCase();
+    final visitDate = item.visitDate.year == 1970
+        ? 'TBD'
+        : '${item.visitDate.day.toString().padLeft(2, '0')}/${item.visitDate.month.toString().padLeft(2, '0')}/${item.visitDate.year}';
+    final visitTime = item.time.isEmpty ? 'TBD' : item.time.substring(0, 5);
+
+    return CustomCard(
+      gradient: LinearGradient(
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.4),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: <Widget>[
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(27)),
+            child: Container(
+              height: 130,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: palette,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Stack(
+                children: <Widget>[
+                  const Positioned(
+                    top: 14,
+                    left: 14,
+                    child: CircleAvatar(
+                      radius: 7,
+                      backgroundColor: Colors.white24,
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.forestGreen,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            availabilityBadge,
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                        if (isShortlisted) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.deepOrange,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'SHORTLISTED',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 14,
+                    left: 14,
+                    right: 14,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: <Widget>[
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 11,
+                              color: AppColors.primaryOrange,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                color: AppColors.primaryOrange,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!isShortlisted) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
+                            ),
+                            child: Text(
+                              badge,
+                              style: const TextStyle(
+                                color: AppColors.white,
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _JourneyMetric(
+                        label: 'VISIT DATE',
+                        value: visitDate,
+                        alignment: CrossAxisAlignment.start,
+                      ),
+                    ),
+                    Expanded(
+                      child: _JourneyMetric(
+                        label: 'VISIT TIME',
+                        value: visitTime,
+                        alignment: CrossAxisAlignment.end,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _TrackingActionButton(
+                        label: 'VIEW FULL DETAILS',
+                        onTap: () {},
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (!isShortlisted) ...[
+                      Expanded(
+                        child: _TrackingActionButton(
+                          label: 'SHORTLIST',
+                          isFilled: true,
+                          isLoading: isShortlistLoading,
+                          onTap: isShortlistLoading
+                              ? null
+                              : () {
+                                  context.read<ProfileBloc>().add(
+                                    CreateShortlistRequested(landId: item.landId),
+                                  );
+                                },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: _TrackingActionButton(
+                        label: 'REMOVE FROM THIS LIST',
+                        foregroundColor: AppColors.deepOrange,
+                        isLoading: isDeleteShortlistLoading,
+                        onTap: isDeleteShortlistLoading
+                            ? null
+                            : () {
+                                context.read<ProfileBloc>().add(
+                                  DeleteShortlistRequested(landId: item.landId),
+                                );
+                              },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _VisitTimeChip extends StatelessWidget {
   const _VisitTimeChip({
     required this.time,
     required this.isSelected,
-    super.key,
   });
 
   final String time;
@@ -2225,11 +2677,13 @@ class _VisitDateChip extends StatelessWidget {
     required this.date,
     required this.day,
     required this.isSelected,
+    this.isDisabled = false,
   });
 
   final String date;
   final String day;
   final bool isSelected;
+  final bool isDisabled;
 
   @override
   Widget build(BuildContext context) {
@@ -2239,17 +2693,21 @@ class _VisitDateChip extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: isSelected
+            color: isDisabled
+                ? AppColors.lightLine.withValues(alpha: 0.35)
+                : isSelected
                 ? AppColors.white
                 : AppColors.softBackground.withValues(alpha: 0.5),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isSelected
+              color: isDisabled
+                  ? AppColors.lightLine.withValues(alpha: 0.7)
+                  : isSelected
                   ? AppColors.deepOrange
                   : AppColors.lightLine.withValues(alpha: 0.6),
               width: isSelected ? 1.5 : 1,
             ),
-            boxShadow: isSelected
+            boxShadow: isSelected && !isDisabled
                 ? [
                     BoxShadow(
                       color: AppColors.deepOrange.withValues(alpha: 0.15),
@@ -2263,7 +2721,11 @@ class _VisitDateChip extends StatelessWidget {
             child: Text(
               date,
               style: TextStyle(
-                color: isSelected ? AppColors.deepOrange : AppColors.mutedText,
+                color: isDisabled
+                    ? AppColors.mutedText.withValues(alpha: 0.5)
+                    : isSelected
+                    ? AppColors.deepOrange
+                    : AppColors.mutedText,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
               ),
@@ -2273,8 +2735,10 @@ class _VisitDateChip extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           day,
-          style: const TextStyle(
-            color: AppColors.mutedText,
+          style: TextStyle(
+            color: isDisabled
+                ? AppColors.mutedText.withValues(alpha: 0.5)
+                : AppColors.mutedText,
             fontSize: 6,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.25,
@@ -2359,11 +2823,29 @@ class _VisitsHubCard extends StatelessWidget {
   const _VisitsHubCard({
     required this.selectedList,
     required this.onChanged,
+    required this.visitItems,
+    required this.getVisitsStatus,
+    required this.visitItemsErrorMessage,
+    required this.shortlistItems,
+    required this.getShortlistsStatus,
+    required this.shortlistItemsErrorMessage,
+    required this.finalItems,
+    required this.getFinalsStatus,
+    required this.finalItemsErrorMessage,
     super.key,
   });
 
   final _VisitsHubList selectedList;
   final ValueChanged<_VisitsHubList> onChanged;
+  final List<VisitItemEntity> visitItems;
+  final GetVisitsStatus getVisitsStatus;
+  final String? visitItemsErrorMessage;
+  final List<ShortlistItemEntity> shortlistItems;
+  final GetShortlistsStatus getShortlistsStatus;
+  final String? shortlistItemsErrorMessage;
+  final List<ShortlistItemEntity> finalItems;
+  final GetFinalsStatus getFinalsStatus;
+  final String? finalItemsErrorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -2373,30 +2855,517 @@ class _VisitsHubCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(28),
       border: Border.all(color: AppColors.lightLine),
       padding: const EdgeInsets.all(6),
-      child: Row(
+      child: Column(
         children: <Widget>[
-          Expanded(
-            child: _VisitsHubTabButton(
-              label: 'PRIMARY VISIT',
-              isSelected: selectedList == _VisitsHubList.primaryVisit,
-              onTap: () => onChanged(_VisitsHubList.primaryVisit),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _VisitsHubTabButton(
+                  label: 'PRIMARY VISIT',
+                  isSelected: selectedList == _VisitsHubList.primaryVisit,
+                  onTap: () => onChanged(_VisitsHubList.primaryVisit),
+                ),
+              ),
+              Expanded(
+                child: _VisitsHubTabButton(
+                  label: 'SHORTLIST',
+                  isSelected: selectedList == _VisitsHubList.shortlist,
+                  onTap: () => onChanged(_VisitsHubList.shortlist),
+                ),
+              ),
+              Expanded(
+                child: _VisitsHubTabButton(
+                  label: 'FINAL LIST',
+                  isSelected: selectedList == _VisitsHubList.finalList,
+                  onTap: () => onChanged(_VisitsHubList.finalList),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (selectedList == _VisitsHubList.primaryVisit)
+            _PrimaryVisitList(
+              visitItems: visitItems,
+              getVisitsStatus: getVisitsStatus,
+              visitItemsErrorMessage: visitItemsErrorMessage,
+            )
+          else if (selectedList == _VisitsHubList.shortlist)
+            _ShortlistHubList(
+              shortlistItems: shortlistItems,
+              isLoading: getShortlistsStatus == GetShortlistsStatus.loading,
+              hasFailure: getShortlistsStatus == GetShortlistsStatus.failure,
+              errorMessage: shortlistItemsErrorMessage,
+              showOnlyFinalized: false,
+            )
+          else if (selectedList == _VisitsHubList.finalList)
+            _ShortlistHubList(
+              shortlistItems: finalItems,
+              isLoading: getFinalsStatus == GetFinalsStatus.loading,
+              hasFailure: getFinalsStatus == GetFinalsStatus.failure,
+              errorMessage: finalItemsErrorMessage,
+              showOnlyFinalized: true,
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 20, 12, 16),
+              child: Text(
+                'This list is ready for the next workflow.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrimaryVisitList extends StatelessWidget {
+  const _PrimaryVisitList({
+    required this.visitItems,
+    required this.getVisitsStatus,
+    required this.visitItemsErrorMessage,
+  });
+
+  final List<VisitItemEntity> visitItems;
+  final GetVisitsStatus getVisitsStatus;
+  final String? visitItemsErrorMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    if (getVisitsStatus == GetVisitsStatus.loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 28),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryOrange),
+        ),
+      );
+    }
+
+    if (getVisitsStatus == GetVisitsStatus.failure) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Column(
+          children: <Widget>[
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.deepOrange,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              visitItemsErrorMessage ?? 'Failed to load primary visits.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (visitItems.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(12, 20, 12, 16),
+        child: Text(
+          'No primary visits available yet.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.mutedText,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: visitItems
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _PrimaryVisitLandRow(item: item),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ShortlistHubList extends StatelessWidget {
+  const _ShortlistHubList({
+    required this.shortlistItems,
+    required this.isLoading,
+    required this.hasFailure,
+    required this.errorMessage,
+    required this.showOnlyFinalized,
+  });
+
+  final List<ShortlistItemEntity> shortlistItems;
+  final bool isLoading;
+  final bool hasFailure;
+  final String? errorMessage;
+  final bool showOnlyFinalized;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading && shortlistItems.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 28),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryOrange),
+        ),
+      );
+    }
+
+    if (hasFailure && shortlistItems.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        child: Column(
+          children: <Widget>[
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.deepOrange,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMessage ??
+                  (showOnlyFinalized
+                      ? 'Failed to load final list items.'
+                      : 'Failed to load shortlist items.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (shortlistItems.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 20, 12, 16),
+        child: Text(
+          showOnlyFinalized
+              ? 'No final-choice lands available yet.'
+              : 'No shortlisted lands available yet.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.mutedText,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: shortlistItems
+          .map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _ShortlistLandRow(
+                item: item,
+                showFinalChoice: showOnlyFinalized,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ShortlistLandRow extends StatelessWidget {
+  const _ShortlistLandRow({
+    required this.item,
+    required this.showFinalChoice,
+  });
+
+  final ShortlistItemEntity item;
+  final bool showFinalChoice;
+
+  static const List<List<Color>> _palettes = <List<Color>>[
+    <Color>[Color(0xFF041E42), Color(0xFF0D5C5D), Color(0xFFFFB34A)],
+    <Color>[Color(0xFF243B55), Color(0xFF141E30), Color(0xFFE98B2A)],
+    <Color>[Color(0xFF1E3A5F), Color(0xFF496989), Color(0xFFF4B860)],
+    <Color>[Color(0xFF233D4D), Color(0xFF4F6D7A), Color(0xFFFFB347)],
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final profileState = context.watch<ProfileBloc>().state;
+    final land = item.land;
+    final palette = _palettes[item.id % _palettes.length];
+    final title =
+        'LAND #${land.id} • ${land.village.isEmpty ? 'LOCATION' : land.village.toUpperCase()}';
+    final subtitle = land.district.isEmpty
+        ? land.state.toUpperCase()
+        : land.district.toUpperCase();
+    final availabilityBadge = land.landStatus.isNotEmpty
+        ? land.landStatus.first.toUpperCase()
+        : land.availability.toUpperCase();
+    final updatedOn =
+        '${item.updatedAt.day.toString().padLeft(2, '0')}/${item.updatedAt.month.toString().padLeft(2, '0')}/${item.updatedAt.year}';
+    final isFinalizeLoading =
+        profileState.createFinalStatus == CreateFinalStatus.loading &&
+        profileState.activeFinalLandId == item.landId;
+    final isDeleteFinalLoading =
+        profileState.deleteFinalStatus == DeleteFinalStatus.loading &&
+        profileState.activeDeleteFinalLandId == item.landId;
+    final isDeleteShortlistLoading =
+        profileState.deleteShortlistStatus == DeleteShortlistStatus.loading &&
+        profileState.activeDeleteShortlistLandId == item.landId;
+
+    return CustomCard(
+      gradient: LinearGradient(
+        colors: [
+          AppColors.white,
+          AppColors.softBackground.withValues(alpha: 0.4),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(28),
+      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: <Widget>[
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(27)),
+            child: Container(
+              height: 156,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: palette,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Stack(
+                children: <Widget>[
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.02),
+                            Colors.black.withValues(alpha: 0.36),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Positioned(
+                    top: 14,
+                    left: 14,
+                    child: CircleAvatar(
+                      radius: 7,
+                      backgroundColor: Colors.white24,
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        _HeroBadge(
+                          label: availabilityBadge,
+                          backgroundColor: AppColors.forestGreen,
+                        ),
+                        const SizedBox(height: 8),
+                        const _HeroBadge(
+                          label: 'SHORTLISTED',
+                          backgroundColor: AppColors.deepOrange,
+                        ),
+                        if (showFinalChoice) ...[
+                          const SizedBox(height: 8),
+                          const _HeroBadge(
+                            label: 'FINAL CHOICE',
+                            backgroundColor: AppColors.forestGreen,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 14,
+                    right: 14,
+                    bottom: 16,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: <Widget>[
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 11,
+                              color: AppColors.primaryOrange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                color: AppColors.primaryOrange,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          Expanded(
-            child: _VisitsHubTabButton(
-              label: 'SHORTLIST',
-              isSelected: selectedList == _VisitsHubList.shortlist,
-              onTap: () => onChanged(_VisitsHubList.shortlist),
-            ),
-          ),
-          Expanded(
-            child: _VisitsHubTabButton(
-              label: 'FINAL LIST',
-              isSelected: selectedList == _VisitsHubList.finalList,
-              onTap: () => onChanged(_VisitsHubList.finalList),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Column(
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _JourneyMetric(
+                        label: 'FORM STATUS',
+                        value: land.formStatus.toUpperCase(),
+                        alignment: CrossAxisAlignment.start,
+                      ),
+                    ),
+                    Expanded(
+                      child: _JourneyMetric(
+                        label: 'UPDATED ON',
+                        value: updatedOn,
+                        alignment: CrossAxisAlignment.end,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const _DashedLine(),
+                const SizedBox(height: 14),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 2,
+                      child: _TrackingActionButton(
+                        label: 'VIEW FULL DETAILS',
+                        onTap: () {},
+                      ),
+                    ),
+                    if (!showFinalChoice) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _TrackingActionButton(
+                          label: 'FINALIZE',
+                          isFilled: true,
+                          foregroundColor: AppColors.white,
+                          isLoading: isFinalizeLoading,
+                          onTap: isFinalizeLoading
+                              ? null
+                              : () {
+                                  context.read<ProfileBloc>().add(
+                                    CreateFinalRequested(landId: item.landId),
+                                  );
+                                },
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 2,
+                      child: _TrackingActionButton(
+                        label: 'REMOVE FROM THIS LIST',
+                        foregroundColor: const Color(0xFFFF4D4F),
+                        isLoading: showFinalChoice
+                            ? isDeleteFinalLoading
+                            : isDeleteShortlistLoading,
+                        onTap: showFinalChoice
+                            ? (isDeleteFinalLoading
+                                ? null
+                                : () {
+                                    context.read<ProfileBloc>().add(
+                                      DeleteFinalRequested(landId: item.landId),
+                                    );
+                                  })
+                            : (isDeleteShortlistLoading
+                                ? null
+                                : () {
+                                    context.read<ProfileBloc>().add(
+                                      DeleteShortlistRequested(landId: item.landId),
+                                    );
+                                  }),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({
+    required this.label,
+    required this.backgroundColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: backgroundColor.withValues(alpha: 0.26),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: AppColors.white,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
@@ -2912,17 +3881,23 @@ class _TrackingActionButton extends StatelessWidget {
     required this.onTap,
     this.isFilled = false,
     this.foregroundColor,
+    this.isLoading = false,
   });
 
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool isFilled;
   final Color? foregroundColor;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
+    final isDisabled = onTap == null || isLoading;
     final textColor =
         foregroundColor ?? (isFilled ? AppColors.white : AppColors.ink);
+    final effectiveTextColor = isDisabled
+        ? textColor.withValues(alpha: 0.55)
+        : textColor;
 
     return Material(
       color: Colors.transparent,
@@ -2932,7 +3907,9 @@ class _TrackingActionButton extends StatelessWidget {
         child: Container(
           height: 40,
           decoration: BoxDecoration(
-            color: isFilled ? AppColors.deepOrange : AppColors.white,
+            color: isFilled
+                ? AppColors.deepOrange.withValues(alpha: isDisabled ? 0.75 : 1)
+                : AppColors.white.withValues(alpha: isDisabled ? 0.82 : 1),
             gradient: isFilled
                 ? const LinearGradient(
                     colors: [AppColors.deepOrange, AppColors.primaryOrange],
@@ -2966,16 +3943,27 @@ class _TrackingActionButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
-                  ),
-                ),
+                child: isLoading
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isFilled ? AppColors.white : AppColors.deepOrange,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: effectiveTextColor,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
               ),
             ),
           ),

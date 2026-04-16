@@ -19,3 +19,12 @@ class AddToWishlistEvent extends SearchEvent {
   @override
   List<Object?> get props => [landId];
 }
+
+class AddSelectedToWishlistEvent extends SearchEvent {
+  const AddSelectedToWishlistEvent({required this.landIds});
+
+  final List<int> landIds;
+
+  @override
+  List<Object?> get props => [landIds];
+}

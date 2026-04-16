@@ -62,6 +62,63 @@ class GetCartRequested extends ProfileEvent {
   List<Object?> get props => [];
 }
 
+class GetVisitsRequested extends ProfileEvent {
+  const GetVisitsRequested();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class GetShortlistsRequested extends ProfileEvent {
+  const GetShortlistsRequested();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class GetFinalsRequested extends ProfileEvent {
+  const GetFinalsRequested();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class CreateShortlistRequested extends ProfileEvent {
+  const CreateShortlistRequested({required this.landId});
+
+  final int landId;
+
+  @override
+  List<Object?> get props => [landId];
+}
+
+class DeleteShortlistRequested extends ProfileEvent {
+  const DeleteShortlistRequested({required this.landId});
+
+  final int landId;
+
+  @override
+  List<Object?> get props => [landId];
+}
+
+class CreateFinalRequested extends ProfileEvent {
+  const CreateFinalRequested({required this.landId});
+
+  final int landId;
+
+  @override
+  List<Object?> get props => [landId];
+}
+
+class DeleteFinalRequested extends ProfileEvent {
+  const DeleteFinalRequested({required this.landId});
+
+  final int landId;
+
+  @override
+  List<Object?> get props => [landId];
+}
+
 class CreatePaymentRequested extends ProfileEvent {
   const CreatePaymentRequested({
     required this.landIds,

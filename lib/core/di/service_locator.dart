@@ -26,10 +26,17 @@ import 'package:garuda_user_app/features/profile/data/repositories/profile_repos
 import 'package:garuda_user_app/features/profile/domain/repositories/profile_repository.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_availability_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_cart_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/create_final_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_payment_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/create_shortlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_visit_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/delete_final_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/delete_shortlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_availability_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_cart_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/get_finals_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/get_shortlists_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/get_visits_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/search/data/datasources/search_remote_data_source.dart';
@@ -106,6 +113,13 @@ Future<void> initializeDependencies({bool reset = false}) async {
     ..registerLazySingleton(() => GetAvailabilityUseCase(sl()))
     ..registerLazySingleton(() => CreateCartUseCase(sl()))
     ..registerLazySingleton(() => GetCartUseCase(sl()))
+    ..registerLazySingleton(() => GetVisitsUseCase(sl()))
+    ..registerLazySingleton(() => GetShortlistsUseCase(sl()))
+    ..registerLazySingleton(() => GetFinalsUseCase(sl()))
+    ..registerLazySingleton(() => CreateShortlistUseCase(sl()))
+    ..registerLazySingleton(() => DeleteShortlistUseCase(sl()))
+    ..registerLazySingleton(() => CreateFinalUseCase(sl()))
+    ..registerLazySingleton(() => DeleteFinalUseCase(sl()))
     ..registerLazySingleton(() => CreatePaymentUseCase(sl()))
     ..registerLazySingleton(() => CreateVisitUseCase(sl()))
     ..registerFactory(
@@ -117,7 +131,14 @@ Future<void> initializeDependencies({bool reset = false}) async {
         getAvailabilityUseCase: sl(),
         createCartUseCase: sl(),
         getCartUseCase: sl(),
+        getVisitsUseCase: sl(),
+        getShortlistsUseCase: sl(),
+        getFinalsUseCase: sl(),
         createPaymentUseCase: sl(),
+        createShortlistUseCase: sl(),
+        deleteShortlistUseCase: sl(),
+        createFinalUseCase: sl(),
+        deleteFinalUseCase: sl(),
         createVisitUseCase: sl(),
         authBloc: sl(),
       ),

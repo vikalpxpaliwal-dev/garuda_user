@@ -47,13 +47,13 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return const <WishlistItemModel>[];
     }
 
-    final result = responseData['result'] as List<dynamic>? ?? <dynamic>[];
+    final result =
+        responseData['data'] as List<dynamic>? ??
+        responseData['result'] as List<dynamic>? ??
+        <dynamic>[];
 
     return result
-        .map(
-          (json) =>
-              WishlistItemModel.fromJson(json as Map<String, dynamic>),
-        )
+        .map((json) => WishlistItemModel.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -84,14 +84,13 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return const <AvailabilityModel>[];
     }
 
-    final result = responseData['result'] as List<dynamic>? ?? <dynamic>[];
+    final result = responseData['data'] as List<dynamic>? ?? <dynamic>[];
 
     return result
-        .map(
-          (json) => AvailabilityModel.fromJson(json as Map<String, dynamic>),
-        )
+        .map((json) => AvailabilityModel.fromJson(json as Map<String, dynamic>))
         .toList();
   }
+
   @override
   Future<String> createCart({required List<int> landIds}) async {
     final response = await _apiService.post<Map<String, dynamic>>(
@@ -106,23 +105,20 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
     return responseData['message'] as String? ?? 'Cart updated successfully';
   }
+
   @override
   Future<List<CartItemModel>> getCart() async {
-    final response = await _apiService.get<Map<String, dynamic>>(
-      '/buyer/cart',
-    );
+    final response = await _apiService.get<Map<String, dynamic>>('/buyer/cart');
     final responseData = response.data;
 
     if (responseData == null) {
       return const <CartItemModel>[];
     }
 
-    final result = responseData['result'] as List<dynamic>? ?? <dynamic>[];
+    final result = responseData['data'] as List<dynamic>? ?? <dynamic>[];
 
     return result
-        .map(
-          (json) => CartItemModel.fromJson(json as Map<String, dynamic>),
-        )
+        .map((json) => CartItemModel.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -137,12 +133,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return const <VisitItemModel>[];
     }
 
-    final result = responseData['result'] as List<dynamic>? ?? <dynamic>[];
+    final result = responseData['data'] as List<dynamic>? ?? <dynamic>[];
 
     return result
-        .map(
-          (json) => VisitItemModel.fromJson(json as Map<String, dynamic>),
-        )
+        .map((json) => VisitItemModel.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -157,7 +151,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return const <ShortlistItemModel>[];
     }
 
-    final result = responseData['result'] as List<dynamic>? ?? <dynamic>[];
+    final result = responseData['data'] as List<dynamic>? ?? <dynamic>[];
 
     return result
         .map(
@@ -177,7 +171,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return const <ShortlistItemModel>[];
     }
 
-    final result = responseData['result'] as List<dynamic>? ?? <dynamic>[];
+    final result = responseData['data'] as List<dynamic>? ?? <dynamic>[];
 
     return result
         .map(
@@ -198,7 +192,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return 'Land shortlisted successfully';
     }
 
-    return responseData['message'] as String? ?? 'Land shortlisted successfully';
+    return responseData['message'] as String? ??
+        'Land shortlisted successfully';
   }
 
   @override
@@ -268,7 +263,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return 'Payment initiated successfully';
     }
 
-    return responseData['message'] as String? ?? 'Payment initiated successfully';
+    return responseData['message'] as String? ??
+        'Payment initiated successfully';
   }
 
   @override

@@ -113,42 +113,46 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(24),
+                        width: 180,
+                        height: 180,
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: AppColors.white,
-                          shape: BoxShape.circle,
+                          color: AppColors.white.withValues(alpha: 0.95),
+                          borderRadius: BorderRadius.circular(36),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.deepOrange.withValues(alpha: 0.15),
-                              blurRadius: 40,
-                              spreadRadius: 10,
+                              color: AppColors.deepOrange.withValues(alpha: 0.14),
+                              blurRadius: 36,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.home_work_rounded,
-                          size: 64,
-                          color: AppColors.deepOrange,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(22),
+                          child: Image.asset(
+                            'assets/images/garuda_logo.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       const Text(
                         'GARUDA',
                         style: TextStyle(
                           color: AppColors.ink,
-                          fontSize: 32,
+                          fontSize: 28,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 8,
+                          letterSpacing: 4,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'PREMIUM LAND HOLDINGS',
+                        'LANDS',
                         style: TextStyle(
                           color: AppColors.deepOrange.withValues(alpha: 0.8),
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 2,
+                          letterSpacing: 2.8,
                         ),
                       ),
                     ],

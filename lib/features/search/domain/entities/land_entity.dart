@@ -54,6 +54,15 @@ class LandDetailsEntity extends Equatable {
   final List<String> residence;
   final int numberOfBores;
   final bool farmPond;
+  final String mangoTreesNumber;
+  final String coconutTreesNumber;
+  final String neemTreesNumber;
+  final String baniyanTreesNumber;
+  final String tamarindTreesNumber;
+  final String sapotoTreesNumber;
+  final String guavaTreesNumber;
+  final String teakTreesNumber;
+  final String otherTreesNumber;
 
   const LandDetailsEntity({
     required this.totalAcres,
@@ -69,6 +78,15 @@ class LandDetailsEntity extends Equatable {
     required this.residence,
     required this.numberOfBores,
     required this.farmPond,
+    required this.mangoTreesNumber,
+    required this.coconutTreesNumber,
+    required this.neemTreesNumber,
+    required this.baniyanTreesNumber,
+    required this.tamarindTreesNumber,
+    required this.sapotoTreesNumber,
+    required this.guavaTreesNumber,
+    required this.teakTreesNumber,
+    required this.otherTreesNumber,
   });
 
   @override
@@ -86,6 +104,15 @@ class LandDetailsEntity extends Equatable {
         residence,
         numberOfBores,
         farmPond,
+        mangoTreesNumber,
+        coconutTreesNumber,
+        neemTreesNumber,
+        baniyanTreesNumber,
+        tamarindTreesNumber,
+        sapotoTreesNumber,
+        guavaTreesNumber,
+        teakTreesNumber,
+        otherTreesNumber,
       ];
 }
 

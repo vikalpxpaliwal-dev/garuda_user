@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -82,7 +83,6 @@ class _SignupPageState extends State<SignupPage> {
     return BlocProvider(
       create: (context) => sl<SignupBloc>(),
       child: Scaffold(
-        backgroundColor: AppColors.softBackground,
         body: BlocConsumer<SignupBloc, SignupState>(
           listener: (context, state) {
             if (state.status == SignupStatus.success) {
@@ -103,139 +103,123 @@ class _SignupPageState extends State<SignupPage> {
           builder: (context, state) {
             return Stack(
               children: [
-                // Mesh Background
+                // Premium Background Image
                 Positioned.fill(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: RadialGradient(
-                        center: Alignment(-0.8, -0.6),
-                        radius: 1.2,
-                        colors: [
-                          Color(0xFFFFF9F2),
-                          AppColors.softBackground,
-                        ],
-                      ),
-                    ),
+                  child: Image.network(
+                    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop',
+                    fit: BoxFit.cover,
                   ),
                 ),
+                // Dark Gradient Overlay for readability
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0.9, 0.8),
-                        radius: 1.4,
+                      gradient: LinearGradient(
                         colors: [
-                          AppColors.primaryOrange.withValues(alpha: 0.1),
-                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.6),
+                          Colors.black.withValues(alpha: 0.3),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
                 ),
                 SafeArea(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                    child: Center(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 420),
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const SizedBox(height: 20),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.white.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: AppColors.white.withValues(alpha: 0.9),
-                                  width: 1.2,
+                            // Branding Section
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(
+                                      Icons.landscape_rounded,
+                                      size: 20,
+                                      color: Color(0xFFFF9F69),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'GARUDA LANDS',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.home_work_rounded,
-                                    size: 18,
-                                    color: AppColors.deepOrange,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'GARUDA STAYS',
-                                    style: TextStyle(
-                                      color: AppColors.ink,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 32),
                             const Text(
-                              'Join Garuda',
+                              'Start Your\nJourney',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 32,
+                                color: Colors.white,
+                                fontSize: 36,
+                                height: 1.1,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -1,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             Text(
-                              'Create your account to start your stay journey.',
+                              'Join thousands of happy land owners.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: AppColors.mutedText,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.2,
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 40),
-                            CustomCard(
-                              borderRadius: BorderRadius.circular(28),
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.white.withValues(alpha: 0.8),
-                                  AppColors.white.withValues(alpha: 0.4),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: AppColors.white.withValues(alpha: 0.8),
-                                width: 1.2,
-                              ),
-                              padding: const EdgeInsets.all(24),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(28),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            // Glassmorphic Signup Card
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(32),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                child: Container(
+                                  padding: const EdgeInsets.all(28),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(32),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.25),
+                                      width: 1.5,
+                                    ),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       const Text(
                                         'Create Account',
                                         style: TextStyle(
-                                          color: AppColors.ink,
-                                          fontSize: 15,
+                                          color: Colors.white,
+                                          fontSize: 18,
                                           fontWeight: FontWeight.w900,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      const Text(
-                                        'Enter your details to set up your profile.',
-                                        style: TextStyle(
-                                          color: AppColors.mutedText,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 18),
+                                      const SizedBox(height: 24),
                                       ProfileImagePicker(
                                         selectedImage: _selectedImage,
                                         onImageSelected: (image) {
@@ -245,34 +229,26 @@ class _SignupPageState extends State<SignupPage> {
                                         },
                                       ),
                                       const SizedBox(height: 24),
-                                      _buildFieldLabel('Full Name'),
-                                      const SizedBox(height: 8),
                                       _buildTextField(
                                         controller: _nameController,
-                                        hint: 'Enter your full name',
+                                        hint: 'Full Name',
                                         icon: Icons.person_outline_rounded,
                                       ),
-                                      const SizedBox(height: 16),
-                                      _buildFieldLabel('Email'),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 18),
                                       _buildTextField(
                                         controller: _emailController,
-                                        hint: 'Enter your email',
-                                        icon: Icons.email_outlined,
+                                        hint: 'Email Address',
+                                        icon: Icons.alternate_email_rounded,
                                         keyboardType: TextInputType.emailAddress,
                                       ),
-                                      const SizedBox(height: 16),
-                                      _buildFieldLabel('Phone Number'),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 18),
                                       _buildTextField(
                                         controller: _phoneController,
-                                        hint: 'Enter your phone number',
-                                        icon: Icons.phone_android_outlined,
+                                        hint: 'Phone Number',
+                                        icon: Icons.phone_android_rounded,
                                         keyboardType: TextInputType.phone,
                                       ),
-                                      const SizedBox(height: 16),
-                                      _buildFieldLabel('Password'),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 18),
                                       _buildTextField(
                                         controller: _passwordController,
                                         hint: 'Password',
@@ -285,7 +261,7 @@ class _SignupPageState extends State<SignupPage> {
                                           });
                                         },
                                       ),
-                                      const SizedBox(height: 24),
+                                      const SizedBox(height: 32),
                                       FilledButton(
                                         onPressed: state.status == SignupStatus.loading
                                             ? null
@@ -293,24 +269,23 @@ class _SignupPageState extends State<SignupPage> {
                                         style: FilledButton.styleFrom(
                                           backgroundColor: AppColors.deepOrange,
                                           foregroundColor: AppColors.white,
-                                          minimumSize: const Size.fromHeight(56),
+                                          minimumSize: const Size.fromHeight(60),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(20),
                                           ),
-                                          elevation: 8,
-                                          shadowColor: AppColors.deepOrange.withValues(alpha: 0.4),
+                                          elevation: 0,
                                         ),
                                         child: state.status == SignupStatus.loading
                                             ? const SizedBox(
                                                 height: 24,
                                                 width: 24,
                                                 child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
+                                                  strokeWidth: 2.5,
                                                   color: Colors.white,
                                                 ),
                                               )
                                             : const Text(
-                                                'Create Account',
+                                                'Sign Up',
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w900,
@@ -318,40 +293,20 @@ class _SignupPageState extends State<SignupPage> {
                                                 ),
                                               ),
                                       ),
-                                      const SizedBox(height: 14),
-                                      Row(
-                                        children: const [
-                                          Icon(
-                                            Icons.verified_user_rounded,
-                                            size: 16,
-                                            color: AppColors.mutedText,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              'Your information stays private and encrypted.',
-                                              style: TextStyle(
-                                                color: AppColors.mutedText,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                                     ],
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 32),
+                            // Login Link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text(
+                                Text(
                                   "Already have an account?",
                                   style: TextStyle(
-                                    color: AppColors.mutedText,
+                                    color: Colors.white.withValues(alpha: 0.7),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -361,7 +316,7 @@ class _SignupPageState extends State<SignupPage> {
                                   child: const Text(
                                     'Log In',
                                     style: TextStyle(
-                                      color: AppColors.deepOrange,
+                                      color: Colors.white,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -394,11 +349,11 @@ class _SignupPageState extends State<SignupPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.white,
-          width: 1,
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 1.2,
         ),
       ),
       child: TextField(
@@ -406,42 +361,31 @@ class _SignupPageState extends State<SignupPage> {
         obscureText: isPassword && !isVisible,
         keyboardType: keyboardType,
         style: const TextStyle(
-          color: AppColors.ink,
+          color: Colors.white,
           fontSize: 15,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, size: 20, color: AppColors.mutedText),
+          prefixIcon: Icon(icon, size: 20, color: Colors.white.withValues(alpha: 0.5)),
           suffixIcon: isPassword
               ? IconButton(
                   onPressed: onVisibilityToggle,
                   icon: Icon(
                     isVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
                     size: 20,
-                    color: AppColors.mutedText,
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
                 )
               : null,
-          hintStyle: const TextStyle(
-            color: AppColors.mutedText,
+          hintStyle: TextStyle(
+            color: Colors.white.withValues(alpha: 0.3),
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFieldLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: AppColors.ink,
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
       ),
     );
   }

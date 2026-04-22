@@ -50,7 +50,8 @@ class _SearchPageState extends State<SearchPage> {
             _selectedWishlistLandIds.clear();
             _showScaffoldMessage(
               context: context,
-              message: state.wishlistMessage ?? 'Wishlist updated successfully.',
+              message:
+                  state.wishlistMessage ?? 'Wishlist updated successfully.',
               isSuccess: true,
             );
             context.go(AppRoutes.profile);
@@ -68,20 +69,24 @@ class _SearchPageState extends State<SearchPage> {
               state.wishlistStatus == WishlistStatus.loading &&
               state.activeWishlistLandId == null;
           final canShowWishlistFab =
-              !_isFilterOpen && state.status == SearchStatus.success && state.lands.isNotEmpty;
+              !_isFilterOpen &&
+              state.status == SearchStatus.success &&
+              state.lands.isNotEmpty;
 
           return Scaffold(
             floatingActionButton: canShowWishlistFab
                 ? FloatingActionButton.extended(
                     backgroundColor: AppColors.deepOrange,
                     foregroundColor: AppColors.white,
-                    onPressed: isBulkWishlistLoading || _selectedWishlistLandIds.isEmpty
+                    onPressed:
+                        isBulkWishlistLoading ||
+                            _selectedWishlistLandIds.isEmpty
                         ? null
                         : () => context.read<SearchBloc>().add(
-                              AddSelectedToWishlistEvent(
-                                landIds: _selectedWishlistLandIds.toList(),
-                              ),
+                            AddSelectedToWishlistEvent(
+                              landIds: _selectedWishlistLandIds.toList(),
                             ),
+                          ),
                     icon: isBulkWishlistLoading
                         ? const SizedBox(
                             width: 16,
@@ -95,227 +100,255 @@ class _SearchPageState extends State<SearchPage> {
                     label: Text(
                       _selectedWishlistLandIds.isEmpty
                           ? 'Select lands'
-                          : 'Add Wishlist (${_selectedWishlistLandIds.length})',
+                          : 'Wishlist (${_selectedWishlistLandIds.length})',
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   )
                 : null,
             body: Stack(
               children: [
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.softBackground,
-                  gradient: RadialGradient(
-                    center: Alignment(0.8, -0.6),
-                    radius: 1.2,
-                    colors: [Color(0xFFFFF9F2), AppColors.softBackground],
-                    stops: [0.0, 1.0],
-                  ),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(-0.9, 0.8),
-                    radius: 1.4,
-                    colors: [
-                      AppColors.primaryOrange.withValues(alpha: 0.05),
-                      Colors.transparent,
-                    ],
-                    stops: const [0.0, 1.0],
-                  ),
-                ),
-              ),
-            ),
-            CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              slivers: <Widget>[
-                const CommonSliverAppBar(),
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        'Search Land'.toUpperCase(),
-                                        style: const TextStyle(
-                                          color: AppColors.deepOrange,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w900,
-                                          height: 1.05,
-                                          letterSpacing: -0.5,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      const Text(
-                                        'VERIFIED LISTINGS FROM DIRECT FARMER DATA.',
-                                        style: TextStyle(
-                                          color: AppColors.mutedText,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _isFilterOpen = !_isFilterOpen;
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.primaryOrange
-                                            .withValues(alpha: 0.4),
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.primaryOrange
-                                              .withValues(alpha: 0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.tune_rounded,
-                                      size: 20,
-                                      color: AppColors.primaryOrange,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              child: _isFilterOpen
-                                  ? SearchFilterPanel(
-                                      key: const ValueKey<String>('filters'),
-                                      onClose: () {
-                                        setState(() {
-                                          _isFilterOpen = false;
-                                        });
-                                      },
-                                      onSearchResults: () {
-                                        setState(() {
-                                          _isFilterOpen = false;
-                                        });
-                                      },
-                                    )
-                                  : () {
-                                      if (state.status == SearchStatus.loading) {
-                                        return const _SearchSkeletonList();
-                                      }
-
-                                      if (state.status == SearchStatus.failure) {
-                                        return Center(
-                                          child: Column(
-                                            children: [
-                                              const Icon(
-                                                Icons.error_outline,
-                                                size: 48,
-                                                color: AppColors.deepOrange,
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                state.errorMessage ?? 'Failed to load lands',
-                                              ),
-                                              TextButton(
-                                                onPressed: () => context.read<SearchBloc>().add(
-                                                      const GetLandsEvent(),
-                                                    ),
-                                                child: const Text('Try Again'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-
-                                      if (state.lands.isEmpty) {
-                                        return const Center(
-                                          child: Padding(
-                                            padding: EdgeInsets.all(40),
-                                            child: Text('No lands found.'),
-                                          ),
-                                        );
-                                      }
-
-                                      return Column(
-                                        key: const ValueKey<String>('results'),
-                                        children: state.lands.map((land) {
-                                          final uiModel = LandMapper.toUiModel(land);
-                                          final isWishlisted =
-                                              state.wishlistedLandIds.contains(land.id);
-                                          final isSelected =
-                                              _selectedWishlistLandIds.contains(land.id);
-
-                                          return Padding(
-                                            padding: const EdgeInsets.only(bottom: 20),
-                                            child: SearchListingCard(
-                                              listing: uiModel,
-                                              isWishlisted: isWishlisted,
-                                              isWishlistSelected: isSelected,
-                                              isWishlistLoading: isBulkWishlistLoading,
-                                              onWishlistTap: isWishlisted || isBulkWishlistLoading
-                                                  ? null
-                                                  : () {
-                                                      setState(() {
-                                                        if (isSelected) {
-                                                          _selectedWishlistLandIds.remove(land.id);
-                                                        } else {
-                                                          _selectedWishlistLandIds.add(land.id);
-                                                        }
-                                                      });
-                                                    },
-                                              onViewDetails: () {
-                                                context.push(
-                                                  AppRoutes.searchDetails,
-                                                  extra: SearchListingDetailArgs(
-                                                    land: land,
-                                                    searchBloc: context.read<SearchBloc>(),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          );
-                                        }).toList(),
-                                      );
-                                    }(),
-                            ),
-                          ],
-                        ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.softBackground,
+                      gradient: RadialGradient(
+                        center: Alignment(0.8, -0.6),
+                        radius: 1.2,
+                        colors: [Color(0xFFFFF9F2), AppColors.softBackground],
+                        stops: [0.0, 1.0],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: const Alignment(-0.9, 0.8),
+                        radius: 1.4,
+                        colors: [
+                          AppColors.primaryOrange.withValues(alpha: 0.05),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+                CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  slivers: <Widget>[
+                    const CommonSliverAppBar(),
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 420),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(
+                                            'Search Land'.toUpperCase(),
+                                            style: const TextStyle(
+                                              color: AppColors.deepOrange,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w900,
+                                              height: 1.05,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          const Text(
+                                            'VERIFIED LISTINGS FROM DIRECT FARMER DATA.',
+                                            style: TextStyle(
+                                              color: AppColors.mutedText,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _isFilterOpen = !_isFilterOpen;
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.white,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppColors.primaryOrange
+                                                .withValues(alpha: 0.4),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.primaryOrange
+                                                  .withValues(alpha: 0.1),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.tune_rounded,
+                                          size: 20,
+                                          color: AppColors.primaryOrange,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: _isFilterOpen
+                                      ? SearchFilterPanel(
+                                          key: const ValueKey<String>(
+                                            'filters',
+                                          ),
+                                          onClose: () {
+                                            setState(() {
+                                              _isFilterOpen = false;
+                                            });
+                                          },
+                                          onSearchResults: () {
+                                            setState(() {
+                                              _isFilterOpen = false;
+                                            });
+                                          },
+                                        )
+                                      : () {
+                                          if (state.status ==
+                                              SearchStatus.loading) {
+                                            return const _SearchSkeletonList();
+                                          }
+
+                                          if (state.status ==
+                                              SearchStatus.failure) {
+                                            return Center(
+                                              child: Column(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.error_outline,
+                                                    size: 48,
+                                                    color: AppColors.deepOrange,
+                                                  ),
+                                                  const SizedBox(height: 16),
+                                                  Text(
+                                                    state.errorMessage ??
+                                                        'Failed to load lands',
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () => context
+                                                        .read<SearchBloc>()
+                                                        .add(
+                                                          const GetLandsEvent(),
+                                                        ),
+                                                    child: const Text(
+                                                      'Try Again',
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }
+
+                                          if (state.lands.isEmpty) {
+                                            return const Center(
+                                              child: Padding(
+                                                padding: EdgeInsets.all(40),
+                                                child: Text('No lands found.'),
+                                              ),
+                                            );
+                                          }
+
+                                          return Column(
+                                            key: const ValueKey<String>(
+                                              'results',
+                                            ),
+                                            children: state.lands.map((land) {
+                                              final uiModel =
+                                                  LandMapper.toUiModel(land);
+                                              final isWishlisted = state
+                                                  .wishlistedLandIds
+                                                  .contains(land.id);
+                                              final isSelected =
+                                                  _selectedWishlistLandIds
+                                                      .contains(land.id);
+
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 20,
+                                                ),
+                                                child: SearchListingCard(
+                                                  listing: uiModel,
+                                                  isWishlisted: isWishlisted,
+                                                  isWishlistSelected:
+                                                      isSelected,
+                                                  isWishlistLoading:
+                                                      isBulkWishlistLoading,
+                                                  onWishlistTap:
+                                                      isWishlisted ||
+                                                          isBulkWishlistLoading
+                                                      ? null
+                                                      : () {
+                                                          setState(() {
+                                                            if (isSelected) {
+                                                              _selectedWishlistLandIds
+                                                                  .remove(
+                                                                    land.id,
+                                                                  );
+                                                            } else {
+                                                              _selectedWishlistLandIds
+                                                                  .add(land.id);
+                                                            }
+                                                          });
+                                                        },
+                                                  onViewDetails: () {
+                                                    context.push(
+                                                      AppRoutes.searchDetails,
+                                                      extra:
+                                                          SearchListingDetailArgs(
+                                                            land: land,
+                                                            searchBloc: context
+                                                                .read<
+                                                                  SearchBloc
+                                                                >(),
+                                                          ),
+                                                    );
+                                                  },
+                                                ),
+                                              );
+                                            }).toList(),
+                                          );
+                                        }(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           );
@@ -494,11 +527,7 @@ class _SkeletonStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Row(
       children: [
-        _SkeletonFixedBlock(
-          height: 24,
-          width: 24,
-          isCircle: true,
-        ),
+        _SkeletonFixedBlock(height: 24, width: 24, isCircle: true),
         SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -516,10 +545,7 @@ class _SkeletonStat extends StatelessWidget {
 }
 
 class _SkeletonBlock extends StatelessWidget {
-  const _SkeletonBlock({
-    required this.height,
-    required this.widthFactor,
-  });
+  const _SkeletonBlock({required this.height, required this.widthFactor});
 
   final double height;
   final double widthFactor;

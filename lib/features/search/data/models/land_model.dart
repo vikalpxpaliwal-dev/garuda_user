@@ -192,6 +192,15 @@ class LandDetailsModel {
         residence: residence,
         numberOfBores: numberOfBores,
         farmPond: farmPond,
+        mangoTreesNumber: mangoTreesNumber,
+        coconutTreesNumber: coconutTreesNumber,
+        neemTreesNumber: neem_trees_number,
+        baniyanTreesNumber: baniyanTreesNumber,
+        tamarindTreesNumber: tamarindTreesNumber,
+        sapotoTreesNumber: sapotoTreesNumber,
+        guavaTreesNumber: guavaTreesNumber,
+        teakTreesNumber: teakTreesNumber,
+        otherTreesNumber: otherTreesNumber,
       );
 }
 

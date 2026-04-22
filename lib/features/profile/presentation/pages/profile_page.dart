@@ -6,6 +6,7 @@ import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/availability_entity.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/cart_item_entity.dart';
@@ -814,68 +815,211 @@ class _ProfileHeader extends StatelessWidget {
             : 'U';
         final name = state.user?.name ?? 'Profile';
 
-        return GestureDetector(
-          onTap: () => context.go(AppRoutes.editProfile),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE8D7),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.lightLine.withValues(alpha: 0.5),
-                  ),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: AppColors.deepOrange.withValues(alpha: 0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+        return Row(
+          children: <Widget>[
+            Expanded(
+              child: GestureDetector(
+                onTap: () => context.go(AppRoutes.editProfile),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  children: <Widget>[
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE8D7),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.lightLine.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: AppColors.deepOrange.withValues(alpha: 0.12),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          initial,
+                          style: const TextStyle(
+                            color: AppColors.deepOrange,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: AppColors.ink,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.edit_note_rounded,
+                                size: 18,
+                                color: AppColors.mutedText,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.deepOrange.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'ACTIVE MEMBER',
+                              style: TextStyle(
+                                color: AppColors.deepOrange,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      color: AppColors.deepOrange,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            _LogoutButton(onTap: () => _showLogoutDialog(context)),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: AppColors.white,
+        title: const Text(
+          'Logout',
+          style: TextStyle(
+            color: AppColors.ink,
+            fontWeight: FontWeight.w900,
+            fontSize: 20,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to logout from your account?',
+          style: TextStyle(
+            color: AppColors.mutedText,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'CANCEL',
+              style: TextStyle(
+                color: AppColors.mutedText,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(left: 8),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<AuthBloc>().add(UserLoggedOut());
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                foregroundColor: AppColors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'ACTIVE MEMBER',
-                    style: TextStyle(
-                      color: AppColors.deepOrange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
+              child: const Text(
+                'LOGOUT',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFFE1E1), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF0000).withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-        );
-      },
+          child: const Icon(
+            Icons.power_settings_new_rounded,
+            color: Color(0xFFD32F2F),
+            size: 22,
+          ),
+        ),
+      ),
     );
   }
 }

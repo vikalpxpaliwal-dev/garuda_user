@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/home/domain/entities/contact_info.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactSupportCard extends StatelessWidget {
   const ContactSupportCard({required this.contactInfo, super.key});
@@ -50,45 +51,50 @@ class ContactSupportCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.3)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.deepOrange.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.call_rounded,
-                      size: 16,
-                      color: AppColors.deepOrange,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      contactInfo.phoneNumber,
-                      style: const TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ],
-                ),
+          GestureDetector(
+            onTap: () async {
+              final String cleanNumber = contactInfo.phoneNumber.replaceAll(RegExp(r'[^0-9+]'), '');
+              final Uri telUri = Uri(scheme: 'tel', path: cleanNumber);
+              if (await canLaunchUrl(telUri)) {
+                await launchUrl(telUri);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.deepOrange.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.call_rounded,
+                    size: 16,
+                    color: AppColors.deepOrange,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    contactInfo.phoneNumber,
+                    style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

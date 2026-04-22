@@ -528,15 +528,6 @@ class _DetailFooterActions extends StatelessWidget {
             label: 'Share Land',
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _FooterButton(
-            icon: Icons.call_rounded,
-            label: 'Contact Agent',
-            isFilled: true,
-            iconAtEnd: true,
-          ),
-        ),
       ],
     );
   }

@@ -315,8 +315,8 @@ class _ShortlistPill extends StatelessWidget {
                       isWishlisted
                           ? Icons.favorite_rounded
                           : isSelected
-                              ? Icons.check_circle_rounded
-                              : Icons.favorite_border_rounded,
+                          ? Icons.check_circle_rounded
+                          : Icons.favorite_border_rounded,
                       size: 12,
                       color: isSelected && !isWishlisted
                           ? AppColors.deepOrange
@@ -327,8 +327,8 @@ class _ShortlistPill extends StatelessWidget {
                       isWishlisted
                           ? 'WISHLISTED'
                           : isSelected
-                              ? 'SELECTED'
-                              : 'ADD WISHLIST',
+                          ? 'SELECTED'
+                          : 'WISHLIST',
                       style: TextStyle(
                         color: isSelected && !isWishlisted
                             ? AppColors.deepOrange

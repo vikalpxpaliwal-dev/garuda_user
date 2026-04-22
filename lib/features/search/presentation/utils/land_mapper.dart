@@ -9,7 +9,7 @@ class LandMapper {
     final artworkType = _getArtworkType(land.id);
 
     return SearchListingUiModel(
-      title: 'Near ${land.village}',
+      title: 'Near ${land.mandal}',
       price: 'Rs.${_formatPrice(details.totalValue)}',
       availability: land.landStatus.isNotEmpty 
           ? land.landStatus.first.toUpperCase() 
@@ -83,7 +83,20 @@ class LandMapper {
           SearchListingDetailField(label: 'STATE', value: land.state),
           SearchListingDetailField(label: 'DISTRICT', value: land.district),
           SearchListingDetailField(label: 'MANDAL', value: land.mandal),
-          SearchListingDetailField(label: 'VILLAGE', value: land.village),
+        ],
+      ),
+      SearchListingDetailSection(
+        title: 'TREES DETAIL',
+        fields: [
+          SearchListingDetailField(label: 'MANGO', value: details.mangoTreesNumber),
+          SearchListingDetailField(label: 'COCONUT', value: details.coconutTreesNumber),
+          SearchListingDetailField(label: 'NEEM', value: details.neemTreesNumber),
+          SearchListingDetailField(label: 'BANIYAN', value: details.baniyanTreesNumber),
+          SearchListingDetailField(label: 'TAMARIND', value: details.tamarindTreesNumber),
+          SearchListingDetailField(label: 'SAPOTO', value: details.sapotoTreesNumber),
+          SearchListingDetailField(label: 'GUAVA', value: details.guavaTreesNumber),
+          SearchListingDetailField(label: 'TEAK', value: details.teakTreesNumber),
+          SearchListingDetailField(label: 'OTHER', value: details.otherTreesNumber),
         ],
       ),
       SearchListingDetailSection(

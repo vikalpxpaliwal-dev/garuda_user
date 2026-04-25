@@ -7,7 +7,7 @@ class GetLandsUseCase {
 
   GetLandsUseCase(this._repository);
 
-  Future<Result<List<LandEntity>>> call() {
-    return _repository.getLands();
+  Future<Result<List<LandEntity>>> call({Map<String, dynamic>? filters}) {
+    return _repository.getLands(filters: filters);
   }
 }

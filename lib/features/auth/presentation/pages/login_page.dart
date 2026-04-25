@@ -99,6 +99,9 @@ class _LoginPageState extends State<LoginPage> {
                   child: Image.network(
                     'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop',
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(color: AppColors.primaryOrange.withValues(alpha: 0.8));
+                    },
                   ),
                 ),
                 // Dark Gradient Overlay for readability

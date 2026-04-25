@@ -257,7 +257,16 @@ class _DetailHeroCard extends StatelessWidget {
               width: double.infinity,
               child: Stack(
                 children: <Widget>[
-                  Positioned.fill(child: _LifestyleArtwork(listing: listing)),
+                  Positioned.fill(
+                    child: listing.imageUrl != null && listing.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            Uri.encodeFull(listing.imageUrl!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                _LifestyleArtwork(listing: listing),
+                          )
+                        : _LifestyleArtwork(listing: listing),
+                  ),
                   // Inner Shadow Overlay for depth
                   Positioned.fill(
                     child: DecoratedBox(

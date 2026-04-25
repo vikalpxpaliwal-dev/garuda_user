@@ -2,7 +2,7 @@ import 'package:garuda_user_app/core/network/api_service.dart';
 import 'package:garuda_user_app/features/search/data/models/land_model.dart';
 
 abstract interface class SearchRemoteDataSource {
-  Future<List<LandModel>> getLands();
+  Future<List<LandModel>> getLands({Map<String, dynamic>? filters});
   Future<String> addToWishlist({required List<int> landIds});
 }
 
@@ -12,8 +12,8 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
   SearchRemoteDataSourceImpl(this._apiService);
 
   @override
-  Future<List<LandModel>> getLands() async {
-    final response = await _apiService.get('/buyer/land');
+  Future<List<LandModel>> getLands({Map<String, dynamic>? filters}) async {
+    final response = await _apiService.get('/buyer/land', queryParameters: filters);
 
     if (response.data != null && response.data['success'] == true) {
       final List<dynamic> data = response.data['data'];

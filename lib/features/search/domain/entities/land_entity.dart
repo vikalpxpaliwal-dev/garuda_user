@@ -119,11 +119,12 @@ class LandDetailsEntity extends Equatable {
 class MediaEntity extends Equatable {
   final String url;
   final String type;
+  final String category;
 
-  const MediaEntity({required this.url, required this.type});
+  const MediaEntity({required this.url, required this.type, required this.category});
 
   @override
-  List<Object?> get props => [url, type];
+  List<Object?> get props => [url, type, category];
 }
 
 class DocumentEntity extends Equatable {

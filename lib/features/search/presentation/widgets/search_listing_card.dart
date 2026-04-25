@@ -47,14 +47,23 @@ class SearchListingCard extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: switch (listing.artworkType) {
-                          SearchListingArtworkType.cityWalk =>
-                            const _CityWalkArtwork(),
-                          SearchListingArtworkType.forestRoad =>
-                            const _ForestRoadArtwork(),
-                          SearchListingArtworkType.cityBridge =>
-                            const _CityBridgeArtwork(),
-                        },
+                        child: listing.imageUrl != null && listing.imageUrl!.isNotEmpty
+                            ? Image.network(
+                            Uri.encodeFull(listing.imageUrl!),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return switch (listing.artworkType) {
+                                    SearchListingArtworkType.cityWalk => const _CityWalkArtwork(),
+                                    SearchListingArtworkType.forestRoad => const _ForestRoadArtwork(),
+                                    SearchListingArtworkType.cityBridge => const _CityBridgeArtwork(),
+                                  };
+                                },
+                              )
+                            : switch (listing.artworkType) {
+                                SearchListingArtworkType.cityWalk => const _CityWalkArtwork(),
+                                SearchListingArtworkType.forestRoad => const _ForestRoadArtwork(),
+                                SearchListingArtworkType.cityBridge => const _CityBridgeArtwork(),
+                              },
                       ),
                       Positioned.fill(
                         child: DecoratedBox(

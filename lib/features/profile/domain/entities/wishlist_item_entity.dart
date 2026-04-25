@@ -39,6 +39,7 @@ class WishlistLandEntity extends Equatable {
     required this.availability,
     required this.createdAt,
     required this.updatedAt,
+    this.imageUrl,
   });
 
   final int id;
@@ -57,6 +58,7 @@ class WishlistLandEntity extends Equatable {
   final String availability;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? imageUrl;
 
   @override
   List<Object?> get props => [
@@ -76,5 +78,6 @@ class WishlistLandEntity extends Equatable {
         availability,
         createdAt,
         updatedAt,
+        imageUrl,
       ];
 }

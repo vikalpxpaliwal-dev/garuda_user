@@ -12,6 +12,7 @@ class SearchListingUiModel {
     required this.artworkType,
     required this.detailSections,
     required this.documentStatuses,
+    this.imageUrl,
   });
 
   final String title;
@@ -24,6 +25,7 @@ class SearchListingUiModel {
   final SearchListingArtworkType artworkType;
   final List<SearchListingDetailSection> detailSections;
   final List<String> documentStatuses;
+  final String? imageUrl;
 }
 
 class SearchListingDetailSection {

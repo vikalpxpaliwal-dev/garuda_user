@@ -652,6 +652,8 @@ class _TrackedLandUiModel {
     required this.secondaryMetricValue,
     required this.availabilityBadge,
     required this.palette,
+    this.imageUrl,
+    this.availabilityStatus,
   });
 
   final int id;
@@ -664,6 +666,9 @@ class _TrackedLandUiModel {
   final String secondaryMetricValue;
   final String availabilityBadge;
   final List<Color> palette;
+  final String? imageUrl;
+  /// Raw status string from API, e.g. "available", "not_available"
+  final String? availabilityStatus;
 }
 
 class _OwnedLandUiModel {
@@ -672,12 +677,14 @@ class _OwnedLandUiModel {
     required this.subtitle,
     required this.priceLabel,
     required this.palette,
+    this.imageUrl,
   });
 
   final String title;
   final String subtitle;
   final String priceLabel;
   final List<Color> palette;
+  final String? imageUrl;
 }
 
 class _ProfileAvailabilityMapper {
@@ -715,6 +722,8 @@ class _ProfileAvailabilityMapper {
             : 'STANDARD',
         availabilityBadge: 'TRACKING',
         palette: palette,
+        imageUrl: land.imageUrl,
+        availabilityStatus: item.status,
       );
     }).toList();
   }
@@ -739,6 +748,7 @@ class _ProfileOwnedLandMapper {
             '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
         priceLabel: 'TBD',
         palette: palette,
+        imageUrl: land.imageUrl,
       );
     }).toList();
   }
@@ -779,6 +789,7 @@ class _ProfileWishlistMapper {
             : 'STANDARD',
         availabilityBadge: availabilityBadge,
         palette: palette,
+        imageUrl: land.imageUrl,
       );
     }).toList();
   }
@@ -1478,7 +1489,7 @@ class _JourneyCard extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: 14),
-              _JourneyThumbnail(colors: journey.palette),
+              _JourneyThumbnail(colors: journey.palette, imageUrl: journey.imageUrl),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -1544,7 +1555,7 @@ class _OwnedLandCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
       child: Row(
         children: <Widget>[
-          _OwnedLandThumbnail(colors: land.palette),
+          _OwnedLandThumbnail(colors: land.palette, imageUrl: land.imageUrl),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -1936,6 +1947,42 @@ class _TrackedJourneyDetailCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                // Availability status indicator
+                Builder(
+                  builder: (context) {
+                    final isAvailable =
+                        journey.availabilityStatus?.toLowerCase() == 'available';
+                    return Row(
+                      children: <Widget>[
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isAvailable
+                                ? AppColors.forestGreen
+                                : AppColors.deepOrange,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isAvailable
+                              ? 'AVAILABLE FOR VISIT'
+                              : 'NOT AVAILABLE FOR VISIT',
+                          style: TextStyle(
+                            color: isAvailable
+                                ? AppColors.forestGreen
+                                : AppColors.deepOrange,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
                 Row(
                   children: <Widget>[
@@ -1946,15 +1993,17 @@ class _TrackedJourneyDetailCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: _TrackingActionButton(
-                        label: isInCart ? '✓ IN CART' : 'VISIT CART',
-                        isFilled: !isInCart,
-                        foregroundColor: isInCart ? AppColors.deepOrange : null,
-                        onTap: onVisitCart,
+                    if (journey.availabilityStatus?.toLowerCase() == 'available') ...<Widget>[
+                      Expanded(
+                        child: _TrackingActionButton(
+                          label: isInCart ? '✓ IN CART' : 'VISIT CART',
+                          isFilled: !isInCart,
+                          foregroundColor: isInCart ? AppColors.deepOrange : null,
+                          onTap: onVisitCart,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
+                      const SizedBox(width: 8),
+                    ],
                     Expanded(
                       child: _TrackingActionButton(
                         label: 'REMOVE'.toUpperCase(),
@@ -2428,6 +2477,13 @@ class _CartLandRow extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
+                image: land.imageUrl != null && land.imageUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(Uri.encodeFull(land.imageUrl!)),
+                        fit: BoxFit.cover,
+                        onError: (error, stackTrace) {},
+                      )
+                    : null,
               ),
               child: Stack(
                 children: <Widget>[
@@ -2630,6 +2686,13 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
+                image: land.imageUrl != null && land.imageUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(Uri.encodeFull(land.imageUrl!)),
+                        fit: BoxFit.cover,
+                        onError: (error, stackTrace) {},
+                      )
+                    : null,
               ),
               child: Stack(
                 children: <Widget>[
@@ -3695,9 +3758,10 @@ class _VisitsHubFab extends StatelessWidget {
 }
 
 class _OwnedLandThumbnail extends StatelessWidget {
-  const _OwnedLandThumbnail({required this.colors});
+  const _OwnedLandThumbnail({required this.colors, this.imageUrl});
 
   final List<Color> colors;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -3706,16 +3770,26 @@ class _OwnedLandThumbnail extends StatelessWidget {
       child: SizedBox(
         width: 44,
         height: 44,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: colors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
             ),
-          ),
-          child: Stack(
-            children: <Widget>[
+            if (imageUrl != null && imageUrl!.isNotEmpty)
+              Image.network(
+                Uri.encodeFull(imageUrl!),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const SizedBox.shrink(),
+              )
+            else ...<Widget>[
               Positioned(
                 left: -2,
                 right: -2,
@@ -3768,7 +3842,7 @@ class _OwnedLandThumbnail extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -3776,9 +3850,10 @@ class _OwnedLandThumbnail extends StatelessWidget {
 }
 
 class _JourneyThumbnail extends StatelessWidget {
-  const _JourneyThumbnail({required this.colors});
+  const _JourneyThumbnail({required this.colors, this.imageUrl});
 
   final List<Color> colors;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -3787,16 +3862,27 @@ class _JourneyThumbnail extends StatelessWidget {
       child: SizedBox(
         width: 42,
         height: 42,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            // Gradient fallback background
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: colors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
             ),
-          ),
-          child: Stack(
-            children: <Widget>[
+            if (imageUrl != null && imageUrl!.isNotEmpty)
+              Image.network(
+                Uri.encodeFull(imageUrl!),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const SizedBox.shrink(),
+              )
+            else ...<Widget>[
               Positioned(
                 left: -6,
                 bottom: -8,
@@ -3843,7 +3929,7 @@ class _JourneyThumbnail extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -3879,22 +3965,85 @@ class _TrackedJourneyHeroArtwork extends StatelessWidget {
                 ),
               ),
             ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(0.68, -0.02),
-                    radius: 0.7,
-                    colors: <Color>[
-                      Colors.white.withValues(alpha: 0.92),
-                      Colors.white.withValues(alpha: 0.16),
-                      Colors.transparent,
-                    ],
-                    stops: const <double>[0, 0.22, 1],
+            if (journey.imageUrl != null && journey.imageUrl!.isNotEmpty)
+              Positioned.fill(
+                child: Image.network(
+                  Uri.encodeFull(journey.imageUrl!),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const SizedBox.shrink(),
+                ),
+              )
+            else ...<Widget>[
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0.68, -0.02),
+                      radius: 0.7,
+                      colors: <Color>[
+                        Colors.white.withValues(alpha: 0.92),
+                        Colors.white.withValues(alpha: 0.16),
+                        Colors.transparent,
+                      ],
+                      stops: const <double>[0, 0.22, 1],
+                    ),
                   ),
                 ),
               ),
-            ),
+              ...List<Widget>.generate(
+                7,
+                (index) => Positioned(
+                  left: index < 4 ? 8.0 + (index * 16.0) : null,
+                  right: index >= 4 ? 8.0 + ((index - 4) * 18.0) : null,
+                  top: 0,
+                  bottom: 0,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      width: index.isEven ? 22 : 16,
+                      height: 110 + ((index % 3) * 18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF081426).withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 18,
+                right: 18,
+                bottom: -8,
+                child: Transform.rotate(
+                  angle: -0.12,
+                  child: Container(
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: <Color>[
+                          const Color(0xFF08111D),
+                          const Color(0xFF263746).withValues(alpha: 0.92),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 20,
+                top: 20,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.96),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
             // Inner Shadow Overlay for depth
             Positioned.fill(
               child: DecoratedBox(
@@ -3908,58 +4057,6 @@ class _TrackedJourneyHeroArtwork extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
-                ),
-              ),
-            ),
-            ...List<Widget>.generate(
-              7,
-              (index) => Positioned(
-                left: index < 4 ? 8.0 + (index * 16.0) : null,
-                right: index >= 4 ? 8.0 + ((index - 4) * 18.0) : null,
-                top: 0,
-                bottom: 0,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    width: index.isEven ? 22 : 16,
-                    height: 110 + ((index % 3) * 18),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF081426).withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 18,
-              right: 18,
-              bottom: -8,
-              child: Transform.rotate(
-                angle: -0.12,
-                child: Container(
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: <Color>[
-                        const Color(0xFF08111D),
-                        const Color(0xFF263746).withValues(alpha: 0.92),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 20,
-              top: 20,
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.96),
-                  shape: BoxShape.circle,
                 ),
               ),
             ),

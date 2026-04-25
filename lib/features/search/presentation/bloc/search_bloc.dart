@@ -27,7 +27,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   ) async {
     emit(state.copyWith(status: SearchStatus.loading));
 
-    final result = await _getLandsUseCase();
+    final result = await _getLandsUseCase(filters: event.filters);
 
     switch (result) {
       case Success(data: final lands):

@@ -229,10 +229,13 @@ class _SearchPageState extends State<SearchPage> {
                                               _isFilterOpen = false;
                                             });
                                           },
-                                          onSearchResults: () {
+                                          onSearchResults: (filters) {
                                             setState(() {
                                               _isFilterOpen = false;
                                             });
+                                            context.read<SearchBloc>().add(
+                                              GetLandsEvent(filters: filters),
+                                            );
                                           },
                                         )
                                       : () {

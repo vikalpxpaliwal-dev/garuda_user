@@ -8,7 +8,12 @@ sealed class SearchEvent extends Equatable {
 }
 
 class GetLandsEvent extends SearchEvent {
-  const GetLandsEvent();
+  const GetLandsEvent({this.filters});
+  
+  final Map<String, dynamic>? filters;
+  
+  @override
+  List<Object?> get props => [filters];
 }
 
 class AddToWishlistEvent extends SearchEvent {

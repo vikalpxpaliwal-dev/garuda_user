@@ -247,7 +247,7 @@ class MediaModel {
 
   Map<String, dynamic> toJson() => _$MediaModelToJson(this);
 
-  MediaEntity toEntity() => MediaEntity(url: url, type: type);
+  MediaEntity toEntity() => MediaEntity(url: url, type: type, category: category);
 }
 
 @JsonSerializable()

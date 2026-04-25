@@ -11,9 +11,9 @@ class SearchRepositoryImpl implements SearchRepository {
   SearchRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<Result<List<LandEntity>>> getLands() async {
+  Future<Result<List<LandEntity>>> getLands({Map<String, dynamic>? filters}) async {
     try {
-      final landModels = await _remoteDataSource.getLands();
+      final landModels = await _remoteDataSource.getLands(filters: filters);
       final landEntities = landModels.map((m) => m.toEntity()).toList();
       return Success(landEntities);
     } on AppException catch (e) {

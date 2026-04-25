@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
@@ -10,7 +11,7 @@ class SearchFilterPanel extends StatefulWidget {
   });
 
   final VoidCallback onClose;
-  final VoidCallback onSearchResults;
+  final ValueChanged<Map<String, dynamic>> onSearchResults;
 
   @override
   State<SearchFilterPanel> createState() => _SearchFilterPanelState();
@@ -43,21 +44,13 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
   bool _deepFiltersExpanded = false;
 
   // Deep Filter States
-  String? _selectedLandStatus;
-  bool _isFarmhouse = false;
-  String? _selectedRoadType;
-  RangeValues _distanceRange = const RangeValues(0, 20);
   String? _selectedWaterSource;
-  String? _selectedBoundaryStatus;
   bool _isPoultryShed = false;
   bool _isCowShed = false;
   bool _isFarmPond = false;
   String? _selectedPhaseType;
 
-  static const List<String> _landStatuses = ['Clear Title', 'Patta Land', 'Assigned Land'];
-  static const List<String> _roadTypes = ['National Highway', 'State Highway', 'BT Road', 'Metal Road', 'Dirt Road'];
   static const List<String> _waterSources = ['Borewell', 'Canal', 'Open Well', 'River', 'Rainfed'];
-  static const List<String> _boundaryStatuses = ['Fenced', 'Compound Wall', 'Stones Marked'];
   static const List<String> _phaseTypes = ['Single Phase', '3 Phase', 'High Tension'];
 
   @override
@@ -224,118 +217,8 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const _SubSectionHeader(
-                    icon: Icons.verified_user_outlined,
-                    label: 'OWNERSHIP & STATUS',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FilterLabel('LAND STATUS'),
-                            const SizedBox(height: 8),
-                            _FilterDropdown(
-                              value: _selectedLandStatus,
-                              hint: 'Any Status',
-                              options: _landStatuses,
-                              onChanged: (val) => setState(() => _selectedLandStatus = val),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 4,
-                        child: _ToggleField(
-                          label: 'FARMHOUSE',
-                          value: _isFarmhouse,
-                          onChanged: (val) => setState(() => _isFarmhouse = val),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const _SubSectionHeader(
-                    icon: Icons.add_road_rounded,
-                    label: 'ROAD CONNECTIVITY',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FilterLabel('ATTACHED ROAD'),
-                            const SizedBox(height: 8),
-                            _FilterDropdown(
-                              value: _selectedRoadType,
-                              hint: 'Road Type',
-                              options: _roadTypes,
-                              onChanged: (val) => setState(() => _selectedRoadType = val),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FilterLabel('DIST. FROM TOWN (KM)'),
-                            const SizedBox(height: 4),
-                            SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                trackHeight: 6,
-                                activeTrackColor: AppColors.deepOrange,
-                                inactiveTrackColor: const Color(0xFFF7D8C2),
-                                rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
-                                rangeThumbShape: const _FilterRangeThumbShape(radius: 8),
-                                overlayShape: SliderComponentShape.noOverlay,
-                              ),
-                              child: RangeSlider(
-                                values: _distanceRange,
-                                min: 0,
-                                max: 20,
-                                onChanged: (val) => setState(() => _distanceRange = val),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '${_distanceRange.start.round()} km',
-                                  style: const TextStyle(
-                                    color: AppColors.deepOrange,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  '${_distanceRange.end.round()} km',
-                                  style: const TextStyle(
-                                    color: AppColors.deepOrange,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const _SubSectionHeader(
                     icon: Icons.water_drop_outlined,
-                    label: 'WATER & BOUNDARY',
+                    label: 'WATER SOURCE',
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -351,22 +234,6 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
                               hint: 'Any',
                               options: _waterSources,
                               onChanged: (val) => setState(() => _selectedWaterSource = val),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FilterLabel('BOUNDARY STATUS'),
-                            const SizedBox(height: 8),
-                            _FilterDropdown(
-                              value: _selectedBoundaryStatus,
-                              hint: 'Any',
-                              options: _boundaryStatuses,
-                              onChanged: (val) => setState(() => _selectedBoundaryStatus = val),
                             ),
                           ],
                         ),
@@ -435,7 +302,32 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: widget.onSearchResults,
+              onPressed: () {
+                final filters = <String, dynamic>{};
+                
+                if (_selectedState != null) filters['state'] = _selectedState;
+                if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
+                if (_selectedMandal != null) filters['mandal'] = _selectedMandal;
+                
+                if (_priceRange.start > 0) filters['min_price_per_acre'] = _priceRange.start * 100000;
+                if (_priceRange.end < 500) filters['max_price_per_acre'] = _priceRange.end * 100000;
+                
+                if (_budgetRange.start > 0) filters['min_total_budget'] = _budgetRange.start * 10000000;
+                if (_budgetRange.end < 50) filters['max_total_budget'] = _budgetRange.end * 10000000;
+                
+                if (_isFarmPond) filters['farm_pond'] = true;
+                if (_isPoultryShed) filters['poultry_shed'] = true;
+                if (_isCowShed) filters['cow_shed'] = true;
+                
+                if (_selectedWaterSource != null) {
+                  filters['water_source'] = jsonEncode({_selectedWaterSource!: true});
+                }
+                if (_selectedPhaseType != null) {
+                  filters['electricity'] = jsonEncode({_selectedPhaseType!: true});
+                }
+
+                widget.onSearchResults(filters);
+              },
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.deepOrange,
                 foregroundColor: AppColors.white,
@@ -776,31 +668,6 @@ class _ToggleField extends StatelessWidget {
   }
 }
 
-class _DeepFilterChip extends StatelessWidget {
-  const _DeepFilterChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.softBackground,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.lightLine),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.deepOrange,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
 
 class _DashedDivider extends StatelessWidget {
   const _DashedDivider();

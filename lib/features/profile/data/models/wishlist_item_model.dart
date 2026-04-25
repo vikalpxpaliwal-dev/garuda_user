@@ -60,6 +60,7 @@ class WishlistLandModel {
     required this.availability,
     required this.createdAt,
     required this.updatedAt,
+    this.imageUrl,
   });
 
   factory WishlistLandModel.fromJson(Map<String, dynamic> json) {
@@ -81,6 +82,7 @@ class WishlistLandModel {
           json['availablity'] as String? ??
           json['availability'] as String? ??
           '',
+      imageUrl: _parseImageUrl(json['media']),
       createdAt: _parseDateTime(json['created_at']),
       updatedAt: _parseDateTime(json['updated_at']),
     );
@@ -102,6 +104,7 @@ class WishlistLandModel {
   final String availability;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? imageUrl;
 
   WishlistLandEntity toEntity() {
     return WishlistLandEntity(
@@ -121,6 +124,7 @@ class WishlistLandModel {
       availability: availability,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      imageUrl: imageUrl,
     );
   }
 }
@@ -139,4 +143,24 @@ DateTime _parseDateTime(Object? value) {
   }
 
   return DateTime.fromMillisecondsSinceEpoch(0);
+}
+
+String? _parseImageUrl(Object? media) {
+  if (media is List && media.isNotEmpty) {
+    // Prefer 'default' category image first, then any other image type
+    for (final item in media) {
+      if (item is Map<String, dynamic> &&
+          item['type'] == 'image' &&
+          item['category'] == 'default') {
+        return item['url'] as String?;
+      }
+    }
+    // Fallback to the first image of any category
+    for (final item in media) {
+      if (item is Map<String, dynamic> && item['type'] == 'image') {
+        return item['url'] as String?;
+      }
+    }
+  }
+  return null;
 }

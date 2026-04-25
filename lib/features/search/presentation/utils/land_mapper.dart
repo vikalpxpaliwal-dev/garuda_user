@@ -21,6 +21,7 @@ class LandMapper {
       artworkType: artworkType,
       detailSections: _buildDetailSections(land),
       documentStatuses: land.documents.map((doc) => doc.docType).toList(),
+      imageUrl: _pickImageUrl(land.media),
     );
   }
 
@@ -33,6 +34,18 @@ class LandMapper {
       case 2: return SearchListingArtworkType.cityBridge;
       default: return SearchListingArtworkType.cityWalk;
     }
+  }
+
+  static String? _pickImageUrl(List<MediaEntity> media) {
+    // Prefer 'default' category image first
+    for (final m in media) {
+      if (m.type == 'image' && m.category == 'default') return m.url;
+    }
+    // Fallback to any image
+    for (final m in media) {
+      if (m.type == 'image') return m.url;
+    }
+    return null;
   }
 
   static String _formatPrice(double value) {

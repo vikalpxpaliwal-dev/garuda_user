@@ -16,6 +16,10 @@ class GetLandsEvent extends SearchEvent {
   List<Object?> get props => [filters];
 }
 
+class GetLocationsEvent extends SearchEvent {
+  const GetLocationsEvent();
+}
+
 class AddToWishlistEvent extends SearchEvent {
   const AddToWishlistEvent({required this.landId});
 

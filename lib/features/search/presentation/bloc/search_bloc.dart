@@ -2,21 +2,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/add_to_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_lands_usecase.dart';
+import 'package:garuda_user_app/features/search/domain/usecases/get_locations_usecase.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
 
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final GetLandsUseCase _getLandsUseCase;
   final AddToWishlistUseCase _addToWishlistUseCase;
+  final GetLocationsUseCase _getLocationsUseCase;
 
   SearchBloc({
     required GetLandsUseCase getLandsUseCase,
     required AddToWishlistUseCase addToWishlistUseCase,
-  })
-      : _getLandsUseCase = getLandsUseCase,
+    required GetLocationsUseCase getLocationsUseCase,
+  })  : _getLandsUseCase = getLandsUseCase,
         _addToWishlistUseCase = addToWishlistUseCase,
+        _getLocationsUseCase = getLocationsUseCase,
         super(const SearchState()) {
     on<GetLandsEvent>(_onGetLands);
+    on<GetLocationsEvent>(_onGetLocations);
     on<AddToWishlistEvent>(_onAddToWishlist);
     on<AddSelectedToWishlistEvent>(_onAddSelectedToWishlist);
   }
@@ -38,6 +42,28 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       case Error(failure: final f):
         emit(state.copyWith(
           status: SearchStatus.failure,
+          errorMessage: f.message,
+        ));
+    }
+  }
+
+  Future<void> _onGetLocations(
+    GetLocationsEvent event,
+    Emitter<SearchState> emit,
+  ) async {
+    emit(state.copyWith(locationStatus: LocationStatus.loading));
+
+    final result = await _getLocationsUseCase();
+
+    switch (result) {
+      case Success(data: final states):
+        emit(state.copyWith(
+          locationStatus: LocationStatus.success,
+          states: states,
+        ));
+      case Error(failure: final f):
+        emit(state.copyWith(
+          locationStatus: LocationStatus.failure,
           errorMessage: f.message,
         ));
     }

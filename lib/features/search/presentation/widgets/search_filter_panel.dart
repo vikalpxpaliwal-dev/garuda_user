@@ -1,7 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
+import 'package:garuda_user_app/features/search/domain/entities/location_entity.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
+import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
 
 class SearchFilterPanel extends StatefulWidget {
   const SearchFilterPanel({
@@ -18,27 +23,10 @@ class SearchFilterPanel extends StatefulWidget {
 }
 
 class _SearchFilterPanelState extends State<SearchFilterPanel> {
-  static const List<String> _states = <String>[
-    'Telangana',
-    'Andhra Pradesh',
-    'Karnataka',
-  ];
-
-  static const List<String> _districts = <String>[
-    'Rangareddy',
-    'Mahabubnagar',
-    'Medchal',
-  ];
-
-  static const List<String> _mandals = <String>[
-    'Shadnagar',
-    'Chevella',
-    'Khajaguda',
-  ];
-
   String? _selectedState;
   String? _selectedDistrict;
   String? _selectedMandal;
+  String? _selectedVillage;
   RangeValues _priceRange = const RangeValues(0, 500);
   RangeValues _budgetRange = const RangeValues(0, 50);
   bool _deepFiltersExpanded = false;
@@ -54,308 +42,421 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
   static const List<String> _phaseTypes = ['Single Phase', '3 Phase', 'High Tension'];
 
   @override
+  void initState() {
+    super.initState();
+    final bloc = context.read<SearchBloc>();
+    if (bloc.state.locationStatus == LocationStatus.initial) {
+      bloc.add(const GetLocationsEvent());
+    }
+  }
+
+  // ── Cascading helpers ──────────────────────────────────────────────────
+  List<String> _stateNames(List<StateEntity> states) =>
+      states.map((s) => s.name).toList();
+
+  List<String> _districtNames(List<StateEntity> states) {
+    if (_selectedState == null) return const [];
+    final state = states.where((s) => s.name == _selectedState).firstOrNull;
+    return state?.districts.map((d) => d.name).toList() ?? const [];
+  }
+
+  List<String> _mandalNames(List<StateEntity> states) {
+    if (_selectedState == null || _selectedDistrict == null) return const [];
+    final state = states.where((s) => s.name == _selectedState).firstOrNull;
+    final district = state?.districts
+        .where((d) => d.name == _selectedDistrict)
+        .firstOrNull;
+    return district?.mandals.map((m) => m.name).toList() ?? const [];
+  }
+
+  List<String> _villageNames(List<StateEntity> states) {
+    if (_selectedState == null ||
+        _selectedDistrict == null ||
+        _selectedMandal == null) {
+      return const [];
+    }
+    final state = states.where((s) => s.name == _selectedState).firstOrNull;
+    final district = state?.districts
+        .where((d) => d.name == _selectedDistrict)
+        .firstOrNull;
+    final mandal = district?.mandals
+        .where((m) => m.name == _selectedMandal)
+        .firstOrNull;
+    return mandal?.villages.map((v) => v.name).toList() ?? const [];
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CustomCard(
-      gradient: LinearGradient(
-        colors: [
-          AppColors.white,
-          AppColors.softBackground.withValues(alpha: 0.5),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Expanded(
-                child: Text(
-                  'SEARCH FILTERS',
-                  style: TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              InkWell(
-                onTap: widget.onClose,
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.softBackground,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 16,
-                    color: AppColors.ink,
-                  ),
-                ),
-              ),
+    return BlocBuilder<SearchBloc, SearchState>(
+      buildWhen: (prev, curr) =>
+          prev.locationStatus != curr.locationStatus ||
+          prev.states != curr.states,
+      builder: (context, searchState) {
+        final isLoading = searchState.locationStatus == LocationStatus.loading;
+        final states = searchState.states;
+
+        return CustomCard(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.white,
+              AppColors.softBackground.withValues(alpha: 0.5),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 20),
-          const _SectionLabel('STATE'),
-          const SizedBox(height: 10),
-          _FilterDropdown(
-            value: _selectedState,
-            hint: 'Select State',
-            options: _states,
-            onChanged: (value) => setState(() => _selectedState = value),
-          ),
-          const SizedBox(height: 18),
-          const Row(
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(child: _SectionLabel('DISTRICT')),
-              SizedBox(width: 12),
-              Expanded(child: _SectionLabel('MANDAL')),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _FilterDropdown(
-                  value: _selectedDistrict,
-                  hint: 'District',
-                  options: _districts,
-                  onChanged: (value) =>
-                      setState(() => _selectedDistrict = value),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _FilterDropdown(
-                  value: _selectedMandal,
-                  hint: 'Mandal',
-                  options: _mandals,
-                  onChanged: (value) => setState(() => _selectedMandal = value),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          const _DashedDivider(),
-          const SizedBox(height: 20),
-          _RangeFilterSection(
-            label: 'PRICE PER ACRE (LAKHS)',
-            values: _priceRange,
-            max: 500,
-            suffix: 'L',
-            onChanged: (values) => setState(() => _priceRange = values),
-          ),
-          const SizedBox(height: 20),
-          _RangeFilterSection(
-            label: 'TOTAL BUDGET (CRORES)',
-            values: _budgetRange,
-            max: 50,
-            suffix: 'Cr',
-            onChanged: (values) => setState(() => _budgetRange = values),
-          ),
-          const SizedBox(height: 16),
-          InkWell(
-            onTap: () {
-              setState(() {
-                _deepFiltersExpanded = !_deepFiltersExpanded;
-              });
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: BoxDecoration(
-                color: AppColors.softBackground,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+              // ── Header ─────────────────────────────────────────────
+              Row(
                 children: <Widget>[
-                  const Icon(
-                    Icons.tune_rounded,
-                    size: 14,
-                    color: AppColors.deepOrange,
-                  ),
-                  const SizedBox(width: 10),
                   const Expanded(
                     child: Text(
-                      'DEEP FILTERS',
+                      'SEARCH FILTERS',
                       style: TextStyle(
-                        color: AppColors.deepOrange,
-                        fontSize: 11,
+                        color: AppColors.ink,
+                        fontSize: 12,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
-                  AnimatedRotation(
-                    duration: const Duration(milliseconds: 240),
-                    turns: _deepFiltersExpanded ? 0.5 : 0,
-                    child: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 20,
-                      color: AppColors.mutedText,
+                  InkWell(
+                    onTap: widget.onClose,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.softBackground,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: AppColors.ink,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 300),
-            crossFadeState: _deepFiltersExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            firstChild: const SizedBox(height: 12),
-            secondChild: Padding(
-              padding: const EdgeInsets.only(top: 16, bottom: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _SubSectionHeader(
-                    icon: Icons.water_drop_outlined,
-                    label: 'WATER SOURCE',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FilterLabel('WATER SOURCE'),
-                            const SizedBox(height: 8),
-                            _FilterDropdown(
-                              value: _selectedWaterSource,
-                              hint: 'Any',
-                              options: _waterSources,
-                              onChanged: (val) => setState(() => _selectedWaterSource = val),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const _SubSectionHeader(
-                    icon: Icons.home_outlined,
-                    label: 'PROPERTY FACILITIES',
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ToggleField(
-                          label: 'POULTRY SHED',
-                          value: _isPoultryShed,
-                          onChanged: (val) => setState(() => _isPoultryShed = val),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _ToggleField(
-                          label: 'COW SHED',
-                          value: _isCowShed,
-                          onChanged: (val) => setState(() => _isCowShed = val),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: _ToggleField(
-                          label: 'FARM POND',
-                          value: _isFarmPond,
-                          onChanged: (val) => setState(() => _isFarmPond = val),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FilterLabel('ELECTRICITY'),
-                            const SizedBox(height: 8),
-                            _FilterDropdown(
-                              value: _selectedPhaseType,
-                              hint: 'Phase Type',
-                              options: _phaseTypes,
-                              onChanged: (val) => setState(() => _selectedPhaseType = val),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () {
-                final filters = <String, dynamic>{};
-                
-                if (_selectedState != null) filters['state'] = _selectedState;
-                if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
-                if (_selectedMandal != null) filters['mandal'] = _selectedMandal;
-                
-                if (_priceRange.start > 0) filters['min_price_per_acre'] = _priceRange.start * 100000;
-                if (_priceRange.end < 500) filters['max_price_per_acre'] = _priceRange.end * 100000;
-                
-                if (_budgetRange.start > 0) filters['min_total_budget'] = _budgetRange.start * 10000000;
-                if (_budgetRange.end < 50) filters['max_total_budget'] = _budgetRange.end * 10000000;
-                
-                if (_isFarmPond) filters['farm_pond'] = true;
-                if (_isPoultryShed) filters['poultry_shed'] = true;
-                if (_isCowShed) filters['cow_shed'] = true;
-                
-                if (_selectedWaterSource != null) {
-                  filters['water_source'] = jsonEncode({_selectedWaterSource!: true});
-                }
-                if (_selectedPhaseType != null) {
-                  filters['electricity'] = jsonEncode({_selectedPhaseType!: true});
-                }
+              const SizedBox(height: 20),
 
-                widget.onSearchResults(filters);
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.deepOrange,
-                foregroundColor: AppColors.white,
-                minimumSize: const Size.fromHeight(56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              // ── Location loading indicator ─────────────────────────
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.deepOrange,
+                      ),
+                    ),
+                  ),
                 ),
-                elevation: 0,
+
+              // ── State ──────────────────────────────────────────────
+              const _SectionLabel('STATE'),
+              const SizedBox(height: 10),
+              _FilterDropdown(
+                value: _selectedState,
+                hint: 'Select State',
+                options: _stateNames(states),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedState = value;
+                    _selectedDistrict = null;
+                    _selectedMandal = null;
+                    _selectedVillage = null;
+                  });
+                },
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              const SizedBox(height: 18),
+
+              // ── District + Mandal ──────────────────────────────────
+              const Row(
                 children: <Widget>[
-                  Icon(Icons.search_rounded, size: 20),
-                  SizedBox(width: 10),
-                  Text(
-                    'Search Results',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.2,
+                  Expanded(child: _SectionLabel('DISTRICT')),
+                  SizedBox(width: 12),
+                  Expanded(child: _SectionLabel('MANDAL')),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _FilterDropdown(
+                      value: _selectedDistrict,
+                      hint: 'District',
+                      options: _districtNames(states),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedDistrict = value;
+                          _selectedMandal = null;
+                          _selectedVillage = null;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _FilterDropdown(
+                      value: _selectedMandal,
+                      hint: 'Mandal',
+                      options: _mandalNames(states),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedMandal = value;
+                          _selectedVillage = null;
+                        });
+                      },
                     ),
                   ),
                 ],
               ),
-            ),
+
+              // ── Village ────────────────────────────────────────────
+              if (_villageNames(states).isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const _SectionLabel('VILLAGE'),
+                const SizedBox(height: 10),
+                _FilterDropdown(
+                  value: _selectedVillage,
+                  hint: 'Select Village',
+                  options: _villageNames(states),
+                  onChanged: (value) => setState(() => _selectedVillage = value),
+                ),
+              ],
+
+              const SizedBox(height: 22),
+              const _DashedDivider(),
+              const SizedBox(height: 20),
+
+              // ── Price / Budget ─────────────────────────────────────
+              _RangeFilterSection(
+                label: 'PRICE PER ACRE (LAKHS)',
+                values: _priceRange,
+                max: 500,
+                suffix: 'L',
+                onChanged: (values) => setState(() => _priceRange = values),
+              ),
+              const SizedBox(height: 20),
+              _RangeFilterSection(
+                label: 'TOTAL BUDGET (CRORES)',
+                values: _budgetRange,
+                max: 50,
+                suffix: 'Cr',
+                onChanged: (values) => setState(() => _budgetRange = values),
+              ),
+              const SizedBox(height: 16),
+
+              // ── Deep Filters toggle ────────────────────────────────
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _deepFiltersExpanded = !_deepFiltersExpanded;
+                  });
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.softBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      const Icon(
+                        Icons.tune_rounded,
+                        size: 14,
+                        color: AppColors.deepOrange,
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'DEEP FILTERS',
+                          style: TextStyle(
+                            color: AppColors.deepOrange,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      AnimatedRotation(
+                        duration: const Duration(milliseconds: 240),
+                        turns: _deepFiltersExpanded ? 0.5 : 0,
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 20,
+                          color: AppColors.mutedText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 300),
+                crossFadeState: _deepFiltersExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: const SizedBox(height: 12),
+                secondChild: Padding(
+                  padding: const EdgeInsets.only(top: 16, bottom: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _SubSectionHeader(
+                        icon: Icons.water_drop_outlined,
+                        label: 'WATER SOURCE',
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _FilterLabel('WATER SOURCE'),
+                                const SizedBox(height: 8),
+                                _FilterDropdown(
+                                  value: _selectedWaterSource,
+                                  hint: 'Any',
+                                  options: _waterSources,
+                                  onChanged: (val) => setState(() => _selectedWaterSource = val),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const _SubSectionHeader(
+                        icon: Icons.home_outlined,
+                        label: 'PROPERTY FACILITIES',
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ToggleField(
+                              label: 'POULTRY SHED',
+                              value: _isPoultryShed,
+                              onChanged: (val) => setState(() => _isPoultryShed = val),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ToggleField(
+                              label: 'COW SHED',
+                              value: _isCowShed,
+                              onChanged: (val) => setState(() => _isCowShed = val),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: _ToggleField(
+                              label: 'FARM POND',
+                              value: _isFarmPond,
+                              onChanged: (val) => setState(() => _isFarmPond = val),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _FilterLabel('ELECTRICITY'),
+                                const SizedBox(height: 8),
+                                _FilterDropdown(
+                                  value: _selectedPhaseType,
+                                  hint: 'Phase Type',
+                                  options: _phaseTypes,
+                                  onChanged: (val) => setState(() => _selectedPhaseType = val),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Search button ──────────────────────────────────────
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    final filters = <String, dynamic>{};
+
+                    if (_selectedState != null) filters['state'] = _selectedState;
+                    if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
+                    if (_selectedMandal != null) filters['mandal'] = _selectedMandal;
+                    if (_selectedVillage != null) filters['village'] = _selectedVillage;
+
+                    if (_priceRange.start > 0) filters['min_price_per_acre'] = _priceRange.start * 100000;
+                    if (_priceRange.end < 500) filters['max_price_per_acre'] = _priceRange.end * 100000;
+
+                    if (_budgetRange.start > 0) filters['min_total_budget'] = _budgetRange.start * 10000000;
+                    if (_budgetRange.end < 50) filters['max_total_budget'] = _budgetRange.end * 10000000;
+
+                    if (_isFarmPond) filters['farm_pond'] = true;
+                    if (_isPoultryShed) filters['poultry_shed'] = true;
+                    if (_isCowShed) filters['cow_shed'] = true;
+
+                    if (_selectedWaterSource != null) {
+                      filters['water_source'] = jsonEncode({_selectedWaterSource!: true});
+                    }
+                    if (_selectedPhaseType != null) {
+                      filters['electricity'] = jsonEncode({_selectedPhaseType!: true});
+                    }
+
+                    widget.onSearchResults(filters);
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.deepOrange,
+                    foregroundColor: AppColors.white,
+                    minimumSize: const Size.fromHeight(56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.search_rounded, size: 20),
+                      SizedBox(width: 10),
+                      Text(
+                        'Search Results',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

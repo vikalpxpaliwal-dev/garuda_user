@@ -44,6 +44,7 @@ import 'package:garuda_user_app/features/search/data/repositories/search_reposit
 import 'package:garuda_user_app/features/search/domain/repositories/search_repository.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/add_to_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_lands_usecase.dart';
+import 'package:garuda_user_app/features/search/domain/usecases/get_locations_usecase.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -161,10 +162,12 @@ Future<void> initializeDependencies({bool reset = false}) async {
     )
     ..registerLazySingleton(() => GetLandsUseCase(sl()))
     ..registerLazySingleton(() => AddToWishlistUseCase(sl()))
+    ..registerLazySingleton(() => GetLocationsUseCase(sl()))
     ..registerFactory(
       () => SearchBloc(
         getLandsUseCase: sl(),
         addToWishlistUseCase: sl(),
+        getLocationsUseCase: sl(),
       ),
     );
 }

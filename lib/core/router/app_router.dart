@@ -5,6 +5,7 @@ import 'package:garuda_user_app/core/router/go_router_refresh_stream.dart';
 import 'package:garuda_user_app/core/widgets/app_shell_scaffold.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:garuda_user_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:garuda_user_app/features/auth/presentation/pages/login_page.dart';
 import 'package:garuda_user_app/features/auth/presentation/pages/signup_page.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
@@ -32,17 +33,18 @@ final class AppRouter {
 
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
       final isSigningUp = state.matchedLocation == AppRoutes.signup;
+      final isForgottingPassword = state.matchedLocation == AppRoutes.forgotPassword;
       final isSplashing = state.matchedLocation == AppRoutes.splash;
 
       if (status == AuthStatus.initial) return null;
 
       if (status == AuthStatus.unauthenticated) {
-        if (isLoggingIn || isSigningUp || isSplashing) return null;
+        if (isLoggingIn || isSigningUp || isForgottingPassword || isSplashing) return null;
         return AppRoutes.login;
       }
 
       if (status == AuthStatus.authenticated) {
-        if (isLoggingIn || isSigningUp || isSplashing) return AppRoutes.home;
+        if (isLoggingIn || isSigningUp || isForgottingPassword || isSplashing) return AppRoutes.home;
       }
 
       return null;
@@ -59,6 +61,10 @@ final class AppRouter {
       GoRoute(
         path: AppRoutes.signup,
         builder: (context, state) => const SignupPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordPage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

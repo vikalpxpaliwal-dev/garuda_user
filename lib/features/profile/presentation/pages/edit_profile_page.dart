@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
 import 'package:garuda_user_app/features/auth/presentation/widgets/profile_image_picker.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_state.dart';
@@ -21,14 +22,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   XFile? _selectedImage;
+  String? _currentImageUrl;
 
   @override
   void initState() {
     super.initState();
-    // Assuming we have the current user in state or passed down.
-    // For now initializing empty, but will be populated from state.
-    _nameController = TextEditingController();
-    _phoneController = TextEditingController();
+    final user = context.read<AuthBloc>().state.user;
+    
+    _nameController = TextEditingController(text: user?.name ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
+    _currentImageUrl = user?.photo;
   }
 
   @override
@@ -44,7 +47,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         UpdateProfileRequested(
           name: _nameController.text,
           phone: _phoneController.text,
-          photoPath: _selectedImage?.path,
+          photoPath: _selectedImage?.path ?? _currentImageUrl,
         ),
       );
     }
@@ -132,6 +135,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       const SizedBox(height: 20),
                       ProfileImagePicker(
                         selectedImage: _selectedImage,
+                        currentImageUrl: _currentImageUrl,
                         onImageSelected: (image) {
                           setState(() => _selectedImage = image);
                         },

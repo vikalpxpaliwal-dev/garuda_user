@@ -142,5 +142,20 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity?> getUser() async {
     return _localDataSource.getUser();
   }
+
+  @override
+  Future<Result<String>> forgotPassword(String email) async {
+    try {
+      final message = await _remoteDataSource.forgotPassword(email);
+      return Success(message);
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
+      }
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
 }
 

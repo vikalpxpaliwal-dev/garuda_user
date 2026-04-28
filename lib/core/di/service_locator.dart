@@ -10,10 +10,12 @@ import 'package:garuda_user_app/features/auth/data/datasources/auth_remote_data_
 import 'package:garuda_user_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:garuda_user_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/delete_account_usecase.dart';
+import 'package:garuda_user_app/features/auth/domain/usecases/forgot_password_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/signup_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/forgot_password_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/login_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
 import 'package:garuda_user_app/features/home/data/datasources/home_local_data_source.dart';
@@ -101,8 +103,10 @@ Future<void> initializeDependencies({bool reset = false}) async {
     ..registerLazySingleton(() => LoginUseCase(sl()))
     ..registerLazySingleton(() => UpdateProfileUseCase(sl()))
     ..registerLazySingleton(() => DeleteAccountUseCase(sl()))
+    ..registerLazySingleton(() => ForgotPasswordUseCase(sl()))
     ..registerFactory(() => SignupBloc(signupUseCase: sl()))
     ..registerFactory(() => LoginBloc(loginUseCase: sl()))
+    ..registerFactory(() => ForgotPasswordBloc(forgotPasswordUseCase: sl()))
     ..registerLazySingleton<ProfileRemoteDataSource>(
       () => ProfileRemoteDataSourceImpl(sl()),
     )

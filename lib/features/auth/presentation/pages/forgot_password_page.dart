@@ -1,100 +1,59 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
-import 'package:garuda_user_app/features/auth/data/models/signup_request_model.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/signup_event.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/signup_state.dart';
-import 'package:garuda_user_app/features/auth/presentation/widgets/profile_image_picker.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/forgot_password_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/forgot_password_event.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/forgot_password_state.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
-class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+class ForgotPasswordPage extends StatefulWidget {
+  const ForgotPasswordPage({super.key});
 
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _SignupPageState extends State<SignupPage> {
-  final _nameController = TextEditingController();
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _phoneController = TextEditingController();
-  XFile? _selectedImage;
-  
-  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
-  void _onSignupPressed(BuildContext context) {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        _phoneController.text.isEmpty) {
-      _showScaffoldMessage(
-        context: context,
-        message: 'Please fill all required fields',
-        isSuccess: false,
-      );
+  void _onSendOtpPressed(BuildContext context) {
+    if (_emailController.text.isEmpty) {
+      AppScaffoldMessage.showError(context, 'Please enter your email address');
       return;
     }
 
-    final request = SignupRequestModel(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      phone: _phoneController.text.trim(),
-      // In a real app, we would upload the file here and get a URL.
-      // For now, we use a placeholder as the API expects a String URL.
-      photo: 'https://example.com/profile.jpg',
-    );
-
-    context.read<SignupBloc>().add(SignupRequested(request));
-  }
-
-  void _showScaffoldMessage({
-    required BuildContext context,
-    required String message,
-    required bool isSuccess,
-  }) {
-    if (isSuccess) {
-      AppScaffoldMessage.showSuccess(context, message);
-    } else {
-      AppScaffoldMessage.showError(context, message);
-    }
+    context.read<ForgotPasswordBloc>().add(
+          ForgotPasswordRequested(_emailController.text.trim()),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<SignupBloc>(),
+      create: (context) => sl<ForgotPasswordBloc>(),
       child: Scaffold(
-        body: BlocConsumer<SignupBloc, SignupState>(
+        resizeToAvoidBottomInset: false,
+        body: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
           listener: (context, state) {
-            if (state.status == SignupStatus.success) {
-              _showScaffoldMessage(
-                context: context,
-                message: 'Signup successful! Please login to continue.',
-                isSuccess: true,
+            if (state.status == ForgotPasswordStatus.success) {
+              AppScaffoldMessage.showSuccess(
+                context,
+                state.message ?? 'OTP sent successfully!',
               );
-              context.pushReplacement(AppRoutes.login);
-            } else if (state.status == SignupStatus.failure) {
-              _showScaffoldMessage(
-                context: context,
-                message: state.errorMessage ?? 'Signup failed',
-                isSuccess: false,
+              context.pop();
+            } else if (state.status == ForgotPasswordStatus.failure) {
+              AppScaffoldMessage.showError(
+                context,
+                state.errorMessage ?? 'Failed to send OTP',
               );
             }
           },
@@ -107,11 +66,12 @@ class _SignupPageState extends State<SignupPage> {
                     'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Container(color: AppColors.primaryOrange.withValues(alpha: 0.8));
+                      return Container(
+                          color: AppColors.primaryOrange.withValues(alpha: 0.8));
                     },
                   ),
                 ),
-                // Dark Gradient Overlay for readability
+                // Dark Gradient Overlay
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -130,7 +90,8 @@ class _SignupPageState extends State<SignupPage> {
                 SafeArea(
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 32),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 420),
                         child: Column(
@@ -140,7 +101,8 @@ class _SignupPageState extends State<SignupPage> {
                             // Branding Section
                             Center(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(999),
@@ -173,7 +135,7 @@ class _SignupPageState extends State<SignupPage> {
                             ),
                             const SizedBox(height: 32),
                             const Text(
-                              'Start Your\nJourney',
+                              'Reset Your\nPassword',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
@@ -185,7 +147,7 @@ class _SignupPageState extends State<SignupPage> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Join thousands of happy land owners.',
+                              'Enter your email to receive a reset code.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.8),
@@ -193,27 +155,30 @@ class _SignupPageState extends State<SignupPage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 40),
-                            // Glassmorphic Signup Card
+                            const SizedBox(height: 48),
+                            // Glassmorphic Card
                             ClipRRect(
                               borderRadius: BorderRadius.circular(32),
                               child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                filter:
+                                    ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                                 child: Container(
                                   padding: const EdgeInsets.all(28),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(32),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.25),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.25),
                                       width: 1.5,
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       const Text(
-                                        'Create Account',
+                                        'Forgot Password',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 18,
@@ -221,72 +186,43 @@ class _SignupPageState extends State<SignupPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 24),
-                                      ProfileImagePicker(
-                                        selectedImage: _selectedImage,
-                                        onImageSelected: (image) {
-                                          setState(() {
-                                            _selectedImage = image;
-                                          });
-                                        },
-                                      ),
-                                      const SizedBox(height: 24),
-                                      _buildTextField(
-                                        controller: _nameController,
-                                        hint: 'Full Name',
-                                        icon: Icons.person_outline_rounded,
-                                      ),
-                                      const SizedBox(height: 18),
                                       _buildTextField(
                                         controller: _emailController,
                                         hint: 'Email Address',
                                         icon: Icons.alternate_email_rounded,
-                                        keyboardType: TextInputType.emailAddress,
-                                      ),
-                                      const SizedBox(height: 18),
-                                      _buildTextField(
-                                        controller: _phoneController,
-                                        hint: 'Phone Number',
-                                        icon: Icons.phone_android_rounded,
-                                        keyboardType: TextInputType.phone,
-                                      ),
-                                      const SizedBox(height: 18),
-                                      _buildTextField(
-                                        controller: _passwordController,
-                                        hint: 'Password',
-                                        icon: Icons.lock_outline_rounded,
-                                        isPassword: true,
-                                        isVisible: _isPasswordVisible,
-                                        onVisibilityToggle: () {
-                                          setState(() {
-                                            _isPasswordVisible = !_isPasswordVisible;
-                                          });
-                                        },
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                       ),
                                       const SizedBox(height: 32),
                                       FilledButton(
-                                        onPressed: state.status == SignupStatus.loading
+                                        onPressed: state.status ==
+                                                ForgotPasswordStatus.loading
                                             ? null
-                                            : () => _onSignupPressed(context),
+                                            : () => _onSendOtpPressed(context),
                                         style: FilledButton.styleFrom(
                                           backgroundColor: AppColors.deepOrange,
                                           foregroundColor: AppColors.white,
-                                          minimumSize: const Size.fromHeight(60),
+                                          minimumSize:
+                                              const Size.fromHeight(60),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
                                           ),
                                           elevation: 0,
                                         ),
-                                        child: state.status == SignupStatus.loading
+                                        child: state.status ==
+                                                ForgotPasswordStatus.loading
                                             ? const SizedBox(
                                                 height: 24,
                                                 width: 24,
-                                                child: CircularProgressIndicator(
+                                                child:
+                                                    CircularProgressIndicator(
                                                   strokeWidth: 2.5,
                                                   color: Colors.white,
                                                 ),
                                               )
                                             : const Text(
-                                                'Sign Up',
+                                                'Send OTP',
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w900,
@@ -299,31 +235,18 @@ class _SignupPageState extends State<SignupPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32),
-                            // Login Link
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Already have an account?",
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            const SizedBox(height: 48),
+                            // Back to Login Link
+                            TextButton(
+                              onPressed: () => context.pop(),
+                              child: const Text(
+                                'Back to Login',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
                                 ),
-                                TextButton(
-                                  onPressed: () => context.pop(),
-                                  child: const Text(
-                                    'Log In',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
@@ -343,9 +266,6 @@ class _SignupPageState extends State<SignupPage> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
-    bool isPassword = false,
-    bool isVisible = false,
-    VoidCallback? onVisibilityToggle,
     TextInputType? keyboardType,
   }) {
     return Container(
@@ -359,7 +279,6 @@ class _SignupPageState extends State<SignupPage> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: isPassword && !isVisible,
         keyboardType: keyboardType,
         style: const TextStyle(
           color: Colors.white,
@@ -368,27 +287,18 @@ class _SignupPageState extends State<SignupPage> {
         ),
         decoration: InputDecoration(
           hintText: hint,
-          prefixIcon: Icon(icon, size: 20, color: Colors.white.withValues(alpha: 0.5)),
-          suffixIcon: isPassword
-              ? IconButton(
-                  onPressed: onVisibilityToggle,
-                  icon: Icon(
-                    isVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    size: 20,
-                    color: Colors.white.withValues(alpha: 0.5),
-                  ),
-                )
-              : null,
+          prefixIcon: Icon(icon,
+              size: 20, color: Colors.white.withValues(alpha: 0.5)),
           hintStyle: TextStyle(
             color: Colors.white.withValues(alpha: 0.3),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         ),
       ),
     );
   }
 }
-

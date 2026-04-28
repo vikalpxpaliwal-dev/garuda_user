@@ -16,4 +16,5 @@ abstract interface class AuthRepository {
   });
   Future<Result<void>> deleteAccount();
   Future<UserEntity?> getUser();
+  Future<Result<String>> forgotPassword(String email);
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
-import 'package:garuda_user_app/core/widgets/app_text.dart';
 import 'package:garuda_user_app/features/home/domain/entities/hero_banner.dart';
 
 class HeroBannerCard extends StatelessWidget {
@@ -68,24 +67,6 @@ class HeroBannerCard extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        AppText(
-          banner.title,
-          variant: AppTextVariant.titleLarge,
-          textAlign: TextAlign.center,
-          color: AppColors.ink,
-          fontWeight: FontWeight.w800,
-        ),
-        const SizedBox(height: 5),
-        Text(
-          banner.subtitle.toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.deepOrange,
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.8,
           ),
         ),
       ],

@@ -7,21 +7,59 @@ class ProfileImagePicker extends StatelessWidget {
   const ProfileImagePicker({
     super.key,
     this.selectedImage,
+    this.currentImageUrl,
     required this.onImageSelected,
   });
 
   final XFile? selectedImage;
+  final String? currentImageUrl;
   final ValueChanged<XFile?> onImageSelected;
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
+  Future<void> _pickImage(BuildContext context) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_rounded, color: AppColors.primaryOrange),
+                title: const Text('Take a Photo'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final image = await picker.pickImage(
+                    source: ImageSource.camera,
+                    imageQuality: 70,
+                  );
+                  if (image != null) {
+                    onImageSelected(image);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_rounded, color: AppColors.primaryOrange),
+                title: const Text('Choose from Gallery'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final image = await picker.pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 70,
+                  );
+                  if (image != null) {
+                    onImageSelected(image);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
-    if (image != null) {
-      onImageSelected(image);
-    }
   }
 
   @override
@@ -48,23 +86,14 @@ class ProfileImagePicker extends StatelessWidget {
               ],
             ),
             child: ClipOval(
-              child: selectedImage != null
-                  ? Image.file(
-                      File(selectedImage!.path),
-                      fit: BoxFit.cover,
-                    )
-                  : Icon(
-                      Icons.person_outline_rounded,
-                      size: 60,
-                      color: AppColors.mutedText.withValues(alpha: 0.5),
-                    ),
+              child: _buildImage(),
             ),
           ),
           Positioned(
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: _pickImage,
+              onTap: () => _pickImage(context),
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(
@@ -81,6 +110,31 @@ class ProfileImagePicker extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildImage() {
+    if (selectedImage != null) {
+      return Image.file(
+        File(selectedImage!.path),
+        fit: BoxFit.cover,
+      );
+    } else if (currentImageUrl != null && currentImageUrl!.isNotEmpty) {
+      return Image.network(
+        currentImageUrl!,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+      );
+    } else {
+      return _buildPlaceholder();
+    }
+  }
+
+  Widget _buildPlaceholder() {
+    return Icon(
+      Icons.person_outline_rounded,
+      size: 60,
+      color: AppColors.mutedText.withValues(alpha: 0.5),
     );
   }
 }

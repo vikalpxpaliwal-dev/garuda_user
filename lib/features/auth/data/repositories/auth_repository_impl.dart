@@ -157,5 +157,49 @@ class AuthRepositoryImpl implements AuthRepository {
       return Error(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Result<String>> verifyOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final message = await _remoteDataSource.verifyOtp(
+        email: email,
+        otp: otp,
+      );
+      return Success(message);
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
+      }
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<String>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final message = await _remoteDataSource.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+      return Success(message);
+    } on AppException catch (e) {
+      if (e is NetworkException) {
+        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
+      }
+      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Error(ServerFailure(message: e.toString()));
+    }
+  }
 }
 

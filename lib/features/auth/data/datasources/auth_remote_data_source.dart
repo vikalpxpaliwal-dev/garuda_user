@@ -18,6 +18,12 @@ abstract interface class AuthRemoteDataSource {
   Future<void> logout(String refreshToken);
   Future<void> deleteAccount();
   Future<String> forgotPassword(String email);
+  Future<String> verifyOtp({required String email, required String otp});
+  Future<String> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -107,6 +113,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final response = await _apiService.post(
       '/buyer/forgot-password',
       data: {'email': email},
+    );
+    return response.data['message'] as String;
+  }
+  @override
+  Future<String> verifyOtp({required String email, required String otp}) async {
+    final response = await _apiService.post(
+      '/buyer/verify-otp',
+      data: {
+        'email': email,
+        'otp': otp,
+      },
+    );
+    return response.data['message'] as String;
+  }
+
+  @override
+  Future<String> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final response = await _apiService.post(
+      '/buyer/reset-password',
+      data: {
+        'email': email,
+        'otp': otp,
+        'newPassword': newPassword,
+      },
     );
     return response.data['message'] as String;
   }

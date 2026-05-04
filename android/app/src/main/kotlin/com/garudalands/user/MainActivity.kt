@@ -1,4 +1,4 @@
-package com.example.garuda_user_app
+package com.garudalands.user
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -14,10 +14,14 @@ import 'package:garuda_user_app/features/auth/domain/usecases/forgot_password_us
 import 'package:garuda_user_app/features/auth/domain/usecases/login_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/signup_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/update_profile_usecase.dart';
+import 'package:garuda_user_app/features/auth/domain/usecases/verify_otp_usecase.dart';
+import 'package:garuda_user_app/features/auth/domain/usecases/reset_password_usecase.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/forgot_password_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/login_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/verify_otp_bloc.dart';
+import 'package:garuda_user_app/features/auth/presentation/bloc/reset_password_bloc.dart';
 import 'package:garuda_user_app/features/home/data/datasources/home_local_data_source.dart';
 import 'package:garuda_user_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:garuda_user_app/features/home/domain/repositories/home_repository.dart';
@@ -104,9 +108,13 @@ Future<void> initializeDependencies({bool reset = false}) async {
     ..registerLazySingleton(() => UpdateProfileUseCase(sl()))
     ..registerLazySingleton(() => DeleteAccountUseCase(sl()))
     ..registerLazySingleton(() => ForgotPasswordUseCase(sl()))
+    ..registerLazySingleton(() => VerifyOtpUseCase(sl()))
+    ..registerLazySingleton(() => ResetPasswordUseCase(sl()))
     ..registerFactory(() => SignupBloc(signupUseCase: sl()))
     ..registerFactory(() => LoginBloc(loginUseCase: sl()))
     ..registerFactory(() => ForgotPasswordBloc(forgotPasswordUseCase: sl()))
+    ..registerFactory(() => VerifyOtpBloc(verifyOtpUseCase: sl()))
+    ..registerFactory(() => ResetPasswordBloc(resetPasswordUseCase: sl()))
     ..registerLazySingleton<ProfileRemoteDataSource>(
       () => ProfileRemoteDataSourceImpl(sl()),
     )

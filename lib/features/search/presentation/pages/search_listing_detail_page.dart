@@ -1,26 +1,16 @@
-import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:garuda_user_app/core/constants/app_routes.dart';
-import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
-import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
-import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.dart';
 import 'package:go_router/go_router.dart';
 
 class SearchListingDetailArgs {
-  const SearchListingDetailArgs({
-    required this.land,
-    required this.searchBloc,
-  });
+  const SearchListingDetailArgs({required this.land, required this.searchBloc});
 
   final LandEntity land;
   final SearchBloc searchBloc;
@@ -53,177 +43,58 @@ class SearchListingDetailPage extends StatelessWidget {
         }
       },
       child: Scaffold(
-        body: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.softBackground,
-                  gradient: RadialGradient(
-                    center: Alignment(0.8, -0.6),
-                    radius: 1.2,
-                    colors: <Color>[Color(0xFFFFF9F2), AppColors.softBackground],
-                  ),
-                ),
-              ),
+        backgroundColor: const Color(0xFFF7F7F7),
+        body: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            SliverToBoxAdapter(
+              child: _DetailHeaderBlock(land: land, listing: listing),
             ),
-            Positioned.fill(
+            SliverToBoxAdapter(
               child: Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(-0.9, 0.8),
-                    radius: 1.4,
-                    colors: <Color>[
-                      AppColors.primaryOrange.withValues(alpha: 0.05),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              slivers: <Widget>[
-                SliverAppBar(
-                  pinned: true,
-                  toolbarHeight: 56,
-                  backgroundColor: AppColors.softBackground.withValues(
-                    alpha: 0.72,
-                  ),
-                  surfaceTintColor: Colors.transparent,
-                  flexibleSpace: ClipRRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                      child: Container(color: Colors.transparent),
-                    ),
-                  ),
-                  shape: Border(
-                    bottom: BorderSide(
-                      color: AppColors.lightLine.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  titleSpacing: 12,
-                  title: Row(
-                    children: <Widget>[
-                      const Icon(
-                        Icons.home_work_outlined,
-                        size: 18,
-                        color: AppColors.deepOrange,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        AppStrings.appName,
-                        style: const TextStyle(
-                          color: AppColors.deepOrange,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                  actions: <Widget>[
-                    IconButton(
-                      onPressed: () => context.go(AppRoutes.search),
-                      icon: const Icon(
-                        Icons.search_rounded,
-                        size: 20,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: GestureDetector(
-                        onTap: () => context.go(AppRoutes.profile),
-                        child: Container(
-                          padding: const EdgeInsets.all(1.5),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.deepOrange.withValues(alpha: 0.2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const CircleAvatar(
-                            radius: 12,
-                            backgroundColor: Color(0xFFFFD1B5),
-                            child: Text(
-                              'U',
-                              style: TextStyle(
-                                color: AppColors.deepOrange,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    _DetailPropertiesList(land: land, listing: listing),
+                    _VisualDocumentationSection(land: land),
                   ],
                 ),
-                SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 12, 10, 28),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  if (Navigator.of(context).canPop()) {
-                                    context.pop();
-                                  } else {
-                                    context.go(AppRoutes.search);
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(999),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      const Icon(
-                                        Icons.arrow_back_rounded,
-                                        size: 16,
-                                        color: AppColors.ink,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Full Details'.toUpperCase(),
-                                        style: const TextStyle(
-                                          color: AppColors.ink,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            _DetailHeroCard(listing: listing),
-                            const SizedBox(height: 10),
-                            _DetailReportCard(listing: listing),
-                            const SizedBox(height: 12),
-                            _DetailFooterActions(landId: land.id),
-                          ],
-                        ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  top: 40,
+                  bottom: 40,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    onPressed: () {},
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.deepOrange,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'ADD TO ENQUIRY',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -232,618 +103,433 @@ class SearchListingDetailPage extends StatelessWidget {
   }
 }
 
-class _DetailHeroCard extends StatelessWidget {
-  const _DetailHeroCard({required this.listing});
-
+class _DetailHeaderBlock extends StatelessWidget {
+  const _DetailHeaderBlock({required this.land, required this.listing});
+  final LandEntity land;
   final SearchListingUiModel listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomCard(
-      gradient: LinearGradient(
-        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.3)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.4)),
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: <Widget>[
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            child: SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: Stack(
-                children: <Widget>[
-                  Positioned.fill(
-                    child: listing.imageUrl != null && listing.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            Uri.encodeFull(listing.imageUrl!),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                _LifestyleArtwork(listing: listing),
-                          )
-                        : _LifestyleArtwork(listing: listing),
-                  ),
-                  // Inner Shadow Overlay for depth
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.black.withValues(alpha: 0.15),
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.05),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 14,
-                    right: 14,
-                    child: _BadgePill(
-                      icon: Icons.photo_library_outlined,
-                      label: 'See Gallery'.toUpperCase(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: Row(
-              children: <Widget>[
-                const _BadgePill(
-                  icon: Icons.description_outlined,
-                  label: 'PROPERTY REPORT',
-                  tinted: true,
-                ),
-                const Spacer(),
-                _BadgePill(
-                  icon: Icons.vrpano_outlined,
-                  label: listing.title.toUpperCase(),
-                  tinted: true,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailReportCard extends StatelessWidget {
-  const _DetailReportCard({required this.listing});
-
-  final SearchListingUiModel listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomCard(
-      gradient: LinearGradient(
-        colors: [AppColors.white, AppColors.softBackground.withValues(alpha: 0.5)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          ...listing.detailSections.asMap().entries.map(
-            (entry) => Padding(
-              padding: EdgeInsets.only(
-                bottom: entry.key == listing.detailSections.length - 1 ? 12 : 20,
-              ),
-              child: _DetailSection(section: entry.value),
-            ),
-          ),
-          const Text(
-            'DOCUMENT STATUS',
-            style: TextStyle(
-              color: AppColors.ink,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: listing.documentStatuses
-                .map((status) => _DocumentStatusChip(label: status))
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailSection extends StatelessWidget {
-  const _DetailSection({required this.section});
-
-  final SearchListingDetailSection section;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.lightLine.withValues(alpha: 0.4),
-          ),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            section.title,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = math
-                  .max(120.0, (constraints.maxWidth - 12) / 2)
-                  .toDouble();
-
-              return Wrap(
-                spacing: 12,
-                runSpacing: 16,
-                children: section.fields
-                    .map(
-                      (field) => SizedBox(
-                        width: itemWidth,
-                        child: _DetailField(field: field),
-                      ),
-                    )
-                    .toList(),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailField extends StatelessWidget {
-  const _DetailField({required this.field});
-
-  final SearchListingDetailField field;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          field.label.toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.mutedText,
-            fontSize: 7,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          field.value,
-          style: TextStyle(
-            color: field.isAccent ? AppColors.deepOrange : AppColors.ink,
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            height: 1.25,
-            letterSpacing: -0.1,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DocumentStatusChip extends StatelessWidget {
-  const _DocumentStatusChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.ink,
-          fontSize: 8.5,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.3,
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailFooterActions extends StatelessWidget {
-  const _DetailFooterActions({required this.landId});
-
-  final int landId;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: BlocBuilder<SearchBloc, SearchState>(
-            buildWhen: (previous, current) =>
-                previous.wishlistStatus != current.wishlistStatus ||
-                previous.activeWishlistLandId != current.activeWishlistLandId ||
-                previous.wishlistedLandIds != current.wishlistedLandIds,
-            builder: (context, state) {
-              final isLoading =
-                  state.wishlistStatus == WishlistStatus.loading &&
-                  state.activeWishlistLandId == landId;
-              final isWishlisted = state.wishlistedLandIds.contains(landId);
-
-              return _FooterButton(
-                icon: isWishlisted
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                label: isWishlisted ? 'Wishlisted' : 'Add to Wishlist',
-                isFilled: isWishlisted,
-                isLoading: isLoading,
-                onTap: isLoading || isWishlisted
-                    ? null
-                    : () => context.read<SearchBloc>().add(
-                          AddToWishlistEvent(landId: landId),
-                        ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _FooterButton(
-            icon: Icons.share_rounded,
-            label: 'Share Land',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FooterButton extends StatelessWidget {
-  const _FooterButton({
-    required this.icon,
-    required this.label,
-    this.onTap,
-    this.isFilled = false,
-    this.iconAtEnd = false,
-    this.isLoading = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final bool isFilled;
-  final bool iconAtEnd;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    final foregroundColor = isFilled ? AppColors.white : AppColors.ink;
-    final isDisabled = onTap == null;
-    final effectiveColor = isDisabled
-        ? foregroundColor.withValues(alpha: isFilled ? 0.9 : 0.55)
-        : foregroundColor;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          height: 48,
-          decoration: BoxDecoration(
-            color: isFilled
-                ? AppColors.deepOrange.withValues(alpha: isDisabled ? 0.92 : 1)
-                : AppColors.white,
-            gradient: isFilled
-                ? const LinearGradient(
-                    colors: [AppColors.deepOrange, AppColors.primaryOrange],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isFilled ? AppColors.deepOrange : AppColors.lightLine.withValues(alpha: 0.6),
+      children: [
+        Stack(
+          children: [
+            Container(
+              height: 380,
+              width: double.infinity,
+              decoration: const BoxDecoration(color: Colors.black),
+              child: listing.imageUrl != null && listing.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      Uri.encodeFull(listing.imageUrl!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Container(color: AppColors.lightLine),
+                    )
+                  : Container(color: AppColors.lightLine),
             ),
-            boxShadow: [
-              if (isFilled)
-                BoxShadow(
-                  color: AppColors.deepOrange.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                )
-              else
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withValues(alpha: 0.2),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.9),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
-            ],
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: isLoading
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            effectiveColor,
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 12,
+              left: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () => context.pop(),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 30,
+              left: 24,
+              right: 24,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${land.landDetails.totalAcres.toInt()} ac ${land.landDetails.guntas} gts',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        color: AppColors.deepOrange,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${land.district}, ${land.state}'.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.deepOrange,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'PER ACRE PRICE\n₹${(land.landDetails.pricePerAcres / 100000).toStringAsFixed(1)} LAKHS',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                            height: 1.3,
                           ),
                         ),
-                      )
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: iconAtEnd
-                            ? <Widget>[
-                                Text(
-                                  label,
-                                  style: TextStyle(
-                                    color: effectiveColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(icon, size: 16, color: effectiveColor),
-                              ]
-                            : <Widget>[
-                                Icon(icon, size: 16, color: effectiveColor),
-                                const SizedBox(width: 6),
-                                Text(
-                                  label,
-                                  style: TextStyle(
-                                    color: effectiveColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
                       ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            ),
+          ],
+        ),
+        Container(
+          width: double.infinity,
+          color: Colors.black,
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.pie_chart_outline,
+                    color: AppColors.deepOrange,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'PRICING REPORT',
+                    style: TextStyle(
+                      color: AppColors.deepOrange,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'TOTAL NET VALUE',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '₹ ${(land.landDetails.totalValue / 10000000).toStringAsFixed(2)} Cr',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
 
-class _BadgePill extends StatelessWidget {
-  const _BadgePill({
-    required this.icon,
-    required this.label,
-    this.tinted = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool tinted;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: tinted
-            ? AppColors.softBackground.withValues(alpha: 0.8)
-            : AppColors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-        boxShadow: tinted ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, size: 13, color: AppColors.deepOrange),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 8,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LifestyleArtwork extends StatelessWidget {
-  const _LifestyleArtwork({required this.listing});
-
+class _DetailPropertiesList extends StatelessWidget {
+  const _DetailPropertiesList({required this.land, required this.listing});
+  final LandEntity land;
   final SearchListingUiModel listing;
 
   @override
   Widget build(BuildContext context) {
-    final palette = switch (listing.artworkType) {
-      SearchListingArtworkType.cityWalk => (
-        const Color(0xFFF7EEE7),
-        const Color(0xFFE1D7D0),
-        const Color(0xFFB9D37B),
-        const Color(0xFFC27A73),
-      ),
-      SearchListingArtworkType.forestRoad => (
-        const Color(0xFFF8F0D5),
-        const Color(0xFFD8E4D4),
-        const Color(0xFFA6C56A),
-        const Color(0xFF56705D),
-      ),
-      SearchListingArtworkType.cityBridge => (
-        const Color(0xFFF7ECE7),
-        const Color(0xFFD9D8E7),
-        const Color(0xFFC9B077),
-        const Color(0xFF68659D),
-      ),
-    };
-
-    return Stack(
-      children: <Widget>[
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: <Color>[palette.$1, palette.$2],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildRow(
+            _buildPropItem(
+              Icons.verified_outlined,
+              'VERIFICATION',
+              'YET TO BE VERIFIED',
+            ),
+            _buildPropItem(
+              Icons.access_time,
+              'AVAILABILITY',
+              listing.availability.toUpperCase(),
             ),
           ),
-        ),
-        Positioned(
-          left: -18,
-          top: 18,
-          child: Container(
-            width: 84,
-            height: 56,
-            decoration: BoxDecoration(
-              color: palette.$3.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(28),
+          const SizedBox(height: 24),
+          _buildRow(
+            _buildPropItem(
+              Icons.account_balance_outlined,
+              'MORTGAGE',
+              land.landStatus.isNotEmpty
+                  ? land.landStatus.first.toUpperCase()
+                  : 'CURRENTLY MORTGAGED',
+            ),
+            _buildPropItem(Icons.update, 'UPDATED', '2 DAYS AGO'),
+          ),
+          _buildDivider(),
+          _buildRow(
+            _buildPropItem(
+              Icons.location_on_outlined,
+              'DISTRICT',
+              land.district.toUpperCase(),
+            ),
+            _buildPropItem(
+              Icons.location_city_outlined,
+              'NEAREST TOWN',
+              land.mandal.toUpperCase(),
             ),
           ),
-        ),
-        Positioned(
-          left: 14,
-          top: 22,
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: List<Widget>.generate(
-              8,
-              (index) => Container(
-                width: 8 + (index.isEven ? 4 : 0),
-                height: 8 + (index % 3 == 0 ? 3 : 0),
+          const SizedBox(height: 24),
+          _buildRow(
+            _buildPropItem(
+              Icons.route_outlined,
+              'DIST. FROM TOWN',
+              listing.distance.toUpperCase(),
+            ),
+            const SizedBox(),
+          ),
+          _buildDivider(),
+          _buildRow(
+            _buildPropItem(
+              Icons.add_road,
+              'NEAREST ROAD',
+              land.landDetails.nearestRoadType.toUpperCase(),
+            ),
+            _buildPropItem(
+              Icons.share_location_outlined,
+              'ATTACHED TO ROAD',
+              land.landDetails.landAttachedToRoad.toUpperCase(),
+            ),
+          ),
+          _buildDivider(),
+          _buildRow(
+            _buildPropItem(
+              Icons.landscape_outlined,
+              'SOIL TYPE',
+              land.landDetails.soilType.toUpperCase(),
+            ),
+            _buildPropItem(
+              Icons.water_drop_outlined,
+              'WATER SOURCE',
+              land.landDetails.waterSource.isNotEmpty
+                  ? land.landDetails.waterSource.join(', ').toUpperCase()
+                  : 'NONE',
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildRow(
+            _buildPropItem(
+              Icons.waves,
+              'NO. OF BORES',
+              land.landDetails.numberOfBores.toString(),
+            ),
+            _buildPropItem(
+              Icons.pool_outlined,
+              'FARM POND',
+              land.landDetails.farmPond ? 'YES' : 'NO',
+            ),
+          ),
+          _buildDivider(),
+          _buildRow(
+            _buildPropItem(
+              Icons.house_outlined,
+              'RESIDENCE',
+              land.landDetails.residence.isNotEmpty
+                  ? land.landDetails.residence.join(', ').toUpperCase()
+                  : 'NO',
+            ),
+            _buildPropItem(Icons.home_work_outlined, 'POULTRY SHED', 'NO'),
+          ),
+          const SizedBox(height: 24),
+          _buildRow(
+            _buildPropItem(Icons.pets_outlined, 'COW SHED', 'NO'),
+            const SizedBox(),
+          ),
+          _buildDivider(),
+          _buildRow(
+            _buildPropItem(
+              Icons.electric_bolt_outlined,
+              'ELECTRICITY',
+              land.landDetails.electricity.isNotEmpty
+                  ? land.landDetails.electricity.join(', ').toUpperCase()
+                  : 'NONE',
+            ),
+            _buildPropItem(
+              Icons.fence_outlined,
+              'FENCING STATUS',
+              land.landDetails.fencingStatus.toUpperCase(),
+            ),
+          ),
+          _buildDivider(),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: <Color>[
-                    Colors.white,
-                    palette.$4.withValues(alpha: 0.85),
-                    palette.$3.withValues(alpha: 0.8),
-                  ][index % 3],
+                  color: AppColors.deepOrange.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 26,
-          child: Container(
-            height: 26,
-            color: Colors.white.withValues(alpha: 0.22),
-          ),
-        ),
-        Positioned(
-          left: 90,
-          right: 18,
-          bottom: 20,
-          child: Transform.rotate(
-            angle: -0.06,
-            child: Container(
-              height: 20,
-              decoration: BoxDecoration(
-                color: const Color(0xFF57525A),
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 116,
-          bottom: 36,
-          child: _PersonFigure(
-            height: 48,
-            skin: const Color(0xFFE2B7A1),
-            clothing: const Color(0xFFF0F0F0),
-            hair: const Color(0xFF8A6B54),
-          ),
-        ),
-        Positioned(
-          left: 144,
-          bottom: 42,
-          child: _PersonFigure(
-            height: 40,
-            skin: const Color(0xFFE4B89E),
-            clothing: palette.$4,
-            hair: const Color(0xFF5B463D),
-          ),
-        ),
-        Positioned(
-          right: 12,
-          top: 18,
-          child: Column(
-            children: List<Widget>.generate(
-              4,
-              (index) => Container(
-                width: 18 + (index * 8),
-                height: 24,
-                margin: const EdgeInsets.only(bottom: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.34),
-                  borderRadius: BorderRadius.circular(8),
+                child: const Icon(
+                  Icons.park_outlined,
+                  size: 14,
+                  color: AppColors.deepOrange,
                 ),
               ),
+              const SizedBox(width: 8),
+              const Text(
+                'TREES',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildRow(
+            _buildPropItem(
+              Icons.energy_savings_leaf_outlined,
+              'MANGO',
+              '${land.landDetails.mangoTreesNumber.isEmpty ? '0' : land.landDetails.mangoTreesNumber} TREES',
             ),
+            _buildPropItem(
+              Icons.energy_savings_leaf_outlined,
+              'COCONUT',
+              '${land.landDetails.coconutTreesNumber.isEmpty ? '0' : land.landDetails.coconutTreesNumber} TREES',
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildRow(
+            _buildPropItem(
+              Icons.energy_savings_leaf_outlined,
+              'TEAK',
+              '${land.landDetails.teakTreesNumber.isEmpty ? '0' : land.landDetails.teakTreesNumber} TREES',
+            ),
+            _buildPropItem(
+              Icons.energy_savings_leaf_outlined,
+              'NEEM',
+              '${land.landDetails.neemTreesNumber.isEmpty ? '0' : land.landDetails.neemTreesNumber} TREES',
+            ),
+          ),
+          _buildDivider(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRow(Widget col1, Widget col2) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: col1),
+        Expanded(child: col2),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final dashCount = (constraints.maxWidth / (4 + 4)).floor();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(dashCount, (_) {
+              return SizedBox(
+                width: 4,
+                height: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.lightLine.withValues(alpha: 0.4),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPropItem(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: AppColors.deepOrange),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -851,56 +537,114 @@ class _LifestyleArtwork extends StatelessWidget {
   }
 }
 
-class _PersonFigure extends StatelessWidget {
-  const _PersonFigure({
-    required this.height,
-    required this.skin,
-    required this.clothing,
-    required this.hair,
-  });
-
-  final double height;
-  final Color skin;
-  final Color clothing;
-  final Color hair;
+class _VisualDocumentationSection extends StatelessWidget {
+  const _VisualDocumentationSection({required this.land});
+  final LandEntity land;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: height * 0.55,
-      height: height,
-      child: Stack(
-        children: <Widget>[
-          Positioned(
-            left: height * 0.13,
-            top: 0,
-            child: Container(
-              width: height * 0.28,
-              height: height * 0.28,
-              decoration: BoxDecoration(color: skin, shape: BoxShape.circle),
-            ),
-          ),
-          Positioned(
-            left: height * 0.08,
-            top: height * 0.02,
-            child: Container(
-              width: height * 0.34,
-              height: height * 0.12,
-              decoration: BoxDecoration(
-                color: hair,
-                borderRadius: BorderRadius.circular(10),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.deepOrange.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.photo_library_outlined,
+                  size: 14,
+                  color: AppColors.deepOrange,
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              const Text(
+                'VISUAL DOCUMENTATION',
+                style: TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
           ),
-          Positioned(
-            left: 0,
-            top: height * 0.22,
+          const SizedBox(height: 20),
+          GridView.builder(
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.6,
+            ),
+            itemCount: 4,
+            itemBuilder: (context, index) {
+              final mediaUrl = land.media.length > index
+                  ? land.media[index].url
+                  : null;
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  color: AppColors.lightLine,
+                  child: mediaUrl != null
+                      ? Image.network(
+                          mediaUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: AppColors.lightLine),
+                        )
+                      : Image.network(
+                          'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: AppColors.lightLine),
+                        ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
             child: Container(
-              width: height * 0.46,
-              height: height * 0.58,
-              decoration: BoxDecoration(
-                color: clothing,
-                borderRadius: BorderRadius.circular(18),
+              height: 180,
+              width: double.infinity,
+              color: Colors.black,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.network(
+                      'https://images.unsplash.com/photo-1542315843-079218671c84?q=80&w=600&auto=format&fit=crop',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Container(color: AppColors.lightLine),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

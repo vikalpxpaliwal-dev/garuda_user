@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
-import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 
 class SearchListingCard extends StatelessWidget {
@@ -23,46 +22,57 @@ class SearchListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomCard(
-      gradient: LinearGradient(
-        colors: [
-          AppColors.white,
-          AppColors.softBackground.withValues(alpha: 0.4),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
       ),
-      borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
-      padding: const EdgeInsets.all(12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Stack(
             children: <Widget>[
               ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: AspectRatio(
-                  aspectRatio: 1.62,
+                  aspectRatio: 1.7,
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: listing.imageUrl != null && listing.imageUrl!.isNotEmpty
+                        child:
+                            listing.imageUrl != null &&
+                                listing.imageUrl!.isNotEmpty
                             ? Image.network(
-                            Uri.encodeFull(listing.imageUrl!),
+                                Uri.encodeFull(listing.imageUrl!),
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return switch (listing.artworkType) {
-                                    SearchListingArtworkType.cityWalk => const _CityWalkArtwork(),
-                                    SearchListingArtworkType.forestRoad => const _ForestRoadArtwork(),
-                                    SearchListingArtworkType.cityBridge => const _CityBridgeArtwork(),
+                                    SearchListingArtworkType.cityWalk =>
+                                      const _CityWalkArtwork(),
+                                    SearchListingArtworkType.forestRoad =>
+                                      const _ForestRoadArtwork(),
+                                    SearchListingArtworkType.cityBridge =>
+                                      const _CityBridgeArtwork(),
                                   };
                                 },
                               )
                             : switch (listing.artworkType) {
-                                SearchListingArtworkType.cityWalk => const _CityWalkArtwork(),
-                                SearchListingArtworkType.forestRoad => const _ForestRoadArtwork(),
-                                SearchListingArtworkType.cityBridge => const _CityBridgeArtwork(),
+                                SearchListingArtworkType.cityWalk =>
+                                  const _CityWalkArtwork(),
+                                SearchListingArtworkType.forestRoad =>
+                                  const _ForestRoadArtwork(),
+                                SearchListingArtworkType.cityBridge =>
+                                  const _CityBridgeArtwork(),
                               },
                       ),
                       Positioned.fill(
@@ -70,7 +80,7 @@ class SearchListingCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.black.withValues(alpha: 0.05),
+                                Colors.black.withValues(alpha: 0.2),
                                 Colors.transparent,
                               ],
                               begin: Alignment.topCenter,
@@ -84,8 +94,8 @@ class SearchListingCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 10,
-                right: 10,
+                top: 12,
+                right: 12,
                 child: _ShortlistPill(
                   isWishlisted: isWishlisted,
                   isSelected: isWishlistSelected,
@@ -95,169 +105,262 @@ class SearchListingCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  listing.title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    height: 1.05,
-                    letterSpacing: -0.4,
-                  ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        listing.title,
+                        style: const TextStyle(
+                          color: AppColors.deepOrange,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      listing.price,
+                      style: const TextStyle(
+                        color: AppColors.deepOrange,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    listing.price,
-                    style: const TextStyle(
-                      color: AppColors.deepOrange,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      height: 1.0,
+                const SizedBox(height: 16),
+                _buildDottedDivider(),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: _ListingStatVertical(
+                        icon: Icons.open_in_full_rounded,
+                        label: 'AREA',
+                        value: listing.area,
+                        valueColor: AppColors.deepOrange,
+                      ),
+                    ),
+                    Expanded(
+                      child: _ListingStatVertical(
+                        icon: Icons.landscape_outlined,
+                        label: 'SOIL',
+                        value: listing.soilType,
+                        valueColor: AppColors.deepOrange,
+                      ),
+                    ),
+                    Expanded(
+                      child: _ListingStatVertical(
+                        icon: Icons.location_on_outlined,
+                        label: 'DIST.',
+                        value: listing.distance,
+                        valueColor: AppColors.deepOrange,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildDottedDivider(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ListingStatAvailability(
+                        icon: Icons.access_time,
+                        label: 'AVAILABILITY',
+                        value: listing.availability.toUpperCase(),
+                        valueColor: AppColors.deepOrange,
+                      ),
+                    ),
+                    Expanded(
+                      child: _ListingStatAvailability(
+                        icon: Icons.access_time,
+                        label: 'UPDATED',
+                        value: '2 DAYS AGO',
+                        valueColor: AppColors.ink,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: InkWell(
+                    onTap: onViewDetails,
+                    borderRadius: BorderRadius.circular(4),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Text(
+                        'View Full Details',
+                        style: TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    listing.availability.toUpperCase(),
-                    style: const TextStyle(
-                      color: AppColors.mutedText,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed:
+                        () {}, // Leave Add to Enquiry button empty as requested
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.deepOrange,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Add to Enquiry',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            height: 1,
-            color: AppColors.lightLine.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ListingStat(
-                  icon: Icons.grid_on_rounded,
-                  label: 'AREA',
-                  value: listing.area,
                 ),
-              ),
-              Expanded(
-                child: _ListingStat(
-                  icon: Icons.landscape_outlined,
-                  label: 'SOIL TYPE',
-                  value: listing.soilType,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ListingStat(
-                  icon: Icons.water_drop_outlined,
-                  label: 'WATER',
-                  value: listing.water,
-                ),
-              ),
-              Expanded(
-                child: _ListingStat(
-                  icon: Icons.location_on_outlined,
-                  label: 'DIST',
-                  value: listing.distance,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: onViewDetails,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.deepOrange,
-                foregroundColor: AppColors.white,
-                minimumSize: const Size.fromHeight(44),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text(
-                'Full Details',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.2,
-                ),
-              ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildDottedDivider() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        const dashWidth = 4.0;
+        const dashSpace = 4.0;
+        final dashCount = (width / (dashWidth + dashSpace)).floor();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(dashCount, (_) {
+            return SizedBox(
+              width: dashWidth,
+              height: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.deepOrange.withValues(alpha: 0.2),
+                ),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
 }
 
-class _ListingStat extends StatelessWidget {
-  const _ListingStat({
+class _ListingStatVertical extends StatelessWidget {
+  const _ListingStatVertical({
     required this.icon,
     required this.label,
     required this.value,
+    required this.valueColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Color valueColor;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: AppColors.deepOrange.withValues(alpha: 0.06),
-            shape: BoxShape.circle,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: AppColors.deepOrange),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  color: valueColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          child: Icon(icon, size: 12, color: AppColors.deepOrange),
         ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
+      ],
+    );
+  }
+}
+
+class _ListingStatAvailability extends StatelessWidget {
+  const _ListingStatAvailability({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color valueColor;
+  final CrossAxisAlignment crossAxisAlignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 12, color: AppColors.mutedText),
+            const SizedBox(width: 4),
             Text(
               label,
               style: const TextStyle(
                 color: AppColors.mutedText,
-                fontSize: 8,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ],
     );

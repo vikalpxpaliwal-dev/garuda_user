@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
-import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/search/domain/entities/location_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
@@ -25,21 +24,21 @@ class SearchFilterPanel extends StatefulWidget {
 class _SearchFilterPanelState extends State<SearchFilterPanel> {
   String? _selectedState;
   String? _selectedDistrict;
-  String? _selectedMandal;
-  String? _selectedVillage;
-  RangeValues _priceRange = const RangeValues(0, 500);
-  RangeValues _budgetRange = const RangeValues(0, 50);
-  bool _deepFiltersExpanded = false;
+  String? _selectedTown;
 
-  // Deep Filter States
-  String? _selectedWaterSource;
-  bool _isPoultryShed = false;
-  bool _isCowShed = false;
-  bool _isFarmPond = false;
-  String? _selectedPhaseType;
+  RangeValues _budgetRange = const RangeValues(0, 100);
+  RangeValues _priceRange = const RangeValues(0, 10);
+  RangeValues _areaRange = const RangeValues(0, 50);
 
-  static const List<String> _waterSources = ['Borewell', 'Canal', 'Open Well', 'River', 'Rainfed'];
-  static const List<String> _phaseTypes = ['Single Phase', '3 Phase', 'High Tension'];
+  bool _showCharacteristics = false;
+
+  String _selectedSoilType = 'All';
+  String _selectedRoadType = 'All';
+  String _selectedAttachedToRoad = 'All';
+  String _selectedWaterSource = 'All';
+  String _selectedFarmPond = 'All';
+  String _selectedResidence = 'All';
+  String _selectedFencingStatus = 'All';
 
   @override
   void initState() {
@@ -50,7 +49,6 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
     }
   }
 
-  // ── Cascading helpers ──────────────────────────────────────────────────
   List<String> _stateNames(List<StateEntity> states) =>
       states.map((s) => s.name).toList();
 
@@ -60,29 +58,13 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
     return state?.districts.map((d) => d.name).toList() ?? const [];
   }
 
-  List<String> _mandalNames(List<StateEntity> states) {
+  List<String> _townNames(List<StateEntity> states) {
     if (_selectedState == null || _selectedDistrict == null) return const [];
     final state = states.where((s) => s.name == _selectedState).firstOrNull;
     final district = state?.districts
         .where((d) => d.name == _selectedDistrict)
         .firstOrNull;
     return district?.mandals.map((m) => m.name).toList() ?? const [];
-  }
-
-  List<String> _villageNames(List<StateEntity> states) {
-    if (_selectedState == null ||
-        _selectedDistrict == null ||
-        _selectedMandal == null) {
-      return const [];
-    }
-    final state = states.where((s) => s.name == _selectedState).firstOrNull;
-    final district = state?.districts
-        .where((d) => d.name == _selectedDistrict)
-        .firstOrNull;
-    final mandal = district?.mandals
-        .where((m) => m.name == _selectedMandal)
-        .firstOrNull;
-    return mandal?.villages.map((v) => v.name).toList() ?? const [];
   }
 
   @override
@@ -95,63 +77,29 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
         final isLoading = searchState.locationStatus == LocationStatus.loading;
         final states = searchState.states;
 
-        return CustomCard(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.white,
-              AppColors.softBackground.withValues(alpha: 0.5),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              // ── Header ─────────────────────────────────────────────
-              Row(
-                children: <Widget>[
-                  const Expanded(
-                    child: Text(
-                      'SEARCH FILTERS',
-                      style: TextStyle(
-                        color: AppColors.ink,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: widget.onClose,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppColors.softBackground,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close_rounded,
-                        size: 16,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ),
-                ],
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              const SizedBox(height: 20),
-
-              // ── Location loading indicator ─────────────────────────
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               if (isLoading)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 16),
-                  child: Center(
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 16),
                     child: SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: AppColors.deepOrange,
@@ -160,293 +108,221 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
                   ),
                 ),
 
-              // ── State ──────────────────────────────────────────────
-              const _SectionLabel('STATE'),
-              const SizedBox(height: 10),
-              _FilterDropdown(
+              _buildLabel('STATE'),
+              _buildDropdown(
                 value: _selectedState,
-                hint: 'Select State',
+                hint: 'All States',
                 options: _stateNames(states),
-                onChanged: (value) {
+                onChanged: (val) {
                   setState(() {
-                    _selectedState = value;
+                    _selectedState = val;
                     _selectedDistrict = null;
-                    _selectedMandal = null;
-                    _selectedVillage = null;
+                    _selectedTown = null;
                   });
                 },
-              ),
-              const SizedBox(height: 18),
-
-              // ── District + Mandal ──────────────────────────────────
-              const Row(
-                children: <Widget>[
-                  Expanded(child: _SectionLabel('DISTRICT')),
-                  SizedBox(width: 12),
-                  Expanded(child: _SectionLabel('MANDAL')),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _FilterDropdown(
-                      value: _selectedDistrict,
-                      hint: 'District',
-                      options: _districtNames(states),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedDistrict = value;
-                          _selectedMandal = null;
-                          _selectedVillage = null;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _FilterDropdown(
-                      value: _selectedMandal,
-                      hint: 'Mandal',
-                      options: _mandalNames(states),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedMandal = value;
-                          _selectedVillage = null;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              // ── Village ────────────────────────────────────────────
-              if (_villageNames(states).isNotEmpty) ...[
-                const SizedBox(height: 18),
-                const _SectionLabel('VILLAGE'),
-                const SizedBox(height: 10),
-                _FilterDropdown(
-                  value: _selectedVillage,
-                  hint: 'Select Village',
-                  options: _villageNames(states),
-                  onChanged: (value) => setState(() => _selectedVillage = value),
-                ),
-              ],
-
-              const SizedBox(height: 22),
-              const _DashedDivider(),
-              const SizedBox(height: 20),
-
-              // ── Price / Budget ─────────────────────────────────────
-              _RangeFilterSection(
-                label: 'PRICE PER ACRE (LAKHS)',
-                values: _priceRange,
-                max: 500,
-                suffix: 'L',
-                onChanged: (values) => setState(() => _priceRange = values),
-              ),
-              const SizedBox(height: 20),
-              _RangeFilterSection(
-                label: 'TOTAL BUDGET (CRORES)',
-                values: _budgetRange,
-                max: 50,
-                suffix: 'Cr',
-                onChanged: (values) => setState(() => _budgetRange = values),
               ),
               const SizedBox(height: 16),
 
-              // ── Deep Filters toggle ────────────────────────────────
-              InkWell(
-                onTap: () {
+              _buildLabel('DISTRICT'),
+              _buildDropdown(
+                value: _selectedDistrict,
+                hint: 'All Districts',
+                options: _districtNames(states),
+                onChanged: (val) {
                   setState(() {
-                    _deepFiltersExpanded = !_deepFiltersExpanded;
+                    _selectedDistrict = val;
+                    _selectedTown = null;
                   });
                 },
-                borderRadius: BorderRadius.circular(16),
+              ),
+              const SizedBox(height: 16),
+
+              _buildLabel('TOWN'),
+              _buildDropdown(
+                value: _selectedTown,
+                hint: 'All Towns',
+                options: _townNames(states),
+                onChanged: (val) {
+                  setState(() => _selectedTown = val);
+                },
+              ),
+              const SizedBox(height: 32),
+
+              _buildRangeSlider(
+                label: 'TOTAL BUDGET',
+                values: _budgetRange,
+                min: 0,
+                max: 100,
+                suffix: 'Cr',
+                prefix: '₹ ',
+                onChanged: (val) => setState(() => _budgetRange = val),
+              ),
+              const SizedBox(height: 24),
+
+              _buildRangeSlider(
+                label: 'PRICE PER ACRE',
+                values: _priceRange,
+                min: 0,
+                max: 10,
+                suffix: 'Cr',
+                prefix: '₹ ',
+                onChanged: (val) => setState(() => _priceRange = val),
+              ),
+              const SizedBox(height: 24),
+
+              _buildRangeSlider(
+                label: 'AREA RANGE (ACRES)',
+                values: _areaRange,
+                min: 0,
+                max: 50,
+                suffix: ' Ac',
+                prefix: '',
+                onChanged: (val) => setState(() => _areaRange = val),
+              ),
+              const SizedBox(height: 32),
+
+              // Collapsible Property Characteristics
+              InkWell(
+                onTap: () => setState(
+                  () => _showCharacteristics = !_showCharacteristics,
+                ),
+                borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.softBackground,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
-                    children: <Widget>[
-                      const Icon(
-                        Icons.tune_rounded,
-                        size: 14,
-                        color: AppColors.deepOrange,
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'DEEP FILTERS',
-                          style: TextStyle(
-                            color: AppColors.deepOrange,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                      AnimatedRotation(
-                        duration: const Duration(milliseconds: 240),
-                        turns: _deepFiltersExpanded ? 0.5 : 0,
-                        child: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 20,
-                          color: AppColors.mutedText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 300),
-                crossFadeState: _deepFiltersExpanded
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                firstChild: const SizedBox(height: 12),
-                secondChild: Padding(
-                  padding: const EdgeInsets.only(top: 16, bottom: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const _SubSectionHeader(
-                        icon: Icons.water_drop_outlined,
-                        label: 'WATER SOURCE',
+                      const Text(
+                        'PROPERTY CHARACTERISTICS',
+                        style: TextStyle(
+                          color: AppColors.deepOrange,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const _FilterLabel('WATER SOURCE'),
-                                const SizedBox(height: 8),
-                                _FilterDropdown(
-                                  value: _selectedWaterSource,
-                                  hint: 'Any',
-                                  options: _waterSources,
-                                  onChanged: (val) => setState(() => _selectedWaterSource = val),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      const _SubSectionHeader(
-                        icon: Icons.home_outlined,
-                        label: 'PROPERTY FACILITIES',
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ToggleField(
-                              label: 'POULTRY SHED',
-                              value: _isPoultryShed,
-                              onChanged: (val) => setState(() => _isPoultryShed = val),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _ToggleField(
-                              label: 'COW SHED',
-                              value: _isCowShed,
-                              onChanged: (val) => setState(() => _isCowShed = val),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: _ToggleField(
-                              label: 'FARM POND',
-                              value: _isFarmPond,
-                              onChanged: (val) => setState(() => _isFarmPond = val),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const _FilterLabel('ELECTRICITY'),
-                                const SizedBox(height: 8),
-                                _FilterDropdown(
-                                  value: _selectedPhaseType,
-                                  hint: 'Phase Type',
-                                  options: _phaseTypes,
-                                  onChanged: (val) => setState(() => _selectedPhaseType = val),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      Icon(
+                        _showCharacteristics
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: AppColors.deepOrange,
+                        size: 20,
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // ── Search button ──────────────────────────────────────
-              const SizedBox(height: 4),
+              if (_showCharacteristics) ...[
+                const SizedBox(height: 32),
+                _buildRadioGrid(
+                  label: 'LAND SOIL TYPE',
+                  options: [
+                    'All',
+                    'Red',
+                    'Black',
+                    'Mixed Red',
+                    'Sandy',
+                    'Alluvial',
+                  ],
+                  selectedValue: _selectedSoilType,
+                  onChanged: (val) => setState(() => _selectedSoilType = val),
+                ),
+                const SizedBox(height: 24),
+                _buildRadioGrid(
+                  label: 'NEAREST ROAD TYPE',
+                  options: [
+                    'All',
+                    'Highway',
+                    'Double Road',
+                    'Single Road',
+                    'Gravel Road',
+                  ],
+                  selectedValue: _selectedRoadType,
+                  onChanged: (val) => setState(() => _selectedRoadType = val),
+                ),
+                const SizedBox(height: 24),
+                _buildRadioGrid(
+                  label: 'ATTACHED TO ROAD',
+                  options: ['All', 'Yes', 'No'],
+                  selectedValue: _selectedAttachedToRoad,
+                  onChanged: (val) =>
+                      setState(() => _selectedAttachedToRoad = val),
+                ),
+                const SizedBox(height: 24),
+                _buildRadioGrid(
+                  label: 'WATER SOURCE',
+                  options: ['All', 'Borewell', 'Canal', 'Open Well'],
+                  selectedValue: _selectedWaterSource,
+                  onChanged: (val) =>
+                      setState(() => _selectedWaterSource = val),
+                ),
+                const SizedBox(height: 24),
+                _buildRadioGrid(
+                  label: 'FARM POND',
+                  options: ['All', 'Yes', 'No'],
+                  selectedValue: _selectedFarmPond,
+                  onChanged: (val) => setState(() => _selectedFarmPond = val),
+                ),
+                const SizedBox(height: 24),
+                _buildRadioGrid(
+                  label: 'RESIDENCE',
+                  options: [
+                    'All',
+                    'Developed Farm House',
+                    'RCC House',
+                    'Asbestos Shed',
+                    'Hut',
+                    'None',
+                  ],
+                  selectedValue: _selectedResidence,
+                  onChanged: (val) => setState(() => _selectedResidence = val),
+                ),
+                const SizedBox(height: 24),
+                _buildRadioGrid(
+                  label: 'FENCING STATUS',
+                  options: [
+                    'All',
+                    'All sides with gate',
+                    'All sides',
+                    'Partially',
+                    'No',
+                  ],
+                  selectedValue: _selectedFencingStatus,
+                  onChanged: (val) =>
+                      setState(() => _selectedFencingStatus = val),
+                ),
+              ],
+
+              const SizedBox(height: 40),
               SizedBox(
-                width: double.infinity,
+                height: 52,
                 child: FilledButton(
-                  onPressed: () {
-                    final filters = <String, dynamic>{};
-
-                    if (_selectedState != null) filters['state'] = _selectedState;
-                    if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
-                    if (_selectedMandal != null) filters['mandal'] = _selectedMandal;
-                    if (_selectedVillage != null) filters['village'] = _selectedVillage;
-
-                    if (_priceRange.start > 0) filters['min_price_per_acre'] = _priceRange.start * 100000;
-                    if (_priceRange.end < 500) filters['max_price_per_acre'] = _priceRange.end * 100000;
-
-                    if (_budgetRange.start > 0) filters['min_total_budget'] = _budgetRange.start * 10000000;
-                    if (_budgetRange.end < 50) filters['max_total_budget'] = _budgetRange.end * 10000000;
-
-                    if (_isFarmPond) filters['farm_pond'] = true;
-                    if (_isPoultryShed) filters['poultry_shed'] = true;
-                    if (_isCowShed) filters['cow_shed'] = true;
-
-                    if (_selectedWaterSource != null) {
-                      filters['water_source'] = jsonEncode({_selectedWaterSource!: true});
-                    }
-                    if (_selectedPhaseType != null) {
-                      filters['electricity'] = jsonEncode({_selectedPhaseType!: true});
-                    }
-
-                    widget.onSearchResults(filters);
-                  },
+                  onPressed: _onSearchPressed,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.deepOrange,
                     foregroundColor: AppColors.white,
-                    minimumSize: const Size.fromHeight(56),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.search_rounded, size: 20),
-                      SizedBox(width: 10),
+                    children: [
+                      Icon(Icons.search, size: 20),
+                      SizedBox(width: 8),
                       Text(
-                        'Search Results',
+                        'Show Results',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
@@ -459,28 +335,85 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
       },
     );
   }
-}
 
-class _FilterDropdown extends StatelessWidget {
-  const _FilterDropdown({
-    required this.value,
-    required this.hint,
-    required this.options,
-    required this.onChanged,
-  });
+  void _onSearchPressed() {
+    final filters = <String, dynamic>{};
 
-  final String? value;
-  final String hint;
-  final List<String> options;
-  final ValueChanged<String?> onChanged;
+    if (_selectedState != null) filters['state'] = _selectedState;
+    if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
+    if (_selectedTown != null) filters['mandal'] = _selectedTown;
 
-  @override
-  Widget build(BuildContext context) {
+    if (_budgetRange.start > 0)
+      filters['min_total_budget'] = _budgetRange.start * 10000000;
+    if (_budgetRange.end < 100)
+      filters['max_total_budget'] = _budgetRange.end * 10000000;
+
+    if (_priceRange.start > 0)
+      filters['min_price_per_acre'] = _priceRange.start * 10000000;
+    if (_priceRange.end < 10)
+      filters['max_price_per_acre'] = _priceRange.end * 10000000;
+
+    if (_areaRange.start > 0) filters['min_acres'] = _areaRange.start;
+    if (_areaRange.end < 50) filters['max_acres'] = _areaRange.end;
+
+    if (_selectedSoilType != 'All') filters['soil_type'] = _selectedSoilType;
+    if (_selectedRoadType != 'All')
+      filters['nearest_road_type'] = _selectedRoadType;
+
+    if (_selectedAttachedToRoad != 'All') {
+      filters['land_attached_to_road'] = _selectedAttachedToRoad.toLowerCase();
+    }
+
+    if (_selectedWaterSource != 'All') {
+      filters['water_source'] = jsonEncode([_selectedWaterSource]);
+    }
+
+    if (_selectedFarmPond != 'All') {
+      filters['farm_pond'] = _selectedFarmPond == 'Yes';
+    }
+
+    if (_selectedResidence != 'All') {
+      if (_selectedResidence == 'None') {
+        filters['residence'] = jsonEncode([]);
+      } else {
+        filters['residence'] = jsonEncode([_selectedResidence]);
+      }
+    }
+
+    if (_selectedFencingStatus != 'All') {
+      filters['fencing_status'] = _selectedFencingStatus;
+    }
+
+    widget.onSearchResults(filters);
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: AppColors.ink,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String hint,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.softBackground,
-        borderRadius: BorderRadius.circular(14),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -489,348 +422,172 @@ class _FilterDropdown extends StatelessWidget {
           hint: Text(
             hint,
             style: const TextStyle(
-              color: AppColors.deepOrange,
-              fontSize: 12,
+              color: AppColors.ink,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
           icon: const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 18,
-            color: AppColors.primaryOrange,
+            Icons.keyboard_arrow_down,
+            color: AppColors.mutedText,
+            size: 20,
           ),
           style: const TextStyle(
-            color: AppColors.deepOrange,
-            fontSize: 12,
+            color: AppColors.ink,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
-          borderRadius: BorderRadius.circular(16),
-          dropdownColor: AppColors.white,
           items: options
-              .map(
-                (option) => DropdownMenuItem<String>(
-                  value: option,
-                  child: Text(
-                    option,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.deepOrange,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              )
+              .map((opt) => DropdownMenuItem(value: opt, child: Text(opt)))
               .toList(),
           onChanged: onChanged,
         ),
       ),
     );
   }
-}
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: const TextStyle(
-        color: AppColors.ink,
-        fontSize: 9,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.3,
-      ),
-    );
-  }
-}
-
-class _RangeFilterSection extends StatelessWidget {
-  const _RangeFilterSection({
-    required this.label,
-    required this.values,
-    required this.max,
-    required this.suffix,
-    required this.onChanged,
-  });
-
-  final String label;
-  final RangeValues values;
-  final double max;
-  final String suffix;
-  final ValueChanged<RangeValues> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildRangeSlider({
+    required String label,
+    required RangeValues values,
+    required double min,
+    required double max,
+    required String suffix,
+    required String prefix,
+    required ValueChanged<RangeValues> onChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _SectionLabel(label),
-        const SizedBox(height: 10),
+      children: [
+        _buildLabel(label),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 3,
             activeTrackColor: AppColors.deepOrange,
-            inactiveTrackColor: const Color(0xFFF7D8C2),
-            rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
-            rangeThumbShape: const _FilterRangeThumbShape(),
+            inactiveTrackColor: AppColors.deepOrange.withValues(alpha: 0.2),
+            thumbColor: AppColors.white,
             overlayShape: SliderComponentShape.noOverlay,
+            rangeThumbShape: const RoundRangeSliderThumbShape(
+              enabledThumbRadius: 7,
+              elevation: 2,
+            ),
           ),
           child: RangeSlider(
             values: values,
-            min: 0,
+            min: min,
             max: max,
             onChanged: onChanged,
           ),
         ),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            _RangeValueChip(
-              prefix: 'MIN:',
-              value: values.start.round().toString(),
-              suffix: suffix,
-            ),
-            _RangeValueChip(
-              prefix: 'MAX:',
-              value: values.end.round().toString(),
-              suffix: suffix,
-              emphasizeValue: true,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _RangeValueChip extends StatelessWidget {
-  const _RangeValueChip({
-    required this.prefix,
-    required this.value,
-    required this.suffix,
-    this.emphasizeValue = false,
-  });
-
-  final String prefix;
-  final String value;
-  final String suffix;
-  final bool emphasizeValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.softBackground,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: RichText(
-        text: TextSpan(
-          children: <InlineSpan>[
-            TextSpan(
-              text: '$prefix ',
-              style: const TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            TextSpan(
-              text: '$value ',
-              style: TextStyle(
-                color: emphasizeValue ? AppColors.deepOrange : AppColors.ink,
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            TextSpan(
-              text: suffix,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterLabel extends StatelessWidget {
-  const _FilterLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: const TextStyle(
-        color: AppColors.ink,
-        fontSize: 10,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0.2,
-      ),
-    );
-  }
-}
-
-class _SubSectionHeader extends StatelessWidget {
-  const _SubSectionHeader({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: AppColors.ink,
+            Text(
+              '$prefix${values.start.toStringAsFixed(values.start == values.start.roundToDouble() ? 0 : 1)} $suffix',
+              style: const TextStyle(
+                color: AppColors.deepOrange,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
-                ),
+            Text(
+              '$prefix${values.end.toStringAsFixed(values.end == values.end.roundToDouble() ? 0 : 1)} $suffix',
+              style: const TextStyle(
+                color: AppColors.deepOrange,
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Container(
-          height: 1,
-          width: double.infinity,
-          color: AppColors.lightLine.withValues(alpha: 0.6),
-        ),
       ],
     );
   }
-}
 
-class _ToggleField extends StatelessWidget {
-  const _ToggleField({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget _buildRadioGrid({
+    required String label,
+    required List<String> options,
+    required String selectedValue,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.2,
-            ),
+        _buildLabel(label),
+        GridView.builder(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 44, // Fixed height for each item
           ),
-        ),
-        Transform.scale(
-          scale: 0.75,
-          child: Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppColors.white,
-            activeTrackColor: AppColors.deepOrange,
-            inactiveThumbColor: AppColors.white,
-            inactiveTrackColor: AppColors.lightLine,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-class _DashedDivider extends StatelessWidget {
-  const _DashedDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 1,
-      width: double.infinity,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final dashCount = (constraints.maxWidth / 8).floor();
-
-          return Row(
-            children: List<Widget>.generate(
-              dashCount,
-              (_) => Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  color: AppColors.lightLine,
+          itemCount: options.length,
+          itemBuilder: (context, index) {
+            final option = options[index];
+            final isSelected = selectedValue == option;
+            return GestureDetector(
+              onTap: () => onChanged(option),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.softBackground,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.deepOrange.withValues(alpha: 0.3)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.deepOrange,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: isSelected
+                          ? Center(
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.deepOrange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        option.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        ),
+      ],
     );
-  }
-}
-
-class _FilterRangeThumbShape extends RangeSliderThumbShape {
-  const _FilterRangeThumbShape({this.radius = 6});
-
-  final double radius;
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return Size.square(radius * 2 + 4);
-  }
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    bool isDiscrete = false,
-    bool isEnabled = false,
-    bool isOnTop = false,
-    TextDirection textDirection = TextDirection.ltr,
-    required SliderThemeData sliderTheme,
-    Thumb thumb = Thumb.start,
-    bool isPressed = false,
-  }) {
-    final Canvas canvas = context.canvas;
-    final fillPaint = Paint()..color = AppColors.white;
-    final borderPaint = Paint()
-      ..color = AppColors.deepOrange
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-
-    canvas.drawCircle(center, radius, fillPaint);
-    canvas.drawCircle(center, radius, borderPaint);
   }
 }

@@ -14,11 +14,11 @@ class LandModel {
   final String locationLatitude;
   @JsonKey(name: 'location_longitude')
   final String locationLongitude;
-  @JsonKey(name: 'land_status')
+  @JsonKey(name: 'land_sale_available_status', defaultValue: [])
   final List<String> landStatus;
-  @JsonKey(name: 'urgency_listing')
+  @JsonKey(name: 'urgency_listing', defaultValue: [])
   final List<String> urgencyListing;
-  @JsonKey(name: 'verification_package')
+  @JsonKey(name: 'verification_package', defaultValue: false)
   final bool verificationPackage;
   @JsonKey(name: 'created_by')
   final int createdBy;
@@ -32,7 +32,9 @@ class LandModel {
   final String updatedAt;
   final LandDetailsModel landDetails;
   final GpsModel? gps;
+  @JsonKey(defaultValue: [])
   final List<MediaModel> media;
+  @JsonKey(defaultValue: [])
   final List<DocumentModel> documents;
 
   const LandModel({
@@ -106,13 +108,15 @@ class LandDetailsModel {
   final String soilType;
   @JsonKey(name: 'fencing_status')
   final String fencingStatus;
+  @JsonKey(defaultValue: [])
   final List<String> electricity;
+  @JsonKey(defaultValue: [])
   final List<String> residence;
   @JsonKey(name: 'poultry_shed_number')
   final int poultryShedNumber;
   @JsonKey(name: 'cow_shed_number')
   final int cowShedNumber;
-  @JsonKey(name: 'water_source')
+  @JsonKey(name: 'water_source', defaultValue: [])
   final List<String> waterSource;
   @JsonKey(name: 'number_of_bores')
   final int numberOfBores;
@@ -136,6 +140,7 @@ class LandDetailsModel {
   final String teakTreesNumber;
   @JsonKey(name: 'other_trees_number')
   final String otherTreesNumber;
+  @JsonKey(defaultValue: [])
   final List<String> complaints;
 
   const LandDetailsModel({

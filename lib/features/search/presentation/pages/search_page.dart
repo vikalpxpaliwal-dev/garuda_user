@@ -22,7 +22,7 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  bool _isFilterOpen = false;
+  bool _isFilterOpen = true;
   final Set<int> _selectedWishlistLandIds = <int>{};
 
   void _showScaffoldMessage({
@@ -40,7 +40,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SearchBloc>(
-      create: (_) => sl<SearchBloc>()..add(const GetLandsEvent()),
+      create: (_) => sl<SearchBloc>(),
       child: BlocConsumer<SearchBloc, SearchState>(
         listenWhen: (previous, current) =>
             previous.wishlistStatus != current.wishlistStatus &&

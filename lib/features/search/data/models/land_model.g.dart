@@ -14,13 +14,17 @@ LandModel _$LandModelFromJson(Map<String, dynamic> json) => LandModel(
   village: json['village'] as String,
   locationLatitude: json['location_latitude'] as String,
   locationLongitude: json['location_longitude'] as String,
-  landStatus: (json['land_status'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  urgencyListing: (json['urgency_listing'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
-  verificationPackage: json['verification_package'] as bool,
+  landStatus:
+      (json['land_sale_available_status'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
+  urgencyListing:
+      (json['urgency_listing'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
+  verificationPackage: json['verification_package'] as bool? ?? false,
   createdBy: (json['created_by'] as num).toInt(),
   verifiedBy: json['verified_by'],
   formStatus: json['form_status'] as String,
@@ -32,12 +36,16 @@ LandModel _$LandModelFromJson(Map<String, dynamic> json) => LandModel(
   gps: json['gps'] == null
       ? null
       : GpsModel.fromJson(json['gps'] as Map<String, dynamic>),
-  media: (json['media'] as List<dynamic>)
-      .map((e) => MediaModel.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  documents: (json['documents'] as List<dynamic>)
-      .map((e) => DocumentModel.fromJson(e as Map<String, dynamic>))
-      .toList(),
+  media:
+      (json['media'] as List<dynamic>?)
+          ?.map((e) => MediaModel.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
+  documents:
+      (json['documents'] as List<dynamic>?)
+          ?.map((e) => DocumentModel.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$LandModelToJson(LandModel instance) => <String, dynamic>{
@@ -48,7 +56,7 @@ Map<String, dynamic> _$LandModelToJson(LandModel instance) => <String, dynamic>{
   'village': instance.village,
   'location_latitude': instance.locationLatitude,
   'location_longitude': instance.locationLongitude,
-  'land_status': instance.landStatus,
+  'land_sale_available_status': instance.landStatus,
   'urgency_listing': instance.urgencyListing,
   'verification_package': instance.verificationPackage,
   'created_by': instance.createdBy,
@@ -79,17 +87,23 @@ LandDetailsModel _$LandDetailsModelFromJson(Map<String, dynamic> json) =>
       landBoundaryLongitude: json['land_boundary_longitude'] as String,
       soilType: json['soil_type'] as String,
       fencingStatus: json['fencing_status'] as String,
-      electricity: (json['electricity'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
-      residence: (json['residence'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
+      electricity:
+          (json['electricity'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      residence:
+          (json['residence'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       poultryShedNumber: (json['poultry_shed_number'] as num).toInt(),
       cowShedNumber: (json['cow_shed_number'] as num).toInt(),
-      waterSource: (json['water_source'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
+      waterSource:
+          (json['water_source'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       numberOfBores: (json['number_of_bores'] as num).toInt(),
       farmPond: json['farm_pond'] as bool,
       mangoTreesNumber: json['mango_trees_number'] as String,
@@ -101,9 +115,11 @@ LandDetailsModel _$LandDetailsModelFromJson(Map<String, dynamic> json) =>
       guavaTreesNumber: json['guava_trees_number'] as String,
       teakTreesNumber: json['teak_trees_number'] as String,
       otherTreesNumber: json['other_trees_number'] as String,
-      complaints: (json['complaints'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
+      complaints:
+          (json['complaints'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
 
 Map<String, dynamic> _$LandDetailsModelToJson(LandDetailsModel instance) =>

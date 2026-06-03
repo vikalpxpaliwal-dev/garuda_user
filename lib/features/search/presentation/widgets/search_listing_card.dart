@@ -210,29 +210,6 @@ class SearchListingCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton(
-                    onPressed:
-                        () {}, // Leave Add to Enquiry button empty as requested
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.deepOrange,
-                      foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Add to Enquiry',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),

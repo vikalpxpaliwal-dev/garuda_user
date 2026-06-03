@@ -8,7 +8,7 @@ import 'package:garuda_user_app/features/search/presentation/bloc/search_state.d
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 class SearchListingDetailArgs {
   const SearchListingDetailArgs({required this.land, required this.searchBloc});
 
@@ -60,39 +60,6 @@ class SearchListingDetailPage extends StatelessWidget {
                     _DetailPropertiesList(land: land, listing: listing),
                     _VisualDocumentationSection(land: land),
                   ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  top: 40,
-                  bottom: 40,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: () {},
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.deepOrange,
-                      foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'ADD TO ENQUIRY',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ),
@@ -541,8 +508,66 @@ class _VisualDocumentationSection extends StatelessWidget {
   const _VisualDocumentationSection({required this.land});
   final LandEntity land;
 
+  void _showImageDialog(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Center(child: Icon(Icons.error, color: Colors.white)),
+                ),
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchVideo(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final images = land.media.where((m) => m.type == 'image').toList();
+    final videos = land.media.where((m) => m.type == 'video').toList();
+
+    // Use placeholders if no media available to keep UI looking good
+    final displayImages = images.isNotEmpty
+        ? images.map((e) => e.url).toList()
+        : [
+            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop'
+          ];
+
+    final displayVideos = videos.isNotEmpty
+        ? videos.map((e) => e.url).toList()
+        : [
+            'https://www.youtube.com/watch?v=dQw4w9WgXcQ' // Fallback video URL
+          ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -575,79 +600,83 @@ class _VisualDocumentationSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          GridView.builder(
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.6,
-            ),
-            itemCount: 4,
-            itemBuilder: (context, index) {
-              final mediaUrl = land.media.length > index
-                  ? land.media[index].url
-                  : null;
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  color: AppColors.lightLine,
-                  child: mediaUrl != null
-                      ? Image.network(
-                          mediaUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(color: AppColors.lightLine),
-                        )
-                      : Image.network(
-                          'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(color: AppColors.lightLine),
-                        ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              height: 180,
-              width: double.infinity,
-              color: Colors.black,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Image.network(
-                      'https://images.unsplash.com/photo-1542315843-079218671c84?q=80&w=600&auto=format&fit=crop',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(color: AppColors.lightLine),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        ),
+          if (displayImages.isNotEmpty)
+            GridView.builder(
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.6,
+              ),
+              itemCount: displayImages.length > 4 ? 4 : displayImages.length,
+              itemBuilder: (context, index) {
+                final mediaUrl = displayImages[index];
+                return GestureDetector(
+                  onTap: () => _showImageDialog(context, mediaUrl),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      color: AppColors.lightLine,
+                      child: Image.network(
+                        mediaUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(color: AppColors.lightLine),
                       ),
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          ),
+          const SizedBox(height: 12),
+          if (displayVideos.isNotEmpty)
+            ...displayVideos.map((videoUrl) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: GestureDetector(
+                  onTap: () => _launchVideo(videoUrl),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: Colors.black,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Image.network(
+                              'https://images.unsplash.com/photo-1542315843-079218671c84?q=80&w=600&auto=format&fit=crop',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(color: AppColors.lightLine),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.play_arrow_rounded,
+                                  color: Colors.white,
+                                  size: 36,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
         ],
       ),
     );

@@ -9,7 +9,7 @@ class LandMapper {
     final artworkType = _getArtworkType(land.id);
 
     return SearchListingUiModel(
-      title: 'Near ${land.mandal}',
+      title: land.mandal,
       price: 'Rs.${_formatPrice(details.totalValue)}',
       availability: land.landStatus.isNotEmpty 
           ? land.landStatus.first.toUpperCase() 

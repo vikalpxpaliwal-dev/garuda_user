@@ -2,7 +2,7 @@ import 'package:garuda_user_app/features/search/presentation/models/search_listi
 
 const List<SearchListingUiModel> searchListingCatalog = <SearchListingUiModel>[
   SearchListingUiModel(
-    title: 'Near Shadnagar',
+    title: 'Shadnagar',
     price: 'Rs.74.0L',
     availability: 'AVAILABLE FOR MORTGAGE',
     area: '4 ac 30 gts',
@@ -77,7 +77,7 @@ const List<SearchListingUiModel> searchListingCatalog = <SearchListingUiModel>[
     documentStatuses: <String>['Patta', 'EC Verified', 'Passbook', 'Mutation'],
   ),
   SearchListingUiModel(
-    title: 'Near Chevella',
+    title: 'Chevella',
     price: 'Rs.66.0L',
     availability: 'AVAILABLE FOR SALE',
     area: '8 ac 15 gts',
@@ -149,7 +149,7 @@ const List<SearchListingUiModel> searchListingCatalog = <SearchListingUiModel>[
     documentStatuses: <String>['Patta', 'Tax Paid', 'FMB', 'Aadhar Link'],
   ),
   SearchListingUiModel(
-    title: 'Near Khajaguda',
+    title: 'Khajaguda',
     price: 'Rs.82.0L',
     availability: 'AVAILABLE FOR INVESTMENT',
     area: '3 ac 28 gts',

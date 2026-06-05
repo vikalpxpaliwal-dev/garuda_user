@@ -10,7 +10,7 @@ class LandMapper {
 
     return SearchListingUiModel(
       title: land.mandal,
-      price: 'Rs.${_formatPrice(details.totalValue)}',
+      price: '${_formatPrice(details.pricePerAcres)}/ac',
       availability: land.landStatus.isNotEmpty 
           ? land.landStatus.first.toUpperCase() 
           : 'AVAILABLE',
@@ -71,7 +71,7 @@ class LandMapper {
           ),
           SearchListingDetailField(
             label: 'PRICE PER ACRE', 
-            value: 'Rs.${_formatPrice(details.pricePerAcres)}',
+            value: '${_formatPrice(details.pricePerAcres)}/ac',
             isAccent: true,
           ),
           SearchListingDetailField(
@@ -100,17 +100,10 @@ class LandMapper {
       ),
       SearchListingDetailSection(
         title: 'TREES DETAIL',
-        fields: [
-          SearchListingDetailField(label: 'MANGO', value: details.mangoTreesNumber),
-          SearchListingDetailField(label: 'COCONUT', value: details.coconutTreesNumber),
-          SearchListingDetailField(label: 'NEEM', value: details.neemTreesNumber),
-          SearchListingDetailField(label: 'BANIYAN', value: details.baniyanTreesNumber),
-          SearchListingDetailField(label: 'TAMARIND', value: details.tamarindTreesNumber),
-          SearchListingDetailField(label: 'SAPOTO', value: details.sapotoTreesNumber),
-          SearchListingDetailField(label: 'GUAVA', value: details.guavaTreesNumber),
-          SearchListingDetailField(label: 'TEAK', value: details.teakTreesNumber),
-          SearchListingDetailField(label: 'OTHER', value: details.otherTreesNumber),
-        ],
+        fields: details.trees.map((tree) => SearchListingDetailField(
+          label: tree.type.toUpperCase(),
+          value: tree.count.toString(),
+        )).toList(),
       ),
       SearchListingDetailSection(
         title: 'CHARACTERISTICS',

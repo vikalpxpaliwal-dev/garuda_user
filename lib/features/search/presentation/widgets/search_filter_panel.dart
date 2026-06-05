@@ -26,9 +26,9 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
   String? _selectedDistrict;
   String? _selectedTown;
 
-  double _budget = 100;
-  double _price = 10;
-  double _area = 50;
+  RangeValues _budget = const RangeValues(0, 100);
+  RangeValues _price = const RangeValues(0, 10);
+  RangeValues _area = const RangeValues(0, 50);
 
   bool _showCharacteristics = false;
 
@@ -148,9 +148,9 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
               ),
               const SizedBox(height: 32),
 
-              _buildSlider(
+              _buildRangeSlider(
                 label: 'TOTAL BUDGET',
-                value: _budget,
+                values: _budget,
                 min: 0,
                 max: 100,
                 suffix: 'Cr',
@@ -159,9 +159,9 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
               ),
               const SizedBox(height: 24),
 
-              _buildSlider(
+              _buildRangeSlider(
                 label: 'PRICE PER ACRE',
-                value: _price,
+                values: _price,
                 min: 0,
                 max: 10,
                 suffix: 'Cr',
@@ -170,9 +170,9 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
               ),
               const SizedBox(height: 24),
 
-              _buildSlider(
-                label: 'AREA (ACRES)',
-                value: _area,
+              _buildRangeSlider(
+                label: 'AREA RANGE (ACRES)',
+                values: _area,
                 min: 0,
                 max: 50,
                 suffix: 'ac',
@@ -343,17 +343,31 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
     if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
     if (_selectedTown != null) filters['mandal'] = _selectedTown;
 
-    if (_budget < 100)
-      filters['max_total_budget'] = _budget * 10000000;
+    if (_budget.start > 0) {
+      filters['min_total_budget'] = _budget.start * 10000000;
+    }
+    if (_budget.end < 100) {
+      filters['max_total_budget'] = _budget.end * 10000000;
+    }
 
-    if (_price < 10)
-      filters['max_price_per_acre'] = _price * 10000000;
+    if (_price.start > 0) {
+      filters['min_price_per_acre'] = _price.start * 10000000;
+    }
+    if (_price.end < 10) {
+      filters['max_price_per_acre'] = _price.end * 10000000;
+    }
 
-    if (_area < 50) filters['max_acres'] = _area;
+    if (_area.start > 0) {
+      filters['min_acres'] = _area.start;
+    }
+    if (_area.end < 50) {
+      filters['max_acres'] = _area.end;
+    }
 
     if (_selectedSoilType != 'All') filters['soil_type'] = _selectedSoilType;
-    if (_selectedRoadType != 'All')
+    if (_selectedRoadType != 'All') {
       filters['nearest_road_type'] = _selectedRoadType;
+    }
 
     if (_selectedAttachedToRoad != 'All') {
       filters['land_attached_to_road'] = _selectedAttachedToRoad.toLowerCase();
@@ -441,26 +455,27 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
     );
   }
 
-  Widget _buildSlider({
+  Widget _buildRangeSlider({
     required String label,
-    required double value,
+    required RangeValues values,
     required double min,
     required double max,
     required String suffix,
     required String prefix,
-    required ValueChanged<double> onChanged,
+    required ValueChanged<RangeValues> onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildLabel(label),
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                'Up to $prefix${value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1)} $suffix',
+                '$prefix${values.start.toStringAsFixed(values.start == values.start.roundToDouble() ? 0 : 1)} - $prefix${values.end.toStringAsFixed(values.end == values.end.roundToDouble() ? 0 : 1)} $suffix',
                 style: const TextStyle(
                   color: AppColors.deepOrange,
                   fontSize: 10,
@@ -477,13 +492,13 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
             inactiveTrackColor: AppColors.deepOrange.withValues(alpha: 0.2),
             thumbColor: AppColors.white,
             overlayShape: SliderComponentShape.noOverlay,
-            thumbShape: const RoundSliderThumbShape(
+            rangeThumbShape: const RoundRangeSliderThumbShape(
               enabledThumbRadius: 7,
               elevation: 2,
             ),
           ),
-          child: Slider(
-            value: value,
+          child: RangeSlider(
+            values: values,
             min: min,
             max: max,
             onChanged: onChanged,
@@ -494,17 +509,17 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '$prefix${min.toStringAsFixed(0)} $suffix',
-              style: TextStyle(
-                color: AppColors.ink.withValues(alpha: 0.4),
+              '$prefix${values.start.toStringAsFixed(values.start == values.start.roundToDouble() ? 0 : 1)} $suffix',
+              style: const TextStyle(
+                color: AppColors.deepOrange,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),
             ),
             Text(
-              '$prefix${max.toStringAsFixed(0)} $suffix',
-              style: TextStyle(
-                color: AppColors.ink.withValues(alpha: 0.4),
+              '$prefix${values.end.toStringAsFixed(values.end == values.end.roundToDouble() ? 0 : 1)} $suffix',
+              style: const TextStyle(
+                color: AppColors.deepOrange,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),

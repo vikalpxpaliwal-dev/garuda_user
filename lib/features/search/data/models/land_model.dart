@@ -6,14 +6,14 @@ part 'land_model.g.dart';
 @JsonSerializable()
 class LandModel {
   final int id;
-  final String state;
-  final String district;
-  final String mandal;
-  final String village;
+  final String? state;
+  final String? district;
+  final String? mandal;
+  final String? village;
   @JsonKey(name: 'location_latitude')
-  final String locationLatitude;
+  final String? locationLatitude;
   @JsonKey(name: 'location_longitude')
-  final String locationLongitude;
+  final String? locationLongitude;
   @JsonKey(name: 'land_sale_available_status', defaultValue: [])
   final List<String> landStatus;
   @JsonKey(name: 'urgency_listing', defaultValue: [])
@@ -25,11 +25,11 @@ class LandModel {
   @JsonKey(name: 'verified_by')
   final dynamic verifiedBy;
   @JsonKey(name: 'form_status')
-  final String formStatus;
+  final String? formStatus;
   @JsonKey(name: 'created_at')
-  final String createdAt;
+  final String? createdAt;
   @JsonKey(name: 'updated_at')
-  final String updatedAt;
+  final String? updatedAt;
   final LandDetailsModel landDetails;
   final GpsModel? gps;
   @JsonKey(defaultValue: [])
@@ -39,20 +39,20 @@ class LandModel {
 
   const LandModel({
     required this.id,
-    required this.state,
-    required this.district,
-    required this.mandal,
-    required this.village,
-    required this.locationLatitude,
-    required this.locationLongitude,
+    this.state,
+    this.district,
+    this.mandal,
+    this.village,
+    this.locationLatitude,
+    this.locationLongitude,
     required this.landStatus,
     required this.urgencyListing,
     required this.verificationPackage,
     required this.createdBy,
     this.verifiedBy,
-    required this.formStatus,
-    required this.createdAt,
-    required this.updatedAt,
+    this.formStatus,
+    this.createdAt,
+    this.updatedAt,
     required this.landDetails,
     this.gps,
     required this.media,
@@ -66,10 +66,10 @@ class LandModel {
 
   LandEntity toEntity() => LandEntity(
         id: id,
-        village: village,
-        state: state,
-        district: district,
-        mandal: mandal,
+        village: village ?? '',
+        state: state ?? '',
+        district: district ?? '',
+        mandal: mandal ?? '',
         landStatus: landStatus,
         urgencyListing: urgencyListing,
         landDetails: landDetails.toEntity(),
@@ -84,97 +84,102 @@ class LandDetailsModel {
   @JsonKey(name: 'land_id')
   final int landId;
   @JsonKey(name: 'total_acres')
-  final double totalAcres;
-  final int guntas;
+  final double? totalAcres;
+  final int? guntas;
   @JsonKey(name: 'price_per_acres')
-  final double pricePerAcres;
+  final double? pricePerAcres;
   @JsonKey(name: 'total_value')
-  final double totalValue;
+  final double? totalValue;
   @JsonKey(name: 'nearest_road_type')
-  final String nearestRoadType;
+  final String? nearestRoadType;
   @JsonKey(name: 'land_attached_to_road')
-  final String landAttachedToRoad;
+  final String? landAttachedToRoad;
   @JsonKey(name: 'path_ownership')
-  final String pathOwnership;
+  final String? pathOwnership;
   @JsonKey(name: 'land_entry_latitude')
-  final String landEntryLatitude;
+  final String? landEntryLatitude;
   @JsonKey(name: 'land_entry_longitude')
-  final String landEntryLongitude;
+  final String? landEntryLongitude;
   @JsonKey(name: 'land_boundary_latitude')
-  final String landBoundaryLatitude;
+  final String? landBoundaryLatitude;
   @JsonKey(name: 'land_boundary_longitude')
-  final String landBoundaryLongitude;
+  final String? landBoundaryLongitude;
   @JsonKey(name: 'soil_type')
-  final String soilType;
+  final String? soilType;
   @JsonKey(name: 'fencing_status')
-  final String fencingStatus;
+  final String? fencingStatus;
   @JsonKey(defaultValue: [])
   final List<String> electricity;
   @JsonKey(defaultValue: [])
   final List<String> residence;
   @JsonKey(name: 'poultry_shed_number')
-  final int poultryShedNumber;
+  final int? poultryShedNumber;
   @JsonKey(name: 'cow_shed_number')
-  final int cowShedNumber;
+  final int? cowShedNumber;
   @JsonKey(name: 'water_source', defaultValue: [])
   final List<String> waterSource;
   @JsonKey(name: 'number_of_bores')
-  final int numberOfBores;
+  final int? numberOfBores;
   @JsonKey(name: 'farm_pond')
-  final bool farmPond;
-  @JsonKey(name: 'mango_trees_number')
-  final String mangoTreesNumber;
-  @JsonKey(name: 'coconut_trees_number')
-  final String coconutTreesNumber;
-  @JsonKey(name: 'neem_trees_number')
-  final String neem_trees_number;
-  @JsonKey(name: 'baniyan_trees_number')
-  final String baniyanTreesNumber;
-  @JsonKey(name: 'tamarind_trees_number')
-  final String tamarindTreesNumber;
-  @JsonKey(name: 'sapoto_trees_number')
-  final String sapotoTreesNumber;
-  @JsonKey(name: 'guava_trees_number')
-  final String guavaTreesNumber;
-  @JsonKey(name: 'teak_trees_number')
-  final String teakTreesNumber;
-  @JsonKey(name: 'other_trees_number')
-  final String otherTreesNumber;
+  final bool? farmPond;
+  @JsonKey(readValue: _readTrees, defaultValue: [])
+  final List<TreeModel> trees;
+
+  static List<dynamic> _readTrees(Map<dynamic, dynamic> json, String key) {
+    if (json[key] != null && json[key] is List) return json[key] as List<dynamic>;
+    final treeKeys = {
+      'mango_trees_number': 'Mango',
+      'coconut_trees_number': 'Coconut',
+      'neem_trees_number': 'Neem',
+      'baniyan_trees_number': 'Baniyan',
+      'tamarind_trees_number': 'Tamarind',
+      'sapoto_trees_number': 'Sapoto',
+      'guava_trees_number': 'Guava',
+      'teak_trees_number': 'Teak',
+      'other_trees_number': 'Other',
+    };
+    final List<Map<String, dynamic>> treesList = [];
+    for (final entry in treeKeys.entries) {
+      final val = json[entry.key];
+      if (val != null && val is String && val.isNotEmpty) {
+        final match = RegExp(r'\d+').firstMatch(val);
+        if (match != null) {
+          final count = int.tryParse(match.group(0) ?? '0') ?? 0;
+          if (count > 0) {
+            treesList.add({'type': entry.value, 'count': count});
+          }
+        }
+      }
+    }
+    return treesList;
+  }
   @JsonKey(defaultValue: [])
   final List<String> complaints;
 
   const LandDetailsModel({
     required this.id,
     required this.landId,
-    required this.totalAcres,
-    required this.guntas,
-    required this.pricePerAcres,
-    required this.totalValue,
-    required this.nearestRoadType,
-    required this.landAttachedToRoad,
-    required this.pathOwnership,
-    required this.landEntryLatitude,
-    required this.landEntryLongitude,
-    required this.landBoundaryLatitude,
-    required this.landBoundaryLongitude,
-    required this.soilType,
-    required this.fencingStatus,
+    this.totalAcres,
+    this.guntas,
+    this.pricePerAcres,
+    this.totalValue,
+    this.nearestRoadType,
+    this.landAttachedToRoad,
+    this.pathOwnership,
+    this.landEntryLatitude,
+    this.landEntryLongitude,
+    this.landBoundaryLatitude,
+    this.landBoundaryLongitude,
+    this.soilType,
+    this.fencingStatus,
     required this.electricity,
     required this.residence,
-    required this.poultryShedNumber,
-    required this.cowShedNumber,
+    this.poultryShedNumber,
+    this.cowShedNumber,
     required this.waterSource,
-    required this.numberOfBores,
-    required this.farmPond,
-    required this.mangoTreesNumber,
-    required this.coconutTreesNumber,
-    required this.neem_trees_number,
-    required this.baniyanTreesNumber,
-    required this.tamarindTreesNumber,
-    required this.sapotoTreesNumber,
-    required this.guavaTreesNumber,
-    required this.teakTreesNumber,
-    required this.otherTreesNumber,
+    this.numberOfBores,
+    this.farmPond,
+    required this.trees,
     required this.complaints,
   });
 
@@ -184,28 +189,22 @@ class LandDetailsModel {
   Map<String, dynamic> toJson() => _$LandDetailsModelToJson(this);
 
   LandDetailsEntity toEntity() => LandDetailsEntity(
-        totalAcres: totalAcres,
-        guntas: guntas,
-        pricePerAcres: pricePerAcres,
-        totalValue: totalValue,
-        soilType: soilType,
-        nearestRoadType: nearestRoadType,
-        landAttachedToRoad: landAttachedToRoad,
-        fencingStatus: fencingStatus,
+        totalAcres: totalAcres ?? 0.0,
+        guntas: guntas ?? 0,
+        pricePerAcres: pricePerAcres ?? 0.0,
+        totalValue: totalValue ?? 0.0,
+        soilType: soilType ?? '',
+        nearestRoadType: nearestRoadType ?? '',
+        landAttachedToRoad: landAttachedToRoad ?? '',
+        fencingStatus: fencingStatus ?? '',
         waterSource: waterSource,
         electricity: electricity,
         residence: residence,
-        numberOfBores: numberOfBores,
-        farmPond: farmPond,
-        mangoTreesNumber: mangoTreesNumber,
-        coconutTreesNumber: coconutTreesNumber,
-        neemTreesNumber: neem_trees_number,
-        baniyanTreesNumber: baniyanTreesNumber,
-        tamarindTreesNumber: tamarindTreesNumber,
-        sapotoTreesNumber: sapotoTreesNumber,
-        guavaTreesNumber: guavaTreesNumber,
-        teakTreesNumber: teakTreesNumber,
-        otherTreesNumber: otherTreesNumber,
+        numberOfBores: numberOfBores ?? 0,
+        farmPond: farmPond ?? false,
+        poultryShedNumber: poultryShedNumber ?? 0,
+        cowShedNumber: cowShedNumber ?? 0,
+        trees: trees.map((t) => t.toEntity()).toList(),
       );
 }
 
@@ -214,14 +213,14 @@ class GpsModel {
   final int id;
   @JsonKey(name: 'land_id')
   final int landId;
-  final String latitude;
-  final String longitude;
+  final String? latitude;
+  final String? longitude;
 
   const GpsModel({
     required this.id,
     required this.landId,
-    required this.latitude,
-    required this.longitude,
+    this.latitude,
+    this.longitude,
   });
 
   factory GpsModel.fromJson(Map<String, dynamic> json) =>
@@ -278,4 +277,22 @@ class DocumentModel {
   Map<String, dynamic> toJson() => _$DocumentModelToJson(this);
 
   DocumentEntity toEntity() => DocumentEntity(docType: docType, fileUrl: fileUrl);
+}
+
+@JsonSerializable()
+class TreeModel {
+  final String type;
+  final int count;
+
+  const TreeModel({
+    required this.type,
+    required this.count,
+  });
+
+  factory TreeModel.fromJson(Map<String, dynamic> json) =>
+      _$TreeModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TreeModelToJson(this);
+
+  TreeEntity toEntity() => TreeEntity(type: type, count: count);
 }

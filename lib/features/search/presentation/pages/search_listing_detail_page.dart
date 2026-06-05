@@ -352,11 +352,11 @@ class _DetailPropertiesList extends StatelessWidget {
                   ? land.landDetails.residence.join(', ').toUpperCase()
                   : 'NO',
             ),
-            _buildPropItem(Icons.home_work_outlined, 'POULTRY SHED', 'NO'),
+            _buildPropItem(Icons.home_work_outlined, 'POULTRY SHED', land.landDetails.poultryShedNumber > 0 ? land.landDetails.poultryShedNumber.toString() : 'NO'),
           ),
           const SizedBox(height: 24),
           _buildRow(
-            _buildPropItem(Icons.pets_outlined, 'COW SHED', 'NO'),
+            _buildPropItem(Icons.pets_outlined, 'COW SHED', land.landDetails.cowShedNumber > 0 ? land.landDetails.cowShedNumber.toString() : 'NO'),
             const SizedBox(),
           ),
           _buildDivider(),
@@ -402,31 +402,36 @@ class _DetailPropertiesList extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _buildRow(
-            _buildPropItem(
-              Icons.energy_savings_leaf_outlined,
-              'MANGO',
-              '${land.landDetails.mangoTreesNumber.isEmpty ? '0' : land.landDetails.mangoTreesNumber} TREES',
-            ),
-            _buildPropItem(
-              Icons.energy_savings_leaf_outlined,
-              'COCONUT',
-              '${land.landDetails.coconutTreesNumber.isEmpty ? '0' : land.landDetails.coconutTreesNumber} TREES',
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildRow(
-            _buildPropItem(
-              Icons.energy_savings_leaf_outlined,
-              'TEAK',
-              '${land.landDetails.teakTreesNumber.isEmpty ? '0' : land.landDetails.teakTreesNumber} TREES',
-            ),
-            _buildPropItem(
-              Icons.energy_savings_leaf_outlined,
-              'NEEM',
-              '${land.landDetails.neemTreesNumber.isEmpty ? '0' : land.landDetails.neemTreesNumber} TREES',
-            ),
-          ),
+          if (land.landDetails.trees.isEmpty)
+             const Text(
+              'No trees available',
+              style: TextStyle(
+                color: AppColors.ink,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          else
+            ...[
+              for (int i = 0; i < land.landDetails.trees.length; i += 2)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24.0),
+                  child: _buildRow(
+                    _buildPropItem(
+                      Icons.energy_savings_leaf_outlined,
+                      land.landDetails.trees[i].type.toUpperCase(),
+                      '${land.landDetails.trees[i].count} TREES',
+                    ),
+                    i + 1 < land.landDetails.trees.length
+                        ? _buildPropItem(
+                            Icons.energy_savings_leaf_outlined,
+                            land.landDetails.trees[i + 1].type.toUpperCase(),
+                            '${land.landDetails.trees[i + 1].count} TREES',
+                          )
+                        : const SizedBox(),
+                  ),
+                ),
+            ],
           _buildDivider(),
         ],
       ),

@@ -78,7 +78,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? AppColors.deepOrange : AppColors.mutedText;
+    final color = isSelected ? AppColors.primaryOrange : AppColors.mutedText;
 
     return Expanded(
       child: InkWell(

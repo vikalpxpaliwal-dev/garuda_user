@@ -4,7 +4,7 @@ final class AppColors {
   AppColors._();
 
   static const primaryOrange = Color(0xFFF28B36);
-  static const deepOrange = Color(0xFFD36A1C);
+  static const deepOrange = Color.fromARGB(255, 248, 108, 0);
   static const warmAmber = Color(0xFFFFBE73);
   static const forestGreen = Color(0xFF3F6C45);
   static const softBackground = Color(0xFFFBF7F3);

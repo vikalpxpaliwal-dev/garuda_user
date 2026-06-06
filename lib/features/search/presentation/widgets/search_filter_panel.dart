@@ -137,10 +137,10 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
               ),
               const SizedBox(height: 16),
 
-              _buildLabel('TOWN'),
+              _buildLabel('MANDAL'),
               _buildDropdown(
                 value: _selectedTown,
-                hint: 'All Towns',
+                hint: 'All Mandals',
                 options: _townNames(states),
                 onChanged: (val) {
                   setState(() => _selectedTown = val);

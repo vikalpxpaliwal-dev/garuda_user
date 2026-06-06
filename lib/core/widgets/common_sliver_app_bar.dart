@@ -10,10 +10,7 @@ import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart'
 import 'package:go_router/go_router.dart';
 
 class CommonSliverAppBar extends StatelessWidget {
-  const CommonSliverAppBar({
-    super.key,
-    this.showSearchAction = true,
-  });
+  const CommonSliverAppBar({super.key, this.showSearchAction = true});
 
   final bool showSearchAction;
 
@@ -31,9 +28,7 @@ class CommonSliverAppBar extends StatelessWidget {
         ),
       ),
       shape: Border(
-        bottom: BorderSide(
-          color: AppColors.lightLine.withValues(alpha: 0.4),
-        ),
+        bottom: BorderSide(color: AppColors.lightLine.withValues(alpha: 0.4)),
       ),
       titleSpacing: 12,
       title: Row(
@@ -74,7 +69,7 @@ class CommonSliverAppBar extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.deepOrange.withValues(alpha: 0.2),
+                  color: AppColors.forestGreen.withValues(alpha: 0.2),
                   width: 1.5,
                 ),
               ),
@@ -86,11 +81,11 @@ class CommonSliverAppBar extends StatelessWidget {
 
                   return CircleAvatar(
                     radius: 12,
-                    backgroundColor: const Color(0xFFFFD1B5),
+                    backgroundColor: const Color(0xFFC8E6C9),
                     child: Text(
                       initial,
                       style: const TextStyle(
-                        color: AppColors.deepOrange,
+                        color: AppColors.forestGreen,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                       ),

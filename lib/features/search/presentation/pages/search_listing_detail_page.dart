@@ -289,7 +289,7 @@ class _DetailPropertiesList extends StatelessWidget {
             ),
             _buildPropItem(
               Icons.location_city_outlined,
-              'NEAREST TOWN',
+              'NEAREST MANDAL',
               land.mandal.toUpperCase(),
             ),
           ),
@@ -297,7 +297,7 @@ class _DetailPropertiesList extends StatelessWidget {
           _buildRow(
             _buildPropItem(
               Icons.route_outlined,
-              'DIST. FROM TOWN',
+              'DIST. FROM MANDAL',
               listing.distance.toUpperCase(),
             ),
             const SizedBox(),

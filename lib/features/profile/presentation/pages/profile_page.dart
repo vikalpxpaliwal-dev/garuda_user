@@ -703,8 +703,7 @@ class _ProfileAvailabilityMapper {
 
       return _TrackedLandUiModel(
         id: land.id,
-        title:
-            '${_ProfileWishlistMapper._capitalize(land.village)} - ${_ProfileWishlistMapper._capitalize(land.mandal)}',
+        title: _ProfileWishlistMapper._capitalize(land.mandal),
         subtitle:
             '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
         trailingLabel: _ProfileWishlistMapper._normalizeLabel(
@@ -742,8 +741,7 @@ class _ProfileOwnedLandMapper {
       final palette = _palettes[entry.key % _palettes.length];
 
       return _OwnedLandUiModel(
-        title:
-            '${_ProfileWishlistMapper._capitalize(land.village)} - ${_ProfileWishlistMapper._capitalize(land.mandal)}',
+        title: _ProfileWishlistMapper._capitalize(land.mandal),
         subtitle:
             '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
         priceLabel: 'TBD',
@@ -774,7 +772,7 @@ class _ProfileWishlistMapper {
 
       return _TrackedLandUiModel(
         id: land.id,
-        title: '${_capitalize(land.village)} - ${_capitalize(land.mandal)}',
+        title: _capitalize(land.mandal),
         subtitle:
             '${land.district.toUpperCase()} • ${land.state.toUpperCase()}',
         trailingLabel: _normalizeLabel(land.availability, fallback: 'ACTIVE'),
@@ -2443,8 +2441,7 @@ class _CartLandRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final land = item.land;
     final palette = _palettes[item.id % _palettes.length];
-    final title =
-        '${land.village.isEmpty ? 'Land' : land.village} - ${land.mandal.isEmpty ? '' : land.mandal}';
+    final title = land.mandal.isEmpty ? 'Land' : land.mandal;
     final subtitle =
         '${land.district.toUpperCase()} • ${land.state.toUpperCase()}';
     final badge = land.landStatus.isNotEmpty
@@ -2487,6 +2484,10 @@ class _CartLandRow extends StatelessWidget {
               ),
               child: Stack(
                 children: <Widget>[
+                  if (land.imageUrl == null || land.imageUrl!.isEmpty)
+                    const Center(
+                      child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
+                    ),
                   // Dot indicator
                   const Positioned(
                     top: 14,
@@ -2635,8 +2636,7 @@ class _PrimaryVisitLandRow extends StatelessWidget {
     final land = item.land;
     final profileState = context.watch<ProfileBloc>().state;
     final palette = _palettes[item.id % _palettes.length];
-    final title =
-        '${land.village.isEmpty ? 'LAND' : land.village.toUpperCase()}${land.mandal.isEmpty ? '' : ' • ${land.mandal.toUpperCase()}'}';
+    final title = land.mandal.isEmpty ? 'LAND' : land.mandal.toUpperCase();
     final subtitle = land.district.toUpperCase();
     final wasShortlistedFromApi =
         item.meetingStatus.toLowerCase() == 'shortlisted';
@@ -2696,6 +2696,10 @@ class _PrimaryVisitLandRow extends StatelessWidget {
               ),
               child: Stack(
                 children: <Widget>[
+                  if (land.imageUrl == null || land.imageUrl!.isEmpty)
+                    const Center(
+                      child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
+                    ),
                   const Positioned(
                     top: 14,
                     left: 14,
@@ -3377,7 +3381,7 @@ class _ShortlistLandRow extends StatelessWidget {
     final land = item.land;
     final palette = _palettes[item.id % _palettes.length];
     final title =
-        'LAND #${land.id} • ${land.village.isEmpty ? 'LOCATION' : land.village.toUpperCase()}';
+        'LAND #${land.id} • ${land.mandal.isEmpty ? 'LOCATION' : land.mandal.toUpperCase()}';
     final subtitle = land.district.isEmpty
         ? land.state.toUpperCase()
         : land.district.toUpperCase();
@@ -3786,62 +3790,14 @@ class _OwnedLandThumbnail extends StatelessWidget {
               Image.network(
                 Uri.encodeFull(imageUrl!),
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const SizedBox.shrink(),
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
+                ),
               )
-            else ...<Widget>[
-              Positioned(
-                left: -2,
-                right: -2,
-                bottom: -4,
-                child: Container(
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.28),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+            else
+              const Center(
+                child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
               ),
-              Positioned(
-                left: 6,
-                top: 6,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 16,
-                top: 10,
-                child: Transform.rotate(
-                  angle: -0.18,
-                  child: Container(
-                    width: 28,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 5,
-                bottom: 7,
-                child: Transform.rotate(
-                  angle: -0.42,
-                  child: Container(
-                    width: 20,
-                    height: 5,
-                    color: Colors.white.withValues(alpha: 0.3),
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -3879,56 +3835,14 @@ class _JourneyThumbnail extends StatelessWidget {
               Image.network(
                 Uri.encodeFull(imageUrl!),
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const SizedBox.shrink(),
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
+                ),
               )
-            else ...<Widget>[
-              Positioned(
-                left: -6,
-                bottom: -8,
-                child: Container(
-                  width: 36,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+            else
+              const Center(
+                child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
               ),
-              Positioned(
-                right: -3,
-                bottom: -2,
-                child: Container(
-                  width: 24,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFC55A).withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 8,
-                top: 8,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 17,
-                top: 6,
-                child: Container(
-                  width: 1.5,
-                  height: 28,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -3970,80 +3884,17 @@ class _TrackedJourneyHeroArtwork extends StatelessWidget {
                 child: Image.network(
                   Uri.encodeFull(journey.imageUrl!),
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const SizedBox.shrink(),
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
+                  ),
                 ),
               )
-            else ...<Widget>[
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0.68, -0.02),
-                      radius: 0.7,
-                      colors: <Color>[
-                        Colors.white.withValues(alpha: 0.92),
-                        Colors.white.withValues(alpha: 0.16),
-                        Colors.transparent,
-                      ],
-                      stops: const <double>[0, 0.22, 1],
-                    ),
-                  ),
+            else
+              const Positioned.fill(
+                child: Center(
+                  child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
                 ),
               ),
-              ...List<Widget>.generate(
-                7,
-                (index) => Positioned(
-                  left: index < 4 ? 8.0 + (index * 16.0) : null,
-                  right: index >= 4 ? 8.0 + ((index - 4) * 18.0) : null,
-                  top: 0,
-                  bottom: 0,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                      width: index.isEven ? 22 : 16,
-                      height: 110 + ((index % 3) * 18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF081426).withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 18,
-                right: 18,
-                bottom: -8,
-                child: Transform.rotate(
-                  angle: -0.12,
-                  child: Container(
-                    height: 70,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: <Color>[
-                          const Color(0xFF08111D),
-                          const Color(0xFF263746).withValues(alpha: 0.92),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 20,
-                top: 20,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.96),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
             // Inner Shadow Overlay for depth
             Positioned.fill(
               child: DecoratedBox(

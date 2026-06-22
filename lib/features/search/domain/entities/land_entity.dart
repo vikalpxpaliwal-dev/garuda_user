@@ -7,6 +7,7 @@ class LandEntity extends Equatable {
   final String district;
   final String mandal;
   final List<String> landStatus;
+  final List<String> mortgageStatus;
   final List<String> urgencyListing;
   final LandDetailsEntity landDetails;
   final List<MediaEntity> media;
@@ -19,6 +20,7 @@ class LandEntity extends Equatable {
     required this.district,
     required this.mandal,
     required this.landStatus,
+    required this.mortgageStatus,
     required this.urgencyListing,
     required this.landDetails,
     required this.media,
@@ -33,6 +35,7 @@ class LandEntity extends Equatable {
         district,
         mandal,
         landStatus,
+        mortgageStatus,
         urgencyListing,
         landDetails,
         media,

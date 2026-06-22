@@ -19,6 +19,11 @@ LandModel _$LandModelFromJson(Map<String, dynamic> json) => LandModel(
           ?.map((e) => e as String)
           .toList() ??
       [],
+  mortgageStatus:
+      (json['mortage_availability_status'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
   urgencyListing:
       (json['urgency_listing'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -46,6 +51,11 @@ LandModel _$LandModelFromJson(Map<String, dynamic> json) => LandModel(
           ?.map((e) => DocumentModel.fromJson(e as Map<String, dynamic>))
           .toList() ??
       [],
+  trees:
+      (json['tree'] as List<dynamic>?)
+          ?.map((e) => TreeModel.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$LandModelToJson(LandModel instance) => <String, dynamic>{
@@ -57,6 +67,7 @@ Map<String, dynamic> _$LandModelToJson(LandModel instance) => <String, dynamic>{
   'location_latitude': instance.locationLatitude,
   'location_longitude': instance.locationLongitude,
   'land_sale_available_status': instance.landStatus,
+  'mortage_availability_status': instance.mortgageStatus,
   'urgency_listing': instance.urgencyListing,
   'verification_package': instance.verificationPackage,
   'created_by': instance.createdBy,
@@ -68,6 +79,7 @@ Map<String, dynamic> _$LandModelToJson(LandModel instance) => <String, dynamic>{
   'gps': instance.gps,
   'media': instance.media,
   'documents': instance.documents,
+  'tree': instance.trees,
 };
 
 LandDetailsModel _$LandDetailsModelFromJson(Map<String, dynamic> json) =>
@@ -195,7 +207,7 @@ Map<String, dynamic> _$DocumentModelToJson(DocumentModel instance) =>
 
 TreeModel _$TreeModelFromJson(Map<String, dynamic> json) => TreeModel(
   type: json['type'] as String,
-  count: (json['count'] as num).toInt(),
+  count: TreeModel._countFromJson(json['count']),
 );
 
 Map<String, dynamic> _$TreeModelToJson(TreeModel instance) => <String, dynamic>{

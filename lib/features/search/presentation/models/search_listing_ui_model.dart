@@ -5,6 +5,7 @@ class SearchListingUiModel {
     required this.title,
     required this.price,
     required this.availability,
+    required this.mortgage,
     required this.area,
     required this.water,
     required this.soilType,
@@ -18,6 +19,7 @@ class SearchListingUiModel {
   final String title;
   final String price;
   final String availability;
+  final String mortgage;
   final String area;
   final String water;
   final String soilType;

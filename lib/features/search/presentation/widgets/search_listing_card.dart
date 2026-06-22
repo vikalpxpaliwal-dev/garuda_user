@@ -126,13 +126,37 @@ class SearchListingCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      listing.price,
-                      style: const TextStyle(
-                        color: AppColors.deepOrange,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final priceStr = listing.price.trim();
+                        final match = RegExp(r'^([₹$€£]?\s*(?:Rs\.?)?\s*[0-9.,]+)(.*)$', caseSensitive: false).firstMatch(priceStr);
+                        final String priceNumber = match?.group(1)?.trim() ?? priceStr;
+                        final String priceUnit = match?.group(2)?.trim() ?? '';
+                        
+                        return RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: priceNumber,
+                                style: const TextStyle(
+                                  color: AppColors.deepOrange,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              if (priceUnit.isNotEmpty)
+                                TextSpan(
+                                  text: ' $priceUnit',
+                                  style: TextStyle(
+                                    color: AppColors.deepOrange.withValues(alpha: 0.7),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

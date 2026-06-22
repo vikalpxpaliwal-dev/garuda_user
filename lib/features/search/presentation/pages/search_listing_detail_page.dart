@@ -8,7 +8,8 @@ import 'package:garuda_user_app/features/search/presentation/bloc/search_state.d
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:garuda_user_app/core/widgets/app_video_player.dart';
+
 class SearchListingDetailArgs {
   const SearchListingDetailArgs({required this.land, required this.searchBloc});
 
@@ -77,6 +78,10 @@ class _DetailHeaderBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final totalValue = LandMapper.formatTotalValueParts(
+      land.landDetails.totalValue,
+    );
+
     return Column(
       children: [
         Stack(
@@ -90,9 +95,27 @@ class _DetailHeaderBlock extends StatelessWidget {
                       Uri.encodeFull(listing.imageUrl!),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
-                          Container(color: AppColors.lightLine),
+                          Container(
+                        color: AppColors.lightLine,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.grey,
+                            size: 48,
+                          ),
+                        ),
+                      ),
                     )
-                  : Container(color: AppColors.lightLine),
+                  : Container(
+                      color: AppColors.lightLine,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Colors.grey,
+                          size: 48,
+                        ),
+                      ),
+                    ),
             ),
             Positioned.fill(
               child: DecoratedBox(
@@ -174,14 +197,35 @@ class _DetailHeaderBlock extends StatelessWidget {
                           color: AppColors.deepOrange,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Text(
-                          'PER ACRE PRICE\n₹${(land.landDetails.pricePerAcres / 100000).toStringAsFixed(1)} LAKHS',
+                        child: RichText(
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w900,
-                            height: 1.3,
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '₹${(land.landDetails.pricePerAcres / 100000).toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ' L',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const TextSpan(
+                                text: ' / acr',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -229,12 +273,27 @@ class _DetailHeaderBlock extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                '₹ ${(land.landDetails.totalValue / 10000000).toStringAsFixed(2)} Cr',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '₹${totalValue.amount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (totalValue.suffix.isNotEmpty)
+                      TextSpan(
+                        text: totalValue.suffix,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
@@ -274,9 +333,7 @@ class _DetailPropertiesList extends StatelessWidget {
             _buildPropItem(
               Icons.account_balance_outlined,
               'MORTGAGE',
-              land.landStatus.isNotEmpty
-                  ? land.landStatus.first.toUpperCase()
-                  : 'CURRENTLY MORTGAGED',
+              listing.mortgage,
             ),
             _buildPropItem(Icons.update, 'UPDATED', '2 DAYS AGO'),
           ),
@@ -289,7 +346,7 @@ class _DetailPropertiesList extends StatelessWidget {
             ),
             _buildPropItem(
               Icons.location_city_outlined,
-              'NEAREST MANDAL',
+              'MANDAL',
               land.mandal.toUpperCase(),
             ),
           ),
@@ -297,7 +354,7 @@ class _DetailPropertiesList extends StatelessWidget {
           _buildRow(
             _buildPropItem(
               Icons.route_outlined,
-              'DIST. FROM MANDAL',
+              'DISTANCE FROM MANDAL',
               listing.distance.toUpperCase(),
             ),
             const SizedBox(),
@@ -352,11 +409,23 @@ class _DetailPropertiesList extends StatelessWidget {
                   ? land.landDetails.residence.join(', ').toUpperCase()
                   : 'NO',
             ),
-            _buildPropItem(Icons.home_work_outlined, 'POULTRY SHED', land.landDetails.poultryShedNumber > 0 ? land.landDetails.poultryShedNumber.toString() : 'NO'),
+            _buildPropItem(
+              Icons.home_work_outlined,
+              'POULTRY SHED',
+              land.landDetails.poultryShedNumber > 0
+                  ? land.landDetails.poultryShedNumber.toString()
+                  : 'NO',
+            ),
           ),
           const SizedBox(height: 24),
           _buildRow(
-            _buildPropItem(Icons.pets_outlined, 'COW SHED', land.landDetails.cowShedNumber > 0 ? land.landDetails.cowShedNumber.toString() : 'NO'),
+            _buildPropItem(
+              Icons.pets_outlined,
+              'COW SHED',
+              land.landDetails.cowShedNumber > 0
+                  ? land.landDetails.cowShedNumber.toString()
+                  : 'NO',
+            ),
             const SizedBox(),
           ),
           _buildDivider(),
@@ -403,7 +472,7 @@ class _DetailPropertiesList extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (land.landDetails.trees.isEmpty)
-             const Text(
+            const Text(
               'No trees available',
               style: TextStyle(
                 color: AppColors.ink,
@@ -411,27 +480,26 @@ class _DetailPropertiesList extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             )
-          else
-            ...[
-              for (int i = 0; i < land.landDetails.trees.length; i += 2)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: _buildRow(
-                    _buildPropItem(
-                      Icons.energy_savings_leaf_outlined,
-                      land.landDetails.trees[i].type.toUpperCase(),
-                      '${land.landDetails.trees[i].count} TREES',
-                    ),
-                    i + 1 < land.landDetails.trees.length
-                        ? _buildPropItem(
-                            Icons.energy_savings_leaf_outlined,
-                            land.landDetails.trees[i + 1].type.toUpperCase(),
-                            '${land.landDetails.trees[i + 1].count} TREES',
-                          )
-                        : const SizedBox(),
+          else ...[
+            for (int i = 0; i < land.landDetails.trees.length; i += 2)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: _buildRow(
+                  _buildPropItem(
+                    Icons.energy_savings_leaf_outlined,
+                    land.landDetails.trees[i].type.toUpperCase(),
+                    '${land.landDetails.trees[i].count} TREES',
                   ),
+                  i + 1 < land.landDetails.trees.length
+                      ? _buildPropItem(
+                          Icons.energy_savings_leaf_outlined,
+                          land.landDetails.trees[i + 1].type.toUpperCase(),
+                          '${land.landDetails.trees[i + 1].count} TREES',
+                        )
+                      : const SizedBox(),
                 ),
-            ],
+              ),
+          ],
           _buildDivider(),
         ],
       ),
@@ -526,8 +594,9 @@ class _VisualDocumentationSection extends StatelessWidget {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Center(child: Icon(Icons.error, color: Colors.white)),
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(Icons.error, color: Colors.white),
+                  ),
                 ),
               ),
             ),
@@ -545,11 +614,13 @@ class _VisualDocumentationSection extends StatelessWidget {
     );
   }
 
-  Future<void> _launchVideo(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _launchVideo(BuildContext context, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AppVideoPlayer(videoUrl: url),
+        fullscreenDialog: true,
+      ),
+    );
   }
 
   @override
@@ -557,21 +628,8 @@ class _VisualDocumentationSection extends StatelessWidget {
     final images = land.media.where((m) => m.type == 'image').toList();
     final videos = land.media.where((m) => m.type == 'video').toList();
 
-    // Use placeholders if no media available to keep UI looking good
-    final displayImages = images.isNotEmpty
-        ? images.map((e) => e.url).toList()
-        : [
-            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=600&auto=format&fit=crop'
-          ];
-
-    final displayVideos = videos.isNotEmpty
-        ? videos.map((e) => e.url).toList()
-        : [
-            'https://www.youtube.com/watch?v=dQw4w9WgXcQ' // Fallback video URL
-          ];
+    final displayImages = images.map((e) => e.url).toList();
+    final displayVideos = videos.map((e) => e.url).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -605,6 +663,15 @@ class _VisualDocumentationSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+          if (displayImages.isEmpty && displayVideos.isEmpty)
+            const Text(
+              'No visual documentation available',
+              style: TextStyle(
+                color: AppColors.ink,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           if (displayImages.isNotEmpty)
             GridView.builder(
               padding: EdgeInsets.zero,
@@ -616,7 +683,7 @@ class _VisualDocumentationSection extends StatelessWidget {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.6,
               ),
-              itemCount: displayImages.length > 4 ? 4 : displayImages.length,
+              itemCount: displayImages.length,
               itemBuilder: (context, index) {
                 final mediaUrl = displayImages[index];
                 return GestureDetector(
@@ -629,7 +696,15 @@ class _VisualDocumentationSection extends StatelessWidget {
                         mediaUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            Container(color: AppColors.lightLine),
+                            Container(
+                          color: AppColors.lightLine,
+                          child: const Center(
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -642,7 +717,7 @@ class _VisualDocumentationSection extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: GestureDetector(
-                  onTap: () => _launchVideo(videoUrl),
+                  onTap: () => _launchVideo(context, videoUrl),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
@@ -651,14 +726,7 @@ class _VisualDocumentationSection extends StatelessWidget {
                       color: Colors.black,
                       child: Stack(
                         children: [
-                          Positioned.fill(
-                            child: Image.network(
-                              'https://images.unsplash.com/photo-1542315843-079218671c84?q=80&w=600&auto=format&fit=crop',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(color: AppColors.lightLine),
-                            ),
-                          ),
+
                           Positioned.fill(
                             child: Center(
                               child: Container(

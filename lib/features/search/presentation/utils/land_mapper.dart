@@ -10,10 +10,9 @@ class LandMapper {
 
     return SearchListingUiModel(
       title: land.mandal,
-      price: '${_formatPrice(details.pricePerAcres)}/ac',
-      availability: land.landStatus.isNotEmpty 
-          ? land.landStatus.first.toUpperCase() 
-          : 'AVAILABLE',
+      price: '₹${_formatPrice(details.pricePerAcres)}/ac',
+      availability: _formatStatus(land.landStatus, fallback: 'AVAILABLE'),
+      mortgage: _formatStatus(land.mortgageStatus, fallback: 'N/A'),
       area: '${details.totalAcres} ac ${details.guntas} gts',
       water: details.waterSource.isNotEmpty ? details.waterSource.first : 'Borewell',
       soilType: details.soilType,
@@ -48,13 +47,30 @@ class LandMapper {
     return null;
   }
 
+  static String _formatStatus(List<String> statuses, {required String fallback}) {
+    if (statuses.isEmpty) return fallback;
+    return statuses.join(', ').toUpperCase();
+  }
+
   static String _formatPrice(double value) {
+    final parts = formatTotalValueParts(value);
+    return '${parts.amount}${parts.suffix}';
+  }
+
+  static ({String amount, String suffix}) formatTotalValueParts(double value) {
     if (value >= 10000000) {
-      return '${(value / 10000000).toStringAsFixed(1)}Cr';
-    } else if (value >= 100000) {
-      return '${(value / 100000).toStringAsFixed(1)}L';
+      return (
+        amount: (value / 10000000).toStringAsFixed(2),
+        suffix: ' Cr',
+      );
     }
-    return value.toStringAsFixed(0);
+    if (value >= 100000) {
+      return (
+        amount: (value / 100000).toStringAsFixed(1),
+        suffix: ' L',
+      );
+    }
+    return (amount: value.toStringAsFixed(0), suffix: '');
   }
 
   static List<SearchListingDetailSection> _buildDetailSections(LandEntity land) {
@@ -65,18 +81,23 @@ class LandMapper {
         fields: [
           const SearchListingDetailField(label: 'OWNER TYPE', value: 'Verified Farmer'),
           SearchListingDetailField(
-            label: 'AVAILABILITY', 
-            value: land.landStatus.join(', '),
+            label: 'SALE AVAILABILITY',
+            value: _formatStatus(land.landStatus, fallback: 'N/A'),
+            isAccent: true,
+          ),
+          SearchListingDetailField(
+            label: 'MORTGAGE AVAILABILITY',
+            value: _formatStatus(land.mortgageStatus, fallback: 'N/A'),
             isAccent: true,
           ),
           SearchListingDetailField(
             label: 'PRICE PER ACRE', 
-            value: '${_formatPrice(details.pricePerAcres)}/ac',
+            value: '₹${_formatPrice(details.pricePerAcres)}/ac',
             isAccent: true,
           ),
           SearchListingDetailField(
             label: 'TOTAL VALUE', 
-            value: 'Rs.${_formatPrice(details.totalValue)}',
+            value: '₹${_formatPrice(details.totalValue)}',
             isAccent: true,
           ),
         ],

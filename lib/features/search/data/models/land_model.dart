@@ -16,6 +16,8 @@ class LandModel {
   final String? locationLongitude;
   @JsonKey(name: 'land_sale_available_status', defaultValue: [])
   final List<String> landStatus;
+  @JsonKey(name: 'mortage_availability_status', defaultValue: [])
+  final List<String> mortgageStatus;
   @JsonKey(name: 'urgency_listing', defaultValue: [])
   final List<String> urgencyListing;
   @JsonKey(name: 'verification_package', defaultValue: false)
@@ -36,6 +38,8 @@ class LandModel {
   final List<MediaModel> media;
   @JsonKey(defaultValue: [])
   final List<DocumentModel> documents;
+  @JsonKey(name: 'tree', defaultValue: [])
+  final List<TreeModel> trees;
 
   const LandModel({
     required this.id,
@@ -46,6 +50,7 @@ class LandModel {
     this.locationLatitude,
     this.locationLongitude,
     required this.landStatus,
+    required this.mortgageStatus,
     required this.urgencyListing,
     required this.verificationPackage,
     required this.createdBy,
@@ -57,6 +62,7 @@ class LandModel {
     this.gps,
     required this.media,
     required this.documents,
+    required this.trees,
   });
 
   factory LandModel.fromJson(Map<String, dynamic> json) =>
@@ -71,8 +77,11 @@ class LandModel {
         district: district ?? '',
         mandal: mandal ?? '',
         landStatus: landStatus,
+        mortgageStatus: mortgageStatus,
         urgencyListing: urgencyListing,
-        landDetails: landDetails.toEntity(),
+        landDetails: landDetails.toEntity(
+          treesOverride: trees.isNotEmpty ? trees : null,
+        ),
         media: media.map((m) => m.toEntity()).toList(),
         documents: documents.map((d) => d.toEntity()).toList(),
       );
@@ -126,7 +135,11 @@ class LandDetailsModel {
   final List<TreeModel> trees;
 
   static List<dynamic> _readTrees(Map<dynamic, dynamic> json, String key) {
-    if (json[key] != null && json[key] is List) return json[key] as List<dynamic>;
+    for (final treeKey in [key, 'tree']) {
+      if (json[treeKey] != null && json[treeKey] is List) {
+        return json[treeKey] as List<dynamic>;
+      }
+    }
     final treeKeys = {
       'mango_trees_number': 'Mango',
       'coconut_trees_number': 'Coconut',
@@ -188,7 +201,8 @@ class LandDetailsModel {
 
   Map<String, dynamic> toJson() => _$LandDetailsModelToJson(this);
 
-  LandDetailsEntity toEntity() => LandDetailsEntity(
+  LandDetailsEntity toEntity({List<TreeModel>? treesOverride}) =>
+      LandDetailsEntity(
         totalAcres: totalAcres ?? 0.0,
         guntas: guntas ?? 0,
         pricePerAcres: pricePerAcres ?? 0.0,
@@ -204,7 +218,7 @@ class LandDetailsModel {
         farmPond: farmPond ?? false,
         poultryShedNumber: poultryShedNumber ?? 0,
         cowShedNumber: cowShedNumber ?? 0,
-        trees: trees.map((t) => t.toEntity()).toList(),
+        trees: (treesOverride ?? trees).map((t) => t.toEntity()).toList(),
       );
 }
 
@@ -282,7 +296,14 @@ class DocumentModel {
 @JsonSerializable()
 class TreeModel {
   final String type;
+  @JsonKey(fromJson: _countFromJson)
   final int count;
+
+  static int _countFromJson(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
 
   const TreeModel({
     required this.type,

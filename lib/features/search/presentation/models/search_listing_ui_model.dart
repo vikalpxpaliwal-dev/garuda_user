@@ -10,6 +10,8 @@ class SearchListingUiModel {
     required this.water,
     required this.soilType,
     required this.distance,
+    required this.updatedLabel,
+    required this.verificationLabel,
     required this.artworkType,
     required this.detailSections,
     required this.documentStatuses,
@@ -24,6 +26,8 @@ class SearchListingUiModel {
   final String water;
   final String soilType;
   final String distance;
+  final String updatedLabel;
+  final String verificationLabel;
   final SearchListingArtworkType artworkType;
   final List<SearchListingDetailSection> detailSections;
   final List<String> documentStatuses;

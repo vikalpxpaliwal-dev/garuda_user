@@ -7,6 +7,7 @@ import 'package:garuda_user_app/features/profile/data/models/wishlist_item_model
 
 abstract interface class ProfileRemoteDataSource {
   Future<List<WishlistItemModel>> getWishlist();
+  Future<String> addToWishlist({required List<int> landIds});
   Future<String> createAvailability({required List<int> landIds});
   Future<List<AvailabilityModel>> getAvailabilities();
   Future<String> createCart({required List<int> landIds});
@@ -55,6 +56,22 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     return result
         .map((json) => WishlistItemModel.fromJson(json as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<String> addToWishlist({required List<int> landIds}) async {
+    final response = await _apiService.post<Map<String, dynamic>>(
+      '/buyer/wishlist',
+      data: <String, dynamic>{'land_id': landIds},
+    );
+
+    final responseData = response.data;
+    if (responseData == null) {
+      return 'Land added to wishlist successfully';
+    }
+
+    return responseData['message'] as String? ??
+        'Land added to wishlist successfully';
   }
 
   @override

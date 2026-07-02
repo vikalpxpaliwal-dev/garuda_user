@@ -11,11 +11,10 @@ import 'package:garuda_user_app/features/auth/presentation/pages/signup_page.dar
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_event.dart';
 import 'package:garuda_user_app/features/home/presentation/pages/home_page.dart';
-import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
-import 'package:garuda_user_app/features/profile/presentation/bloc/profile_event.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:garuda_user_app/features/profile/presentation/pages/profile_page.dart';
-import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/profile_scope.dart';
+import 'package:garuda_user_app/features/search/presentation/search_scope.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_listing_detail_page.dart';
 import 'package:garuda_user_app/features/search/presentation/pages/search_page.dart';
 import 'package:garuda_user_app/features/splash/presentation/pages/splash_page.dart';
@@ -88,24 +87,28 @@ final class AppRouter {
           ),
           StatefulShellBranch(
             routes: <RouteBase>[
-              GoRoute(
-                path: AppRoutes.search,
-                pageBuilder: (context, state) {
-                  return const NoTransitionPage<void>(child: SearchPage());
-                },
+              ShellRoute(
+                builder: (context, state, child) => SearchScope(child: child),
                 routes: <RouteBase>[
                   GoRoute(
-                    path: 'details',
+                    path: AppRoutes.search,
                     pageBuilder: (context, state) {
-                      final args = state.extra as SearchListingDetailArgs;
-
-                      return NoTransitionPage<void>(
-                        child: BlocProvider<SearchBloc>.value(
-                          value: args.searchBloc,
-                          child: SearchListingDetailPage(land: args.land),
-                        ),
-                      );
+                      return const NoTransitionPage<void>(child: SearchPage());
                     },
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: 'details/:landId',
+                        pageBuilder: (context, state) {
+                          final landId = int.parse(
+                            state.pathParameters['landId']!,
+                          );
+
+                          return NoTransitionPage<void>(
+                            child: SearchListingDetailPage(landId: landId),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -113,27 +116,27 @@ final class AppRouter {
           ),
           StatefulShellBranch(
             routes: <RouteBase>[
-              GoRoute(
-                path: AppRoutes.profile,
-                pageBuilder: (context, state) {
-                  return NoTransitionPage<void>(
-                    child: BlocProvider<ProfileBloc>(
-                      create: (_) => sl<ProfileBloc>()..add(const WishlistRequested()),
-                      child: const ProfilePage(),
-                    ),
-                  );
-                },
-                routes: [
+              ShellRoute(
+                builder: (context, state, child) =>
+                    ProfileScope(child: child),
+                routes: <RouteBase>[
                   GoRoute(
-                    path: 'edit-profile',
+                    path: AppRoutes.profile,
                     pageBuilder: (context, state) {
-                      return NoTransitionPage<void>(
-                        child: BlocProvider<ProfileBloc>(
-                          create: (context) => sl<ProfileBloc>(),
-                          child: const EditProfilePage(),
-                        ),
+                      return const NoTransitionPage<void>(
+                        child: ProfilePage(),
                       );
                     },
+                    routes: <RouteBase>[
+                      GoRoute(
+                        path: 'edit-profile',
+                        pageBuilder: (context, state) {
+                          return const NoTransitionPage<void>(
+                            child: EditProfilePage(),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

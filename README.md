@@ -1,16 +1,38 @@
 # garuda_user_app
 
-A new Flutter project.
+Flutter app for Garuda Lands (buyer/user flow).
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Development
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Reset local storage (dev only)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+To clear secure auth tokens and `SharedPreferences` on the next launch (e.g. test login from scratch), opt in with a compile-time flag. **This does not run by default.**
+
+```bash
+flutter run --dart-define=RESET_STORAGE=true
+```
+
+The same flag works for builds:
+
+```bash
+flutter build apk --dart-define=RESET_STORAGE=true
+```
+
+Do not enable `RESET_STORAGE` in production release builds.
+
+### Home dashboard data source
+
+By default the home screen loads from `/buyer/home`. For local development without that API, use bundled demo banners and contact info:
+
+```bash
+flutter run --dart-define=USE_DEMO_HOME=true
+```
+
+Do not enable `USE_DEMO_HOME` in production release builds.

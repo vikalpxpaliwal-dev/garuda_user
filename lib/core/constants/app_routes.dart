@@ -11,6 +11,5 @@ final class AppRoutes {
   static const profile = '/profile';
   static const editProfile = '/profile/edit-profile';
 
-  static String searchListingDetails(int index) =>
-      '$search/$searchDetails/$index';
+  static String searchLandDetails(int landId) => '$search/details/$landId';
 }

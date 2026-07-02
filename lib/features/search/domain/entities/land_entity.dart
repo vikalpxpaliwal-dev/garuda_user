@@ -9,6 +9,12 @@ class LandEntity extends Equatable {
   final List<String> landStatus;
   final List<String> mortgageStatus;
   final List<String> urgencyListing;
+  final bool verificationPackage;
+  final bool isVerified;
+  final String? verificationStatus;
+  final String? nearestTownKm;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final LandDetailsEntity landDetails;
   final List<MediaEntity> media;
   final List<DocumentEntity> documents;
@@ -22,6 +28,12 @@ class LandEntity extends Equatable {
     required this.landStatus,
     required this.mortgageStatus,
     required this.urgencyListing,
+    required this.verificationPackage,
+    required this.isVerified,
+    this.verificationStatus,
+    this.nearestTownKm,
+    this.createdAt,
+    this.updatedAt,
     required this.landDetails,
     required this.media,
     required this.documents,
@@ -37,6 +49,12 @@ class LandEntity extends Equatable {
         landStatus,
         mortgageStatus,
         urgencyListing,
+        verificationPackage,
+        isVerified,
+        verificationStatus,
+        nearestTownKm,
+        createdAt,
+        updatedAt,
         landDetails,
         media,
         documents,

@@ -1,3 +1,7 @@
+// Dependency injection conventions:
+// - registerLazySingleton: use cases, repositories, data sources, AuthBloc
+// - registerFactory: screen-scoped blocs (HomeBloc, SearchBloc, profile sub-blocs)
+// - Shell routes provide bloc scope: SearchScope, ProfileScope (see docs/ARCHITECTURE.md)
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:garuda_user_app/core/constants/app_constants.dart';
@@ -9,6 +13,7 @@ import 'package:garuda_user_app/features/auth/data/datasources/auth_local_data_s
 import 'package:garuda_user_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:garuda_user_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:garuda_user_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:garuda_user_app/features/auth/domain/services/auth_session_controller.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/forgot_password_usecase.dart';
 import 'package:garuda_user_app/features/auth/domain/usecases/login_usecase.dart';
@@ -22,7 +27,8 @@ import 'package:garuda_user_app/features/auth/presentation/bloc/login_bloc.dart'
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/verify_otp_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/reset_password_bloc.dart';
-import 'package:garuda_user_app/features/home/data/datasources/home_local_data_source.dart';
+import 'package:garuda_user_app/features/home/data/datasources/demo_home_data_source.dart';
+import 'package:garuda_user_app/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:garuda_user_app/features/home/data/repositories/home_repository_impl.dart';
 import 'package:garuda_user_app/features/home/domain/repositories/home_repository.dart';
 import 'package:garuda_user_app/features/home/domain/usecases/get_home_dashboard.dart';
@@ -30,6 +36,7 @@ import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:garuda_user_app/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:garuda_user_app/features/profile/domain/repositories/profile_repository.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/add_to_wishlist_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_availability_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_cart_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/create_final_usecase.dart';
@@ -44,11 +51,16 @@ import 'package:garuda_user_app/features/profile/domain/usecases/get_finals_usec
 import 'package:garuda_user_app/features/profile/domain/usecases/get_shortlists_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_visits_usecase.dart';
 import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/availability/availability_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/cart/cart_bloc.dart';
 import 'package:garuda_user_app/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/shortlist/shortlist_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/visits/visits_bloc.dart';
+import 'package:garuda_user_app/features/profile/presentation/bloc/wishlist/wishlist_bloc.dart';
 import 'package:garuda_user_app/features/search/data/datasources/search_remote_data_source.dart';
 import 'package:garuda_user_app/features/search/data/repositories/search_repository_impl.dart';
 import 'package:garuda_user_app/features/search/domain/repositories/search_repository.dart';
-import 'package:garuda_user_app/features/search/domain/usecases/add_to_wishlist_usecase.dart';
+import 'package:garuda_user_app/features/search/domain/usecases/get_land_by_id_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_lands_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_locations_usecase.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
@@ -77,7 +89,14 @@ Future<void> initializeDependencies({bool reset = false}) async {
 
   // Network
   sl
-    ..registerLazySingleton<AuthInterceptor>(AuthInterceptor.new)
+    ..registerLazySingleton(AuthSessionController.new)
+    ..registerLazySingleton<AuthInterceptor>(
+      () => AuthInterceptor(
+        authRepositoryProvider: () => sl<AuthRepository>(),
+        sessionController: sl(),
+        dioProvider: () => sl<Dio>(),
+      ),
+    )
     ..registerLazySingleton<ApiLoggerInterceptor>(ApiLoggerInterceptor.new)
     ..registerLazySingleton<DioClient>(
       () => DioClient(
@@ -102,7 +121,12 @@ Future<void> initializeDependencies({bool reset = false}) async {
         localDataSource: sl(),
       ),
     )
-    ..registerLazySingleton<AuthBloc>(() => AuthBloc(authRepository: sl()))
+    ..registerLazySingleton<AuthBloc>(
+      () => AuthBloc(
+        authRepository: sl(),
+        sessionController: sl(),
+      ),
+    )
     ..registerLazySingleton(() => SignupUseCase(sl()))
     ..registerLazySingleton(() => LoginUseCase(sl()))
     ..registerLazySingleton(() => UpdateProfileUseCase(sl()))
@@ -122,6 +146,7 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => ProfileRepositoryImpl(sl()),
     )
     ..registerLazySingleton(() => GetWishlistUseCase(sl()))
+    ..registerLazySingleton(() => AddToWishlistUseCase(sl()))
     ..registerLazySingleton(() => CreateAvailabilityUseCase(sl()))
     ..registerLazySingleton(() => GetAvailabilityUseCase(sl()))
     ..registerLazySingleton(() => CreateCartUseCase(sl()))
@@ -139,28 +164,50 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => ProfileBloc(
         updateProfileUseCase: sl(),
         deleteAccountUseCase: sl(),
-        getWishlistUseCase: sl(),
+        authBloc: sl(),
+      ),
+    )
+    ..registerFactory(() => WishlistBloc(getWishlistUseCase: sl()))
+    ..registerFactory(
+      () => AvailabilityBloc(
         createAvailabilityUseCase: sl(),
         getAvailabilityUseCase: sl(),
+      ),
+    )
+    ..registerFactory(
+      () => CartBloc(
         createCartUseCase: sl(),
         getCartUseCase: sl(),
+        createPaymentUseCase: sl(),
+      ),
+    )
+    ..registerFactory(
+      () => VisitsBloc(
+        createVisitUseCase: sl(),
         getVisitsUseCase: sl(),
+      ),
+    )
+    ..registerFactory(
+      () => ShortlistBloc(
         getShortlistsUseCase: sl(),
         getFinalsUseCase: sl(),
-        createPaymentUseCase: sl(),
         createShortlistUseCase: sl(),
         deleteShortlistUseCase: sl(),
         createFinalUseCase: sl(),
         deleteFinalUseCase: sl(),
-        createVisitUseCase: sl(),
-        authBloc: sl(),
       ),
     )
 
     // Home Feature
-    ..registerLazySingleton<HomeLocalDataSource>(HomeLocalDataSourceImpl.new)
+    ..registerLazySingleton<DemoHomeDataSource>(DemoHomeDataSourceImpl.new)
+    ..registerLazySingleton<HomeRemoteDataSource>(
+      () => HomeRemoteDataSourceImpl(sl()),
+    )
     ..registerLazySingleton<HomeRepository>(
-      () => HomeRepositoryImpl(localDataSource: sl()),
+      () => HomeRepositoryImpl(
+        demoDataSource: sl(),
+        remoteDataSource: sl(),
+      ),
     )
     ..registerLazySingleton(() => GetHomeDashboard(sl()))
     ..registerFactory(() => HomeBloc(getHomeDashboard: sl()))
@@ -173,13 +220,15 @@ Future<void> initializeDependencies({bool reset = false}) async {
       () => SearchRepositoryImpl(sl()),
     )
     ..registerLazySingleton(() => GetLandsUseCase(sl()))
-    ..registerLazySingleton(() => AddToWishlistUseCase(sl()))
+    ..registerLazySingleton(() => GetLandByIdUseCase(sl()))
     ..registerLazySingleton(() => GetLocationsUseCase(sl()))
     ..registerFactory(
       () => SearchBloc(
         getLandsUseCase: sl(),
         addToWishlistUseCase: sl(),
+        getWishlistUseCase: sl(),
         getLocationsUseCase: sl(),
+        getLandByIdUseCase: sl(),
       ),
     );
 }

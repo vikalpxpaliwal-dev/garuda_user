@@ -20,3 +20,7 @@ class UserLoggedIn extends AuthEvent {
 }
 
 class UserLoggedOut extends AuthEvent {}
+
+class SessionExpired extends AuthEvent {
+  const SessionExpired();
+}

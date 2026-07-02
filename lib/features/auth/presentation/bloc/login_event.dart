@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:garuda_user_app/features/auth/data/models/login_request_model.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/login_credentials.dart';
 
 sealed class LoginEvent extends Equatable {
   const LoginEvent();
@@ -9,10 +9,10 @@ sealed class LoginEvent extends Equatable {
 }
 
 class LoginRequested extends LoginEvent {
-  const LoginRequested(this.request);
+  const LoginRequested(this.credentials);
 
-  final LoginRequestModel request;
+  final LoginCredentials credentials;
 
   @override
-  List<Object?> get props => [request];
+  List<Object?> get props => [credentials];
 }

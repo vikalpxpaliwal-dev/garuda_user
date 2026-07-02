@@ -20,6 +20,19 @@ class GetLocationsEvent extends SearchEvent {
   const GetLocationsEvent();
 }
 
+class LoadWishlistedLandIdsEvent extends SearchEvent {
+  const LoadWishlistedLandIdsEvent();
+}
+
+class LoadLandDetailEvent extends SearchEvent {
+  const LoadLandDetailEvent({required this.landId});
+
+  final int landId;
+
+  @override
+  List<Object?> get props => [landId];
+}
+
 class AddToWishlistEvent extends SearchEvent {
   const AddToWishlistEvent({required this.landId});
 

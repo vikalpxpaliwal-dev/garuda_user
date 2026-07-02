@@ -1,3 +1,5 @@
+import 'package:garuda_user_app/core/utils/date_parser.dart';
+import 'package:garuda_user_app/features/search/data/mappers/land_api_mapper.dart';
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -28,6 +30,10 @@ class LandModel {
   final dynamic verifiedBy;
   @JsonKey(name: 'form_status')
   final String? formStatus;
+  @JsonKey(name: 'verification_status')
+  final String? verificationStatus;
+  @JsonKey(name: 'nearest_town_1_km')
+  final String? nearestTownKm;
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -56,6 +62,8 @@ class LandModel {
     required this.createdBy,
     this.verifiedBy,
     this.formStatus,
+    this.verificationStatus,
+    this.nearestTownKm,
     this.createdAt,
     this.updatedAt,
     required this.landDetails,
@@ -66,7 +74,7 @@ class LandModel {
   });
 
   factory LandModel.fromJson(Map<String, dynamic> json) =>
-      _$LandModelFromJson(json);
+      _$LandModelFromJson(LandApiMapper.prepareLandJson(json));
 
   Map<String, dynamic> toJson() => _$LandModelToJson(this);
 
@@ -79,6 +87,12 @@ class LandModel {
         landStatus: landStatus,
         mortgageStatus: mortgageStatus,
         urgencyListing: urgencyListing,
+        verificationPackage: verificationPackage,
+        isVerified: verifiedBy != null,
+        verificationStatus: verificationStatus,
+        nearestTownKm: nearestTownKm,
+        createdAt: parseOptionalDateTime(createdAt),
+        updatedAt: parseOptionalDateTime(updatedAt),
         landDetails: landDetails.toEntity(
           treesOverride: trees.isNotEmpty ? trees : null,
         ),
@@ -131,41 +145,8 @@ class LandDetailsModel {
   final int? numberOfBores;
   @JsonKey(name: 'farm_pond')
   final bool? farmPond;
-  @JsonKey(readValue: _readTrees, defaultValue: [])
+  @JsonKey(defaultValue: [])
   final List<TreeModel> trees;
-
-  static List<dynamic> _readTrees(Map<dynamic, dynamic> json, String key) {
-    for (final treeKey in [key, 'tree']) {
-      if (json[treeKey] != null && json[treeKey] is List) {
-        return json[treeKey] as List<dynamic>;
-      }
-    }
-    final treeKeys = {
-      'mango_trees_number': 'Mango',
-      'coconut_trees_number': 'Coconut',
-      'neem_trees_number': 'Neem',
-      'baniyan_trees_number': 'Baniyan',
-      'tamarind_trees_number': 'Tamarind',
-      'sapoto_trees_number': 'Sapoto',
-      'guava_trees_number': 'Guava',
-      'teak_trees_number': 'Teak',
-      'other_trees_number': 'Other',
-    };
-    final List<Map<String, dynamic>> treesList = [];
-    for (final entry in treeKeys.entries) {
-      final val = json[entry.key];
-      if (val != null && val is String && val.isNotEmpty) {
-        final match = RegExp(r'\d+').firstMatch(val);
-        if (match != null) {
-          final count = int.tryParse(match.group(0) ?? '0') ?? 0;
-          if (count > 0) {
-            treesList.add({'type': entry.value, 'count': count});
-          }
-        }
-      }
-    }
-    return treesList;
-  }
   @JsonKey(defaultValue: [])
   final List<String> complaints;
 

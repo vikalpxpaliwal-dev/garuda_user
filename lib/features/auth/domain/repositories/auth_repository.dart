@@ -1,12 +1,13 @@
 import 'package:garuda_user_app/core/utils/result.dart';
-import 'package:garuda_user_app/features/auth/data/models/login_request_model.dart';
-import 'package:garuda_user_app/features/auth/data/models/signup_request_model.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/login_credentials.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/signup_credentials.dart';
 import 'package:garuda_user_app/features/auth/domain/entities/user_entity.dart';
 
 abstract interface class AuthRepository {
-  Future<Result<UserEntity>> signup(SignupRequestModel request);
-  Future<Result<UserEntity>> login(LoginRequestModel request);
+  Future<Result<UserEntity>> signup(SignupCredentials credentials);
+  Future<Result<UserEntity>> login(LoginCredentials credentials);
   Future<Result<String>> refreshToken();
+  Future<void> clearSession();
   Future<Result<void>> logout();
   Future<String?> getAccessToken();
   Future<Result<UserEntity>> updateProfile({

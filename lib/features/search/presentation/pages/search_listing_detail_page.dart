@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
@@ -10,15 +11,66 @@ import 'package:garuda_user_app/features/search/presentation/utils/land_mapper.d
 import 'package:go_router/go_router.dart';
 import 'package:garuda_user_app/core/widgets/app_video_player.dart';
 
-class SearchListingDetailArgs {
-  const SearchListingDetailArgs({required this.land, required this.searchBloc});
+import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
 
-  final LandEntity land;
-  final SearchBloc searchBloc;
+class SearchListingDetailPage extends StatefulWidget {
+  const SearchListingDetailPage({required this.landId, super.key});
+
+  final int landId;
+
+  @override
+  State<SearchListingDetailPage> createState() =>
+      _SearchListingDetailPageState();
 }
 
-class SearchListingDetailPage extends StatelessWidget {
-  const SearchListingDetailPage({required this.land, super.key});
+class _SearchListingDetailPageState extends State<SearchListingDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SearchBloc>().add(LoadLandDetailEvent(landId: widget.landId));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SearchBloc, SearchState>(
+      buildWhen: (previous, current) =>
+          previous.landDetailStatus != current.landDetailStatus ||
+          previous.landDetailId != current.landDetailId ||
+          previous.landDetail != current.landDetail ||
+          previous.lands != current.lands,
+      builder: (context, state) {
+        final land = state.landForId(widget.landId);
+
+        if (land == null &&
+            state.landDetailId == widget.landId &&
+            state.landDetailStatus == LandDetailStatus.loading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (land == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: Center(
+              child: Text(
+                state.landDetailErrorMessage ?? 'Land not found.',
+              ),
+            ),
+          );
+        }
+
+        return _SearchListingDetailView(land: land);
+      },
+    );
+  }
+}
+
+class _SearchListingDetailView extends StatelessWidget {
+  const _SearchListingDetailView({required this.land});
 
   final LandEntity land;
 
@@ -91,11 +143,13 @@ class _DetailHeaderBlock extends StatelessWidget {
               width: double.infinity,
               decoration: const BoxDecoration(color: Colors.black),
               child: listing.imageUrl != null && listing.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      Uri.encodeFull(listing.imageUrl!),
+                  ? CachedNetworkImage(
+                      imageUrl: listing.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(
+                      memCacheWidth: 1080,
+                      placeholder: (context, url) =>
+                          const ColoredBox(color: AppColors.lightLine),
+                      errorWidget: (context, url, error) => Container(
                         color: AppColors.lightLine,
                         child: const Center(
                           child: Icon(
@@ -320,7 +374,7 @@ class _DetailPropertiesList extends StatelessWidget {
             _buildPropItem(
               Icons.verified_outlined,
               'VERIFICATION',
-              'YET TO BE VERIFIED',
+              listing.verificationLabel.toUpperCase(),
             ),
             _buildPropItem(
               Icons.access_time,
@@ -335,7 +389,11 @@ class _DetailPropertiesList extends StatelessWidget {
               'MORTGAGE',
               listing.mortgage,
             ),
-            _buildPropItem(Icons.update, 'UPDATED', '2 DAYS AGO'),
+            _buildPropItem(
+              Icons.update,
+              'UPDATED',
+              listing.updatedLabel.toUpperCase(),
+            ),
           ),
           _buildDivider(),
           _buildRow(
@@ -591,10 +649,13 @@ class _VisualDocumentationSection extends StatelessWidget {
           children: [
             Positioned.fill(
               child: InteractiveViewer(
-                child: Image.network(
-                  imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Center(
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                  errorWidget: (context, url, error) => const Center(
                     child: Icon(Icons.error, color: Colors.white),
                   ),
                 ),
@@ -692,11 +753,13 @@ class _VisualDocumentationSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       color: AppColors.lightLine,
-                      child: Image.network(
-                        mediaUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: mediaUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(
+                        memCacheWidth: 600,
+                        placeholder: (context, url) =>
+                            const ColoredBox(color: AppColors.lightLine),
+                        errorWidget: (context, url, error) => Container(
                           color: AppColors.lightLine,
                           child: const Center(
                             child: Icon(

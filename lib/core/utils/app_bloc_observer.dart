@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AppBlocObserver extends BlocObserver {
@@ -7,7 +8,9 @@ class AppBlocObserver extends BlocObserver {
 
   @override
   void onEvent(Bloc<dynamic, dynamic> bloc, Object? event) {
-    log('${bloc.runtimeType} -> $event', name: 'BlocEvent');
+    if (kDebugMode) {
+      log('${bloc.runtimeType} -> ${event.runtimeType}', name: 'BlocEvent');
+    }
     super.onEvent(bloc, event);
   }
 
@@ -16,13 +19,20 @@ class AppBlocObserver extends BlocObserver {
     Bloc<dynamic, dynamic> bloc,
     Transition<dynamic, dynamic> transition,
   ) {
-    log('${bloc.runtimeType} -> $transition', name: 'BlocTransition');
+    if (kDebugMode) {
+      log(
+        '${bloc.runtimeType} ${transition.event.runtimeType} -> ${transition.nextState.runtimeType}',
+        name: 'BlocTransition',
+      );
+    }
     super.onTransition(bloc, transition);
   }
 
   @override
   void onError(BlocBase<dynamic> bloc, Object error, StackTrace stackTrace) {
-    log('$error', name: 'BlocError', error: error, stackTrace: stackTrace);
+    if (kDebugMode) {
+      log('$error', name: 'BlocError', error: error, stackTrace: stackTrace);
+    }
     super.onError(bloc, error, stackTrace);
   }
 }

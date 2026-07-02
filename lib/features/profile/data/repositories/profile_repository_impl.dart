@@ -1,5 +1,4 @@
-import 'package:garuda_user_app/core/error/exceptions.dart';
-import 'package:garuda_user_app/core/error/failures.dart';
+import 'package:garuda_user_app/core/data/repository_executor.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
 import 'package:garuda_user_app/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:garuda_user_app/features/profile/domain/entities/availability_entity.dart';
@@ -15,203 +14,100 @@ class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource _remoteDataSource;
 
   @override
-  Future<Result<List<WishlistItemEntity>>> getWishlist() async {
-    try {
+  Future<Result<List<WishlistItemEntity>>> getWishlist() {
+    return RepositoryExecutor.runSafely(() async {
       final wishlistModels = await _remoteDataSource.getWishlist();
-      final wishlistItems = wishlistModels.map((item) => item.toEntity()).toList();
-
-      return Success(wishlistItems);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return wishlistModels.map((item) => item.toEntity()).toList();
+    });
   }
 
   @override
-  Future<Result<String>> createAvailability({required List<int> landIds}) async {
-    try {
-      final message = await _remoteDataSource.createAvailability(landIds: landIds);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<String>> addToWishlist({required List<int> landIds}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.addToWishlist(landIds: landIds),
+    );
   }
 
   @override
-  Future<Result<List<AvailabilityEntity>>> getAvailabilities() async {
-    try {
+  Future<Result<String>> createAvailability({required List<int> landIds}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.createAvailability(landIds: landIds),
+    );
+  }
+
+  @override
+  Future<Result<List<AvailabilityEntity>>> getAvailabilities() {
+    return RepositoryExecutor.runSafely(() async {
       final availabilityModels = await _remoteDataSource.getAvailabilities();
-      final availabilityEntities =
-          availabilityModels.map((item) => item.toEntity()).toList();
-
-      return Success(availabilityEntities);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
-  }
-  @override
-  Future<Result<String>> createCart({required List<int> landIds}) async {
-    try {
-      final message = await _remoteDataSource.createCart(landIds: landIds);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return availabilityModels.map((item) => item.toEntity()).toList();
+    });
   }
 
   @override
-  Future<Result<List<CartItemEntity>>> getCart() async {
-    try {
+  Future<Result<String>> createCart({required List<int> landIds}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.createCart(landIds: landIds),
+    );
+  }
+
+  @override
+  Future<Result<List<CartItemEntity>>> getCart() {
+    return RepositoryExecutor.runSafely(() async {
       final cartModels = await _remoteDataSource.getCart();
-      final cartItems = cartModels.map((item) => item.toEntity()).toList();
-      return Success(cartItems);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return cartModels.map((item) => item.toEntity()).toList();
+    });
   }
 
   @override
-  Future<Result<List<VisitItemEntity>>> getVisits() async {
-    try {
+  Future<Result<List<VisitItemEntity>>> getVisits() {
+    return RepositoryExecutor.runSafely(() async {
       final visitModels = await _remoteDataSource.getVisits();
-      final visitItems = visitModels.map((item) => item.toEntity()).toList();
-      return Success(visitItems);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return visitModels.map((item) => item.toEntity()).toList();
+    });
   }
 
   @override
-  Future<Result<List<ShortlistItemEntity>>> getShortlists() async {
-    try {
+  Future<Result<List<ShortlistItemEntity>>> getShortlists() {
+    return RepositoryExecutor.runSafely(() async {
       final shortlistModels = await _remoteDataSource.getShortlists();
-      final shortlistItems = shortlistModels.map((item) => item.toEntity()).toList();
-      return Success(shortlistItems);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return shortlistModels.map((item) => item.toEntity()).toList();
+    });
   }
 
   @override
-  Future<Result<List<ShortlistItemEntity>>> getFinals() async {
-    try {
+  Future<Result<List<ShortlistItemEntity>>> getFinals() {
+    return RepositoryExecutor.runSafely(() async {
       final finalModels = await _remoteDataSource.getFinals();
-      final finalItems = finalModels.map((item) => item.toEntity()).toList();
-      return Success(finalItems);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return finalModels.map((item) => item.toEntity()).toList();
+    });
   }
 
   @override
-  Future<Result<String>> createShortlist({required int landId}) async {
-    try {
-      final message = await _remoteDataSource.createShortlist(landId: landId);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<String>> createShortlist({required int landId}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.createShortlist(landId: landId),
+    );
   }
 
   @override
-  Future<Result<String>> deleteShortlist({required int landId}) async {
-    try {
-      final message = await _remoteDataSource.deleteShortlist(landId: landId);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<String>> deleteShortlist({required int landId}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.deleteShortlist(landId: landId),
+    );
   }
 
   @override
-  Future<Result<String>> createFinal({required int landId}) async {
-    try {
-      final message = await _remoteDataSource.createFinal(landId: landId);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<String>> createFinal({required int landId}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.createFinal(landId: landId),
+    );
   }
 
   @override
-  Future<Result<String>> deleteFinal({required int landId}) async {
-    try {
-      final message = await _remoteDataSource.deleteFinal(landId: landId);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<String>> deleteFinal({required int landId}) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.deleteFinal(landId: landId),
+    );
   }
 
   @override
@@ -219,22 +115,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required List<int> landIds,
     required int amount,
     required String paymentStatus,
-  }) async {
-    try {
-      final message = await _remoteDataSource.createPayment(
+  }) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.createPayment(
         landIds: landIds,
         amount: amount,
         paymentStatus: paymentStatus,
-      );
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      ),
+    );
   }
 
   @override
@@ -243,22 +131,14 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String visitDate,
     required String time,
     required String meetingStatus,
-  }) async {
-    try {
-      final message = await _remoteDataSource.createVisit(
+  }) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.createVisit(
         landIds: landIds,
         visitDate: visitDate,
         time: time,
         meetingStatus: meetingStatus,
-      );
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      ),
+    );
   }
 }

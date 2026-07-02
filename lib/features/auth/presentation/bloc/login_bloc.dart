@@ -21,7 +21,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) async {
     emit(state.copyWith(status: LoginStatus.loading, errorMessage: null));
 
-    final result = await _loginUseCase(event.request);
+    final result = await _loginUseCase(event.credentials);
 
     switch (result) {
       case Success<UserEntity>(:final data):

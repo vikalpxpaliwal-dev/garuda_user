@@ -5,6 +5,7 @@ import 'package:garuda_user_app/features/search/domain/entities/location_entity.
 enum SearchStatus { initial, loading, success, failure }
 enum WishlistStatus { initial, loading, success, failure }
 enum LocationStatus { initial, loading, success, failure }
+enum LandDetailStatus { initial, loading, success, failure }
 
 class SearchState extends Equatable {
   static const Object _unset = Object();
@@ -18,6 +19,10 @@ class SearchState extends Equatable {
   final String? wishlistMessage;
   final LocationStatus locationStatus;
   final List<StateEntity> states;
+  final LandDetailStatus landDetailStatus;
+  final LandEntity? landDetail;
+  final int? landDetailId;
+  final String? landDetailErrorMessage;
 
   const SearchState({
     this.status = SearchStatus.initial,
@@ -29,7 +34,23 @@ class SearchState extends Equatable {
     this.wishlistMessage,
     this.locationStatus = LocationStatus.initial,
     this.states = const [],
+    this.landDetailStatus = LandDetailStatus.initial,
+    this.landDetail,
+    this.landDetailId,
+    this.landDetailErrorMessage,
   });
+
+  LandEntity? landForId(int landId) {
+    for (final land in lands) {
+      if (land.id == landId) {
+        return land;
+      }
+    }
+    if (landDetail?.id == landId) {
+      return landDetail;
+    }
+    return null;
+  }
 
   SearchState copyWith({
     SearchStatus? status,
@@ -41,6 +62,10 @@ class SearchState extends Equatable {
     Object? wishlistMessage = _unset,
     LocationStatus? locationStatus,
     List<StateEntity>? states,
+    LandDetailStatus? landDetailStatus,
+    LandEntity? landDetail,
+    Object? landDetailId = _unset,
+    Object? landDetailErrorMessage = _unset,
   }) {
     return SearchState(
       status: status ?? this.status,
@@ -58,6 +83,14 @@ class SearchState extends Equatable {
           : wishlistMessage as String?,
       locationStatus: locationStatus ?? this.locationStatus,
       states: states ?? this.states,
+      landDetailStatus: landDetailStatus ?? this.landDetailStatus,
+      landDetail: landDetail ?? this.landDetail,
+      landDetailId: identical(landDetailId, _unset)
+          ? this.landDetailId
+          : landDetailId as int?,
+      landDetailErrorMessage: identical(landDetailErrorMessage, _unset)
+          ? this.landDetailErrorMessage
+          : landDetailErrorMessage as String?,
     );
   }
 
@@ -72,5 +105,9 @@ class SearchState extends Equatable {
         wishlistMessage,
         locationStatus,
         states,
+        landDetailStatus,
+        landDetail,
+        landDetailId,
+        landDetailErrorMessage,
       ];
 }

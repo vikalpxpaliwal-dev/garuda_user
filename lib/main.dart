@@ -7,6 +7,8 @@ import 'package:garuda_user_app/core/utils/app_bloc_observer.dart';
 import 'package:garuda_user_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const _resetStorage = bool.fromEnvironment('RESET_STORAGE');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -25,10 +27,14 @@ Future<void> main() async {
   Bloc.observer = const AppBlocObserver();
   await initializeDependencies();
 
-  // TODO: TEMPORARY - Clear all storage for testing fresh flow.
-  // Remove these lines before committing!
-  // await sl<AuthLocalDataSource>().clear();
-  // await sl<SharedPreferences>().clear();
+  if (_resetStorage) {
+    await _clearAllLocalStorage();
+  }
 
   runApp(const GarudaApp());
+}
+
+Future<void> _clearAllLocalStorage() async {
+  await sl<AuthLocalDataSource>().clear();
+  await sl<SharedPreferences>().clear();
 }

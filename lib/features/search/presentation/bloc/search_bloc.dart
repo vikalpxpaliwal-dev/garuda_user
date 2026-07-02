@@ -1,28 +1,110 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
-import 'package:garuda_user_app/features/search/domain/usecases/add_to_wishlist_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/add_to_wishlist_usecase.dart';
+import 'package:garuda_user_app/features/profile/domain/usecases/get_wishlist_usecase.dart';
+import 'package:garuda_user_app/features/search/domain/usecases/get_land_by_id_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_lands_usecase.dart';
 import 'package:garuda_user_app/features/search/domain/usecases/get_locations_usecase.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
 
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
-  final GetLandsUseCase _getLandsUseCase;
-  final AddToWishlistUseCase _addToWishlistUseCase;
-  final GetLocationsUseCase _getLocationsUseCase;
-
   SearchBloc({
     required GetLandsUseCase getLandsUseCase,
     required AddToWishlistUseCase addToWishlistUseCase,
+    required GetWishlistUseCase getWishlistUseCase,
     required GetLocationsUseCase getLocationsUseCase,
+    required GetLandByIdUseCase getLandByIdUseCase,
   })  : _getLandsUseCase = getLandsUseCase,
         _addToWishlistUseCase = addToWishlistUseCase,
+        _getWishlistUseCase = getWishlistUseCase,
         _getLocationsUseCase = getLocationsUseCase,
+        _getLandByIdUseCase = getLandByIdUseCase,
         super(const SearchState()) {
     on<GetLandsEvent>(_onGetLands);
     on<GetLocationsEvent>(_onGetLocations);
+    on<LoadWishlistedLandIdsEvent>(_onLoadWishlistedLandIds);
+    on<LoadLandDetailEvent>(_onLoadLandDetail);
     on<AddToWishlistEvent>(_onAddToWishlist);
     on<AddSelectedToWishlistEvent>(_onAddSelectedToWishlist);
+  }
+
+  final GetLandsUseCase _getLandsUseCase;
+  final AddToWishlistUseCase _addToWishlistUseCase;
+  final GetWishlistUseCase _getWishlistUseCase;
+  final GetLocationsUseCase _getLocationsUseCase;
+  final GetLandByIdUseCase _getLandByIdUseCase;
+
+  Future<List<int>> _fetchWishlistedLandIds() async {
+    final result = await _getWishlistUseCase();
+    return switch (result) {
+      Success(data: final items) => items.map((item) => item.landId).toList(),
+      Error() => state.wishlistedLandIds,
+    };
+  }
+
+  Future<void> _onLoadWishlistedLandIds(
+    LoadWishlistedLandIdsEvent event,
+    Emitter<SearchState> emit,
+  ) async {
+    final wishlistedLandIds = await _fetchWishlistedLandIds();
+    emit(state.copyWith(wishlistedLandIds: wishlistedLandIds));
+  }
+
+  Future<void> _onLoadLandDetail(
+    LoadLandDetailEvent event,
+    Emitter<SearchState> emit,
+  ) async {
+    final cached = state.landForId(event.landId);
+    if (cached != null) {
+      emit(
+        state.copyWith(
+          landDetailStatus: LandDetailStatus.success,
+          landDetail: cached,
+          landDetailId: event.landId,
+          landDetailErrorMessage: null,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        landDetailStatus: LandDetailStatus.loading,
+        landDetailId: event.landId,
+        landDetailErrorMessage: null,
+      ),
+    );
+
+    final result = await _getLandByIdUseCase(event.landId);
+
+    switch (result) {
+      case Success(data: final land) when land != null:
+        emit(
+          state.copyWith(
+            landDetailStatus: LandDetailStatus.success,
+            landDetail: land,
+            landDetailId: event.landId,
+            landDetailErrorMessage: null,
+          ),
+        );
+      case Success():
+        emit(
+          state.copyWith(
+            landDetailStatus: LandDetailStatus.failure,
+            landDetailId: event.landId,
+            landDetailErrorMessage: 'Land not found.',
+          ),
+        );
+      case Error(failure: final failure):
+        emit(
+          state.copyWith(
+            landDetailStatus: LandDetailStatus.failure,
+            landDetailId: event.landId,
+            landDetailErrorMessage: failure.message,
+          ),
+        );
+    }
   }
 
   Future<void> _onGetLands(
@@ -45,6 +127,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
           errorMessage: f.message,
         ));
     }
+
+    // Refresh wishlist highlighting separately so a wishlist API problem
+    // never blocks the land listing from rendering.
+    final wishlistedLandIds = await _fetchWishlistedLandIds();
+    emit(state.copyWith(wishlistedLandIds: wishlistedLandIds));
   }
 
   Future<void> _onGetLocations(
@@ -94,15 +181,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     switch (result) {
       case Success(data: final message):
-        final updatedWishlistedLandIds = <int>{
-          ...state.wishlistedLandIds,
-          event.landId,
-        }.toList();
-
+        final wishlistedLandIds = await _fetchWishlistedLandIds();
         emit(
           state.copyWith(
             wishlistStatus: WishlistStatus.success,
-            wishlistedLandIds: updatedWishlistedLandIds,
+            wishlistedLandIds: wishlistedLandIds,
             activeWishlistLandId: event.landId,
             wishlistMessage: message,
           ),
@@ -150,15 +233,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     switch (result) {
       case Success(data: final message):
-        final updatedWishlistedLandIds = <int>{
-          ...state.wishlistedLandIds,
-          ...filteredLandIds,
-        }.toList();
-
+        final wishlistedLandIds = await _fetchWishlistedLandIds();
         emit(
           state.copyWith(
             wishlistStatus: WishlistStatus.success,
-            wishlistedLandIds: updatedWishlistedLandIds,
+            wishlistedLandIds: wishlistedLandIds,
             activeWishlistLandId: null,
             wishlistMessage: message,
           ),

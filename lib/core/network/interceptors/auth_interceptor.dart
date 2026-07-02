@@ -1,21 +1,30 @@
-import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
 import 'package:garuda_user_app/features/auth/domain/repositories/auth_repository.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:garuda_user_app/features/auth/domain/services/auth_session_controller.dart';
+
+typedef DioProvider = Dio Function();
+typedef AuthRepositoryProvider = AuthRepository Function();
 
 class AuthInterceptor extends Interceptor {
-  AuthInterceptor();
+  AuthInterceptor({
+    required AuthRepositoryProvider authRepositoryProvider,
+    required AuthSessionController sessionController,
+    required DioProvider dioProvider,
+  })  : _authRepositoryProvider = authRepositoryProvider,
+        _sessionController = sessionController,
+        _dioProvider = dioProvider;
 
-  // Lazy dependencies to break circular dependencies in DI
-  AuthRepository get _authRepository => sl<AuthRepository>();
-  AuthBloc get _authBloc => sl<AuthBloc>();
-  Dio get _dio => sl<Dio>();
+  final AuthRepositoryProvider _authRepositoryProvider;
+  final AuthSessionController _sessionController;
+  final DioProvider _dioProvider;
+
+  AuthRepository get _authRepository => _authRepositoryProvider();
 
   bool _isRefreshing = false;
   final _requestsQueue = <MapEntry<RequestOptions, ErrorInterceptorHandler>>[];
+
+  Dio get _dio => _dioProvider();
 
   @override
   Future<void> onRequest(
@@ -23,15 +32,11 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final path = options.path;
-    final isAuthRequest =
-        path.contains('/buyer/refresh') ||
-        path.contains('/buyer/login') ||
-        path.contains('/buyer/signup');
+    final isAuthRequest = _isAuthPath(path);
 
     if (!isAuthRequest) {
       final token = await _authRepository.getAccessToken();
       if (token != null && token.isNotEmpty) {
-        print('AccessToken: $token');
         options.headers['Authorization'] = 'Bearer $token';
       }
     }
@@ -45,14 +50,10 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final path = err.requestOptions.path;
-    final isAuthRequest =
-        path.contains('/buyer/refresh') ||
-        path.contains('/buyer/login') ||
-        path.contains('/buyer/signup');
+    final isAuthRequest = _isAuthPath(path);
 
     if (err.response?.statusCode == 401 && !isAuthRequest) {
       if (_isRefreshing) {
-        // Queue the request
         _requestsQueue.add(MapEntry(err.requestOptions, handler));
         return;
       }
@@ -64,28 +65,32 @@ class AuthInterceptor extends Interceptor {
         final newToken = result.data;
         _isRefreshing = false;
 
-        // 1. Retry original request
         final options = err.requestOptions;
         options.headers['Authorization'] = 'Bearer $newToken';
 
         try {
           final response = await _dio.fetch(options);
           handler.resolve(response);
-
-          // 2. Retry queued requests
           _retryQueuedRequests(newToken);
         } catch (e) {
           handler.next(err);
         }
       } else {
         _isRefreshing = false;
-        _authBloc.add(UserLoggedOut());
+        await _authRepository.clearSession();
+        _sessionController.notifySessionExpired();
         _clearQueue(err);
         handler.next(err);
       }
     } else {
       handler.next(err);
     }
+  }
+
+  bool _isAuthPath(String path) {
+    return path.contains('/buyer/refresh') ||
+        path.contains('/buyer/login') ||
+        path.contains('/buyer/signup');
   }
 
   void _retryQueuedRequests(String token) {

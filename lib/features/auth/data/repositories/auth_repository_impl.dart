@@ -1,10 +1,11 @@
-import 'package:garuda_user_app/core/error/exceptions.dart';
+import 'package:garuda_user_app/core/data/repository_executor.dart';
 import 'package:garuda_user_app/core/error/failures.dart';
 import 'package:garuda_user_app/core/utils/result.dart';
 import 'package:garuda_user_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:garuda_user_app/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:garuda_user_app/features/auth/data/models/login_request_model.dart';
-import 'package:garuda_user_app/features/auth/data/models/signup_request_model.dart';
+import 'package:garuda_user_app/features/auth/data/mappers/auth_request_mapper.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/login_credentials.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/signup_credentials.dart';
 import 'package:garuda_user_app/features/auth/domain/entities/user_entity.dart';
 import 'package:garuda_user_app/features/auth/domain/repositories/auth_repository.dart';
 
@@ -19,63 +20,52 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDataSource _localDataSource;
 
   @override
-  Future<Result<UserEntity>> signup(SignupRequestModel request) async {
-    try {
-      final response = await _remoteDataSource.signup(request);
-      return Success(response.data);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<UserEntity>> signup(SignupCredentials credentials) {
+    return RepositoryExecutor.runSafely(() async {
+      final response = await _remoteDataSource.signup(
+        AuthRequestMapper.toSignupRequestModel(credentials),
+      );
+      return response.data;
+    });
   }
 
   @override
-  Future<Result<UserEntity>> login(LoginRequestModel request) async {
-    try {
-      final response = await _remoteDataSource.login(request);
-      
-      // Persist tokens and user data
+  Future<Result<UserEntity>> login(LoginCredentials credentials) {
+    return RepositoryExecutor.runSafely(() async {
+      final response = await _remoteDataSource.login(
+        AuthRequestMapper.toLoginRequestModel(credentials),
+      );
+
       await _localDataSource.saveTokens(
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       );
       await _localDataSource.saveUser(response.data);
 
-      return Success(response.data);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return response.data;
+    });
   }
 
   @override
   Future<Result<String>> refreshToken() async {
-    try {
-      final refreshToken = await _localDataSource.getRefreshToken();
-      if (refreshToken == null) {
-        return Error(const ServerFailure(message: 'No refresh token available'));
-      }
+    final refreshToken = await _localDataSource.getRefreshToken();
+    if (refreshToken == null) {
+      return Error(const ServerFailure(message: 'No refresh token available'));
+    }
 
+    return RepositoryExecutor.runSafely(() async {
       final newAccessToken = await _remoteDataSource.refresh(refreshToken);
       await _localDataSource.saveTokens(
         accessToken: newAccessToken,
         refreshToken: refreshToken,
       );
+      return newAccessToken;
+    }, policy: RepositoryErrorPolicy.serverOnly);
+  }
 
-      return Success(newAccessToken);
-    } on AppException catch (e) {
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  @override
+  Future<void> clearSession() async {
+    await _localDataSource.clear();
   }
 
   @override
@@ -87,10 +77,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       await _localDataSource.clear();
       return const Success(null);
-    } catch (e) {
-      // Even if API fails, we should clear local data and return success 
-      // from the user's perspective, or return an error if we really need to.
-      // Usually, logout should be best effort remote + certain local clear.
+    } catch (_) {
       await _localDataSource.clear();
       return const Success(null);
     }
@@ -106,36 +93,25 @@ class AuthRepositoryImpl implements AuthRepository {
     required String name,
     required String phone,
     String? photoPath,
-  }) async {
-    try {
+  }) {
+    return RepositoryExecutor.runSafely(() async {
       final response = await _remoteDataSource.updateProfile(
         name: name,
         phone: phone,
         photoPath: photoPath,
       );
 
-      // Update local storage with updated user data
       await _localDataSource.saveUser(response.data);
-
-      return Success(response.data);
-    } on AppException catch (e) {
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      return response.data;
+    }, policy: RepositoryErrorPolicy.serverOnly);
   }
 
   @override
-  Future<Result<void>> deleteAccount() async {
-    try {
+  Future<Result<void>> deleteAccount() {
+    return RepositoryExecutor.runSafely(() async {
       await _remoteDataSource.deleteAccount();
       await _localDataSource.clear();
-      return const Success(null);
-    } on AppException catch (e) {
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+    }, policy: RepositoryErrorPolicy.serverOnly);
   }
 
   @override
@@ -144,39 +120,20 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<String>> forgotPassword(String email) async {
-    try {
-      final message = await _remoteDataSource.forgotPassword(email);
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  Future<Result<String>> forgotPassword(String email) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.forgotPassword(email),
+    );
   }
 
   @override
   Future<Result<String>> verifyOtp({
     required String email,
     required String otp,
-  }) async {
-    try {
-      final message = await _remoteDataSource.verifyOtp(
-        email: email,
-        otp: otp,
-      );
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+  }) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.verifyOtp(email: email, otp: otp),
+    );
   }
 
   @override
@@ -184,22 +141,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String otp,
     required String newPassword,
-  }) async {
-    try {
-      final message = await _remoteDataSource.resetPassword(
+  }) {
+    return RepositoryExecutor.runSafely(
+      () => _remoteDataSource.resetPassword(
         email: email,
         otp: otp,
         newPassword: newPassword,
-      );
-      return Success(message);
-    } on AppException catch (e) {
-      if (e is NetworkException) {
-        return Error(NetworkFailure(message: e.message, statusCode: e.statusCode));
-      }
-      return Error(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } catch (e) {
-      return Error(ServerFailure(message: e.toString()));
-    }
+      ),
+    );
   }
 }
-

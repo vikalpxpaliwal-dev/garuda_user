@@ -5,7 +5,7 @@ import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
-import 'package:garuda_user_app/features/auth/data/models/signup_request_model.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/signup_credentials.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_event.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/signup_state.dart';
@@ -51,7 +51,7 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    final request = SignupRequestModel(
+    final credentials = SignupCredentials(
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
@@ -61,7 +61,7 @@ class _SignupPageState extends State<SignupPage> {
       photo: 'https://example.com/profile.jpg',
     );
 
-    context.read<SignupBloc>().add(SignupRequested(request));
+    context.read<SignupBloc>().add(SignupRequested(credentials));
   }
 
   void _showScaffoldMessage({

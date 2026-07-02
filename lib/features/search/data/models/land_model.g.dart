@@ -33,6 +33,8 @@ LandModel _$LandModelFromJson(Map<String, dynamic> json) => LandModel(
   createdBy: (json['created_by'] as num).toInt(),
   verifiedBy: json['verified_by'],
   formStatus: json['form_status'] as String?,
+  verificationStatus: json['verification_status'] as String?,
+  nearestTownKm: json['nearest_town_1_km'] as String?,
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
   landDetails: LandDetailsModel.fromJson(
@@ -73,6 +75,8 @@ Map<String, dynamic> _$LandModelToJson(LandModel instance) => <String, dynamic>{
   'created_by': instance.createdBy,
   'verified_by': instance.verifiedBy,
   'form_status': instance.formStatus,
+  'verification_status': instance.verificationStatus,
+  'nearest_town_1_km': instance.nearestTownKm,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
   'landDetails': instance.landDetails,
@@ -119,7 +123,7 @@ LandDetailsModel _$LandDetailsModelFromJson(Map<String, dynamic> json) =>
       numberOfBores: (json['number_of_bores'] as num?)?.toInt(),
       farmPond: json['farm_pond'] as bool?,
       trees:
-          (LandDetailsModel._readTrees(json, 'trees') as List<dynamic>?)
+          (json['trees'] as List<dynamic>?)
               ?.map((e) => TreeModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

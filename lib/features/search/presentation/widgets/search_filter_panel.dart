@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
@@ -6,6 +5,7 @@ import 'package:garuda_user_app/features/search/domain/entities/location_entity.
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_state.dart';
+import 'package:garuda_user_app/features/search/presentation/widgets/filter_query_mapper.dart';
 
 class SearchFilterPanel extends StatefulWidget {
   const SearchFilterPanel({
@@ -337,63 +337,25 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
   }
 
   void _onSearchPressed() {
-    final filters = <String, dynamic>{};
-
-    if (_selectedState != null) filters['state'] = _selectedState;
-    if (_selectedDistrict != null) filters['district'] = _selectedDistrict;
-    if (_selectedTown != null) filters['mandal'] = _selectedTown;
-
-    if (_budget.start > 0) {
-      filters['min_total_budget'] = _budget.start * 10000000;
-    }
-    if (_budget.end < 100) {
-      filters['max_total_budget'] = _budget.end * 10000000;
-    }
-
-    if (_price.start > 0) {
-      filters['min_price_per_acre'] = _price.start * 10000000;
-    }
-    if (_price.end < 10) {
-      filters['max_price_per_acre'] = _price.end * 10000000;
-    }
-
-    if (_area.start > 0) {
-      filters['min_acres'] = _area.start;
-    }
-    if (_area.end < 50) {
-      filters['max_acres'] = _area.end;
-    }
-
-    if (_selectedSoilType != 'All') filters['soil_type'] = _selectedSoilType;
-    if (_selectedRoadType != 'All') {
-      filters['nearest_road_type'] = _selectedRoadType;
-    }
-
-    if (_selectedAttachedToRoad != 'All') {
-      filters['land_attached_to_road'] = _selectedAttachedToRoad.toLowerCase();
-    }
-
-    if (_selectedWaterSource != 'All') {
-      filters['water_source'] = jsonEncode([_selectedWaterSource]);
-    }
-
-    if (_selectedFarmPond != 'All') {
-      filters['farm_pond'] = _selectedFarmPond == 'Yes';
-    }
-
-    if (_selectedResidence != 'All') {
-      if (_selectedResidence == 'None') {
-        filters['residence'] = jsonEncode([]);
-      } else {
-        filters['residence'] = jsonEncode([_selectedResidence]);
-      }
-    }
-
-    if (_selectedFencingStatus != 'All') {
-      filters['fencing_status'] = _selectedFencingStatus;
-    }
-
-    widget.onSearchResults(filters);
+    widget.onSearchResults(
+      FilterQueryMapper.toApiFilters(
+        FilterQueryInput(
+          state: _selectedState,
+          district: _selectedDistrict,
+          town: _selectedTown,
+          budget: _budget,
+          price: _price,
+          area: _area,
+          soilType: _selectedSoilType,
+          roadType: _selectedRoadType,
+          attachedToRoad: _selectedAttachedToRoad,
+          waterSource: _selectedWaterSource,
+          farmPond: _selectedFarmPond,
+          residence: _selectedResidence,
+          fencingStatus: _selectedFencingStatus,
+        ),
+      ),
+    );
   }
 
   Widget _buildLabel(String text) {
@@ -548,7 +510,7 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: 44, // Fixed height for each item
+            mainAxisExtent: 44,
           ),
           itemCount: options.length,
           itemBuilder: (context, index) {

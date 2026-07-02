@@ -21,7 +21,7 @@ class SignupBloc extends Bloc<SignupEvent, SignupState> {
   ) async {
     emit(state.copyWith(status: SignupStatus.loading, errorMessage: null));
 
-    final result = await _signupUseCase(event.request);
+    final result = await _signupUseCase(event.credentials);
 
     switch (result) {
       case Success<UserEntity>(:final data):

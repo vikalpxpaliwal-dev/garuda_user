@@ -5,7 +5,7 @@ import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/di/service_locator.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
-import 'package:garuda_user_app/features/auth/data/models/login_request_model.dart';
+import 'package:garuda_user_app/features/auth/domain/entities/login_credentials.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/login_bloc.dart';
@@ -43,12 +43,12 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final request = LoginRequestModel(
+    final credentials = LoginCredentials(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
-    context.read<LoginBloc>().add(LoginRequested(request));
+    context.read<LoginBloc>().add(LoginRequested(credentials));
   }
 
   void _showScaffoldMessage({

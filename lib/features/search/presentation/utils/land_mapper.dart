@@ -1,11 +1,12 @@
+import 'package:garuda_user_app/core/utils/relative_date_formatter.dart';
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 
 class LandMapper {
+  static const String _unavailable = 'Not available';
+
   static SearchListingUiModel toUiModel(LandEntity land) {
     final details = land.landDetails;
-    
-    // Choose artwork based on ID or soil type for consistency
     final artworkType = _getArtworkType(land.id);
 
     return SearchListingUiModel(
@@ -14,9 +15,13 @@ class LandMapper {
       availability: _formatStatus(land.landStatus, fallback: 'AVAILABLE'),
       mortgage: _formatStatus(land.mortgageStatus, fallback: 'N/A'),
       area: '${details.totalAcres} ac ${details.guntas} gts',
-      water: details.waterSource.isNotEmpty ? details.waterSource.first : 'Borewell',
-      soilType: details.soilType,
-      distance: 'Pending', // Distance not in API currently, setting default
+      water: details.waterSource.isNotEmpty
+          ? details.waterSource.first
+          : _unavailable,
+      soilType: details.soilType.isNotEmpty ? details.soilType : _unavailable,
+      distance: formatDistance(land.nearestTownKm),
+      updatedLabel: formatUpdatedLabel(land.updatedAt),
+      verificationLabel: formatVerificationLabel(land),
       artworkType: artworkType,
       detailSections: _buildDetailSections(land),
       documentStatuses: land.documents.map((doc) => doc.docType).toList(),
@@ -24,23 +29,47 @@ class LandMapper {
     );
   }
 
+  static String formatDistance(String? nearestTownKm) {
+    final km = nearestTownKm?.trim();
+    if (km == null || km.isEmpty) return _unavailable;
+    return '$km km';
+  }
+
+  static String formatUpdatedLabel(DateTime? updatedAt) {
+    return RelativeDateFormatter.format(updatedAt);
+  }
+
+  static String formatVerificationLabel(LandEntity land) {
+    if (land.isVerified) return 'Verified';
+
+    final status = land.verificationStatus?.trim();
+    if (status != null && status.isNotEmpty) {
+      return _humanizeStatus(status);
+    }
+
+    if (land.verificationPackage) return 'Verification package';
+
+    return _unavailable;
+  }
+
   static SearchListingArtworkType _getArtworkType(int id) {
-    // Deterministic selection based on ID
     final index = id % 3;
     switch (index) {
-      case 0: return SearchListingArtworkType.cityWalk;
-      case 1: return SearchListingArtworkType.forestRoad;
-      case 2: return SearchListingArtworkType.cityBridge;
-      default: return SearchListingArtworkType.cityWalk;
+      case 0:
+        return SearchListingArtworkType.cityWalk;
+      case 1:
+        return SearchListingArtworkType.forestRoad;
+      case 2:
+        return SearchListingArtworkType.cityBridge;
+      default:
+        return SearchListingArtworkType.cityWalk;
     }
   }
 
   static String? _pickImageUrl(List<MediaEntity> media) {
-    // Prefer 'default' category image first
     for (final m in media) {
       if (m.type == 'image' && m.category == 'default') return m.url;
     }
-    // Fallback to any image
     for (final m in media) {
       if (m.type == 'image') return m.url;
     }
@@ -50,6 +79,18 @@ class LandMapper {
   static String _formatStatus(List<String> statuses, {required String fallback}) {
     if (statuses.isEmpty) return fallback;
     return statuses.join(', ').toUpperCase();
+  }
+
+  static String _humanizeStatus(String value) {
+    return value
+        .replaceAll('_', ' ')
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .map(
+          (word) =>
+              '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+        )
+        .join(' ');
   }
 
   static String _formatPrice(double value) {
@@ -91,12 +132,21 @@ class LandMapper {
             isAccent: true,
           ),
           SearchListingDetailField(
-            label: 'PRICE PER ACRE', 
+            label: 'VERIFICATION',
+            value: formatVerificationLabel(land),
+            isAccent: true,
+          ),
+          SearchListingDetailField(
+            label: 'LAST UPDATED',
+            value: formatUpdatedLabel(land.updatedAt),
+          ),
+          SearchListingDetailField(
+            label: 'PRICE PER ACRE',
             value: '₹${_formatPrice(details.pricePerAcres)}/ac',
             isAccent: true,
           ),
           SearchListingDetailField(
-            label: 'TOTAL VALUE', 
+            label: 'TOTAL VALUE',
             value: '₹${_formatPrice(details.totalValue)}',
             isAccent: true,
           ),
@@ -117,14 +167,22 @@ class LandMapper {
           SearchListingDetailField(label: 'STATE', value: land.state),
           SearchListingDetailField(label: 'DISTRICT', value: land.district),
           SearchListingDetailField(label: 'MANDAL', value: land.mandal),
+          SearchListingDetailField(
+            label: 'DISTANCE',
+            value: formatDistance(land.nearestTownKm),
+          ),
         ],
       ),
       SearchListingDetailSection(
         title: 'TREES DETAIL',
-        fields: details.trees.map((tree) => SearchListingDetailField(
-          label: tree.type.toUpperCase(),
-          value: tree.count.toString(),
-        )).toList(),
+        fields: details.trees
+            .map(
+              (tree) => SearchListingDetailField(
+                label: tree.type.toUpperCase(),
+                value: tree.count.toString(),
+              ),
+            )
+            .toList(),
       ),
       SearchListingDetailSection(
         title: 'CHARACTERISTICS',

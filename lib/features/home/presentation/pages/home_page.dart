@@ -4,9 +4,11 @@ import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/utils/context_extensions.dart';
 import 'package:garuda_user_app/core/widgets/app_button.dart';
+import 'package:garuda_user_app/core/widgets/app_content_width.dart';
+import 'package:garuda_user_app/core/widgets/app_mesh_background.dart';
+import 'package:garuda_user_app/core/widgets/app_page_shell.dart';
 import 'package:garuda_user_app/core/widgets/app_text.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
-import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/features/home/domain/entities/home_dashboard.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_bloc.dart';
 import 'package:garuda_user_app/features/home/presentation/bloc/home_event.dart';
@@ -25,68 +27,25 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Premium Mesh Gradient Background
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.softBackground,
-                gradient: RadialGradient(
-                  center: Alignment(-0.8, -0.6),
-                  radius: 1.2,
-                  colors: [
-                    Color(0xFFFFF9F2),
-                    AppColors.softBackground,
-                  ],
-                  stops: [0.0, 1.0],
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(0.9, 0.8),
-                  radius: 1.4,
-                  colors: [
-                    AppColors.primaryOrange.withValues(alpha: 0.05),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 1.0],
-                ),
-              ),
-            ),
-          ),
-          BlocBuilder<HomeBloc, HomeState>(
-            builder: (context, state) {
-              return RefreshIndicator(
-                color: AppColors.deepOrange,
-                onRefresh: () => _onRefresh(context),
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  slivers: <Widget>[
-                    const CommonSliverAppBar(),
-                    _buildStateSliver(context, state),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
+      body: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          return AppPageShell(
+            meshVariant: AppMeshBackgroundVariant.home,
+            onRefresh: () => _onRefresh(context),
+            slivers: <Widget>[_buildStateSliver(context, state)],
+          );
+        },
       ),
     );
   }
 
   Widget _buildStateSliver(BuildContext context, HomeState state) {
+    final pagePadding = context.spacing.pageInsets();
+
     if (state.dashboard != null) {
-      return SliverToBoxAdapter(
-        child: _PageContainer(
-          child: _DashboardContent(dashboard: state.dashboard!),
-        ),
+      return AppContentWidthBox.sliver(
+        padding: pagePadding,
+        child: _DashboardContent(dashboard: state.dashboard!),
       );
     }
 
@@ -99,7 +58,8 @@ class HomePage extends StatelessWidget {
       ),
       HomeStatus.failure => SliverFillRemaining(
         hasScrollBody: false,
-        child: _PageContainer(
+        child: AppContentWidthBox(
+          padding: pagePadding,
           child: _ErrorState(
             errorMessage: state.errorMessage ?? AppStrings.unexpectedError,
           ),
@@ -110,25 +70,6 @@ class HomePage extends StatelessWidget {
         child: SizedBox.shrink(),
       ),
     };
-  }
-}
-
-class _PageContainer extends StatelessWidget {
-  const _PageContainer({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
-          child: child,
-        ),
-      ),
-    );
   }
 }
 
@@ -144,11 +85,11 @@ class _DashboardContent extends StatelessWidget {
       children: <Widget>[
         ...dashboard.heroBanners.map(
           (banner) => Padding(
-            padding: const EdgeInsets.only(bottom: 32),
+            padding: EdgeInsets.only(bottom: context.spacing.xxl),
             child: HeroBannerCard(banner: banner),
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: context.spacing.sm + 2),
         ContactSupportCard(contactInfo: dashboard.contactInfo),
       ],
     );

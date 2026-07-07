@@ -11,7 +11,7 @@ class LandMapper {
 
     return SearchListingUiModel(
       title: land.mandal,
-      price: '₹${_formatPrice(details.pricePerAcres)}/ac',
+      price: '${_formatPrice(details.pricePerAcres)}/ac',
       availability: _formatStatus(land.landStatus, fallback: 'AVAILABLE'),
       mortgage: _formatStatus(land.mortgageStatus, fallback: 'N/A'),
       area: '${details.totalAcres} ac ${details.guntas} gts',

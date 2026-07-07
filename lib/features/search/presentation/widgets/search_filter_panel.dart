@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/utils/responsive_grid.dart';
 import 'package:garuda_user_app/features/search/domain/entities/location_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
@@ -506,8 +507,8 @@ class _SearchFilterPanelState extends State<SearchFilterPanel> {
           padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: ResponsiveGrid.gridCrossAxisCount(context),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
             mainAxisExtent: 44,

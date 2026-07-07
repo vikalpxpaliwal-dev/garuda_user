@@ -12,6 +12,8 @@ class AppSpacingTheme extends ThemeExtension<AppSpacingTheme> {
     required this.xl,
     required this.xxl,
     required this.screenPadding,
+    required this.contentTop,
+    required this.contentBottom,
   });
 
   static const fallback = AppSpacingTheme(
@@ -21,7 +23,9 @@ class AppSpacingTheme extends ThemeExtension<AppSpacingTheme> {
     lg: 20,
     xl: 24,
     xxl: 32,
-    screenPadding: 20,
+    screenPadding: 18,
+    contentTop: 22,
+    contentBottom: 28,
   );
 
   final double xs;
@@ -31,6 +35,18 @@ class AppSpacingTheme extends ThemeExtension<AppSpacingTheme> {
   final double xl;
   final double xxl;
   final double screenPadding;
+  final double contentTop;
+  final double contentBottom;
+
+  /// Standard horizontal + vertical insets for tab page content.
+  EdgeInsets pageInsets({double? bottom}) {
+    return EdgeInsets.fromLTRB(
+      screenPadding,
+      contentTop,
+      screenPadding,
+      bottom ?? contentBottom,
+    );
+  }
 
   @override
   AppSpacingTheme copyWith({
@@ -41,6 +57,8 @@ class AppSpacingTheme extends ThemeExtension<AppSpacingTheme> {
     double? xl,
     double? xxl,
     double? screenPadding,
+    double? contentTop,
+    double? contentBottom,
   }) {
     return AppSpacingTheme(
       xs: xs ?? this.xs,
@@ -50,6 +68,8 @@ class AppSpacingTheme extends ThemeExtension<AppSpacingTheme> {
       xl: xl ?? this.xl,
       xxl: xxl ?? this.xxl,
       screenPadding: screenPadding ?? this.screenPadding,
+      contentTop: contentTop ?? this.contentTop,
+      contentBottom: contentBottom ?? this.contentBottom,
     );
   }
 
@@ -68,6 +88,9 @@ class AppSpacingTheme extends ThemeExtension<AppSpacingTheme> {
       xxl: lerpDouble(xxl, other.xxl, t) ?? xxl,
       screenPadding:
           lerpDouble(screenPadding, other.screenPadding, t) ?? screenPadding,
+      contentTop: lerpDouble(contentTop, other.contentTop, t) ?? contentTop,
+      contentBottom:
+          lerpDouble(contentBottom, other.contentBottom, t) ?? contentBottom,
     );
   }
 }

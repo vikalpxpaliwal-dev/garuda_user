@@ -23,10 +23,8 @@ class _HeroBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: context.text.microLabel.copyWith(
           color: AppColors.white,
-          fontSize: 8,
-          fontWeight: FontWeight.w900,
           letterSpacing: 0.4,
         ),
       ),
@@ -52,41 +50,43 @@ class _VisitsHubTabButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            gradient: isSelected
-                ? LinearGradient(
-                    colors: [
-                      AppColors.white,
-                      AppColors.softBackground.withValues(alpha: 0.5),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            boxShadow: isSelected
-                ? <BoxShadow>[
-                    BoxShadow(
-                      color: AppColors.ink.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : const <BoxShadow>[],
-          ),
-          child: Center(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isSelected ? AppColors.deepOrange : AppColors.ink,
-                fontSize: 8.5,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                letterSpacing: 0.4,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        AppColors.white,
+                        AppColors.softBackground.withValues(alpha: 0.5),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              boxShadow: isSelected
+                  ? <BoxShadow>[
+                      BoxShadow(
+                        color: AppColors.ink.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : const <BoxShadow>[],
+            ),
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: context.text.microLabel.copyWith(
+                  color: isSelected ? AppColors.deepOrange : AppColors.ink,
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
               ),
             ),
           ),
@@ -104,46 +104,60 @@ class _VisitsHubFloatingActions extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: const <Widget>[
-        _VisitsHubFab(icon: Icons.phone_in_talk_rounded),
+        _VisitsHubFab(
+          icon: Icons.phone_in_talk_rounded,
+          semanticsLabel: 'Contact support by chat',
+        ),
         SizedBox(height: 10),
-        _VisitsHubFab(icon: Icons.call_rounded),
+        _VisitsHubFab(
+          icon: Icons.call_rounded,
+          semanticsLabel: 'Call support',
+        ),
       ],
     );
   }
 }
 
 class _VisitsHubFab extends StatelessWidget {
-  const _VisitsHubFab({required this.icon});
+  const _VisitsHubFab({
+    required this.icon,
+    required this.semanticsLabel,
+  });
 
   final IconData icon;
+  final String semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.deepOrange,
-            gradient: const LinearGradient(
-              colors: [AppColors.deepOrange, AppColors.primaryOrange],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            shape: BoxShape.circle,
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: AppColors.deepOrange.withValues(alpha: 0.35),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.deepOrange,
+              gradient: const LinearGradient(
+                colors: [AppColors.deepOrange, AppColors.primaryOrange],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
+              shape: BoxShape.circle,
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: AppColors.deepOrange.withValues(alpha: 0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 18, color: AppColors.white),
           ),
-          child: Icon(icon, size: 18, color: AppColors.white),
         ),
       ),
     );
@@ -180,12 +194,20 @@ class _OwnedLandThumbnail extends StatelessWidget {
                 Uri.encodeFull(imageUrl!),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: Colors.white54,
+                    size: 20,
+                  ),
                 ),
               )
             else
               const Center(
-                child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
+                child: Icon(
+                  Icons.image_not_supported_outlined,
+                  color: Colors.white54,
+                  size: 20,
+                ),
               ),
           ],
         ),
@@ -210,7 +232,6 @@ class _JourneyThumbnail extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            // Gradient fallback background
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -225,12 +246,20 @@ class _JourneyThumbnail extends StatelessWidget {
                 Uri.encodeFull(imageUrl!),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: Colors.white54,
+                    size: 20,
+                  ),
                 ),
               )
             else
               const Center(
-                child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 20),
+                child: Icon(
+                  Icons.image_not_supported_outlined,
+                  color: Colors.white54,
+                  size: 20,
+                ),
               ),
           ],
         ),
@@ -274,17 +303,24 @@ class _TrackedJourneyHeroArtwork extends StatelessWidget {
                   Uri.encodeFull(journey.imageUrl!),
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => const Center(
-                    child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
+                    child: Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.white54,
+                      size: 32,
+                    ),
                   ),
                 ),
               )
             else
               const Positioned.fill(
                 child: Center(
-                  child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: Colors.white54,
+                    size: 32,
+                  ),
                 ),
               ),
-            // Inner Shadow Overlay for depth
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -314,10 +350,8 @@ class _TrackedJourneyHeroArtwork extends StatelessWidget {
                 ),
                 child: Text(
                   journey.availabilityBadge,
-                  style: const TextStyle(
+                  style: context.text.microLabel.copyWith(
                     color: AppColors.white,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w800,
                     letterSpacing: 0.15,
                   ),
                 ),
@@ -359,10 +393,8 @@ class _TrackedJourneyHeroArtwork extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     journey.subtitle.toUpperCase(),
-                    style: const TextStyle(
-                      color: Color(0xFFFFA462),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
+                    style: context.text.microLabel.copyWith(
+                      color: const Color(0xFFFFA462),
                       letterSpacing: 1.0,
                     ),
                   ),
@@ -397,20 +429,14 @@ class _JourneyMetric extends StatelessWidget {
         Text(
           label,
           textAlign: textAlign,
-          style: const TextStyle(
-            color: AppColors.mutedText,
-            fontSize: 7.5,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.35,
-          ),
+          style: context.text.microLabel.copyWith(letterSpacing: 0.35),
         ),
         const SizedBox(height: 5),
         Text(
           value,
           textAlign: textAlign,
-          style: const TextStyle(
+          style: context.text.caption.copyWith(
             color: Colors.deepOrangeAccent,
-            fontSize: 12,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -437,11 +463,14 @@ class _TrackingActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDisabled = onTap == null || isLoading;
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
     final textColor =
-        foregroundColor ?? (isFilled ? AppColors.white : AppColors.ink);
+        foregroundColor ?? (isFilled ? scheme.onPrimary : onSurface);
     final effectiveTextColor = isDisabled
         ? textColor.withValues(alpha: 0.55)
         : textColor;
+    final unfilledSurface = scheme.surfaceContainerHighest;
 
     return Material(
       color: Colors.transparent,
@@ -449,11 +478,11 @@ class _TrackingActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          height: 40,
+          constraints: const BoxConstraints(minHeight: 44),
           decoration: BoxDecoration(
             color: isFilled
                 ? AppColors.deepOrange.withValues(alpha: isDisabled ? 0.75 : 1)
-                : AppColors.white.withValues(alpha: isDisabled ? 0.82 : 1),
+                : unfilledSurface.withValues(alpha: isDisabled ? 0.82 : 1),
             gradient: isFilled
                 ? const LinearGradient(
                     colors: [AppColors.deepOrange, AppColors.primaryOrange],
@@ -465,7 +494,7 @@ class _TrackingActionButton extends StatelessWidget {
             border: Border.all(
               color: isFilled
                   ? AppColors.deepOrange
-                  : AppColors.lightLine.withValues(alpha: 0.6),
+                  : scheme.outline.withValues(alpha: 0.35),
             ),
             boxShadow: [
               if (isFilled)
@@ -501,10 +530,8 @@ class _TrackingActionButton extends StatelessWidget {
                     : Text(
                         label,
                         maxLines: 1,
-                        style: TextStyle(
+                        style: context.text.microLabel.copyWith(
                           color: effectiveTextColor,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
                           letterSpacing: 0.6,
                         ),
                       ),
@@ -524,37 +551,41 @@ class _TrackingFloatingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.deepOrange,
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFFF6A67C),
-                const Color(0xFFF6A67C).withValues(alpha: 0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            shape: BoxShape.circle,
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: const Color(0xFFF6A67C).withValues(alpha: 0.4),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+    return Semantics(
+      button: true,
+      label: 'Close tracking journey',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.deepOrange,
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFF6A67C),
+                  const Color(0xFFF6A67C).withValues(alpha: 0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          child: const Icon(
-            Icons.remove_rounded,
-            size: 20,
-            color: AppColors.white,
+              shape: BoxShape.circle,
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: const Color(0xFFF6A67C).withValues(alpha: 0.4),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.remove_rounded,
+              size: 20,
+              color: AppColors.white,
+            ),
           ),
         ),
       ),
@@ -573,45 +604,48 @@ class _AvailabilityArrowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isLoading ? null : onTap,
-      child: Container(
-        width: 62,
-        height: 62,
-        decoration: BoxDecoration(
-          color: AppColors.deepOrange,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.deepOrange.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+    return Semantics(
+      button: true,
+      label: isLoading ? 'Loading' : 'Continue',
+      child: GestureDetector(
+        onTap: isLoading ? null : onTap,
+        child: Container(
+          width: 62,
+          height: 62,
+          decoration: BoxDecoration(
+            color: AppColors.deepOrange,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.deepOrange.withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            gradient: const LinearGradient(
+              colors: [AppColors.deepOrange, Color(0xFFFFA63C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-          gradient: const LinearGradient(
-            colors: [AppColors.deepOrange, Color(0xFFFFA63C)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
           ),
-        ),
-        child: Center(
-          child: isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: AppColors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(
+                    Icons.arrow_forward_rounded,
                     color: AppColors.white,
-                    strokeWidth: 2,
+                    size: 32,
                   ),
-                )
-              : const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: AppColors.white,
-                  size: 32,
-                ),
+          ),
         ),
       ),
     );
   }
 }
-

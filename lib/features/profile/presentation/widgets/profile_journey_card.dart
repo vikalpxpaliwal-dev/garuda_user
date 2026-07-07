@@ -5,31 +5,28 @@ class _JourneySectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = context.colors.onSurface;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
                 'SELECT LAND JOURNEY',
                 style: TextStyle(
-                  color: AppColors.ink,
+                  color: onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.7,
                 ),
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
                 'CHOOSE PROPERTIES TO TRACK PROGRESS.',
-                style: TextStyle(
-                  color: AppColors.mutedText,
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
+                style: context.text.microLabel.copyWith(letterSpacing: 0.5),
               ),
             ],
           ),
@@ -57,6 +54,10 @@ class _JourneyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
+    final surfaceCard = context.surfaceCard;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -66,13 +67,13 @@ class _JourneyCard extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: surfaceCard,
             gradient: LinearGradient(
               colors: [
-                AppColors.white,
+                surfaceCard,
                 isSelected
-                    ? AppColors.softBackground.withValues(alpha: 0.5)
-                    : AppColors.white,
+                    ? scheme.surface.withValues(alpha: 0.5)
+                    : surfaceCard,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -81,12 +82,12 @@ class _JourneyCard extends StatelessWidget {
             border: Border.all(
               color: isSelected
                   ? AppColors.deepOrange
-                  : AppColors.lightLine.withValues(alpha: 0.6),
+                  : scheme.outline.withValues(alpha: 0.35),
               width: isSelected ? 1.5 : 1,
             ),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: AppColors.ink.withValues(
+                color: onSurface.withValues(
                   alpha: isSelected ? 0.08 : 0.04,
                 ),
                 blurRadius: isSelected ? 20 : 12,
@@ -106,11 +107,11 @@ class _JourneyCard extends StatelessWidget {
                   border: Border.all(
                     color: isSelected
                         ? AppColors.deepOrange
-                        : AppColors.lightLine,
+                        : scheme.outline.withValues(alpha: 0.35),
                   ),
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check, size: 12, color: AppColors.white)
+                    ? Icon(Icons.check, size: 12, color: scheme.onPrimary)
                     : null,
               ),
               const SizedBox(width: 14),
@@ -122,8 +123,8 @@ class _JourneyCard extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       journey.title,
-                      style: const TextStyle(
-                        color: AppColors.ink,
+                      style: TextStyle(
+                        color: onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.2,
@@ -132,10 +133,8 @@ class _JourneyCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       journey.subtitle.toUpperCase(),
-                      style: const TextStyle(
+                      style: context.text.microLabel.copyWith(
                         color: AppColors.deepOrange,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w900,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -145,8 +144,8 @@ class _JourneyCard extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 journey.trailingLabel,
-                style: const TextStyle(
-                  color: AppColors.ink,
+                style: TextStyle(
+                  color: onSurface,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                 ),
@@ -166,17 +165,21 @@ class _OwnedLandCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
+    final surfaceCard = context.surfaceCard;
+
     return CustomCard(
       gradient: LinearGradient(
         colors: [
-          AppColors.white,
-          AppColors.softBackground.withValues(alpha: 0.3),
+          surfaceCard,
+          scheme.surface.withValues(alpha: 0.3),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.5)),
+      border: Border.all(color: scheme.outline.withValues(alpha: 0.35)),
       padding: const EdgeInsets.fromLTRB(10, 10, 16, 10),
       child: Row(
         children: <Widget>[
@@ -188,8 +191,8 @@ class _OwnedLandCard extends StatelessWidget {
               children: <Widget>[
                 Text(
                   land.title,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.2,
@@ -221,8 +224,8 @@ class _OwnedLandCard extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             land.priceLabel,
-            style: const TextStyle(
-              color: AppColors.ink,
+            style: TextStyle(
+              color: onSurface,
               fontSize: 12,
               fontWeight: FontWeight.w900,
             ),

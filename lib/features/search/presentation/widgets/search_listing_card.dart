@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/utils/context_extensions.dart';
+import 'package:garuda_user_app/core/widgets/app_text.dart';
 import 'package:garuda_user_app/features/search/presentation/models/search_listing_ui_model.dart';
 
 part 'listing_artwork.dart';
@@ -26,11 +28,14 @@ class SearchListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = context.colors.onSurface;
+    final outline = context.colors.outline;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: context.colors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.3)),
+        border: Border.all(color: outline.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -126,44 +131,35 @@ class SearchListingCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: Text(
+                      child: AppText(
                         listing.title,
-                        style: const TextStyle(
-                          color: AppColors.deepOrange,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
+                        variant: AppTextVariant.price,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Builder(
                       builder: (context) {
                         final priceStr = listing.price.trim();
-                        final match = RegExp(r'^([₹$€£]?\s*(?:Rs\.?)?\s*[0-9.,]+)(.*)$', caseSensitive: false).firstMatch(priceStr);
-                        final String priceNumber = match?.group(1)?.trim() ?? priceStr;
-                        final String priceUnit = match?.group(2)?.trim() ?? '';
-                        
+                        final match = RegExp(
+                          r'^([₹$€£]?\s*(?:Rs\.?)?\s*[0-9.,]+)(.*)$',
+                          caseSensitive: false,
+                        ).firstMatch(priceStr);
+                        final priceNumber =
+                            match?.group(1)?.trim() ?? priceStr;
+                        final priceUnit = match?.group(2)?.trim() ?? '';
+
                         return RichText(
                           text: TextSpan(
                             children: [
                               TextSpan(
                                 text: priceNumber,
-                                style: const TextStyle(
-                                  color: AppColors.deepOrange,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                                style: context.text.price,
                               ),
                               if (priceUnit.isNotEmpty)
                                 TextSpan(
                                   text: ' $priceUnit',
-                                  style: TextStyle(
-                                    color: AppColors.deepOrange.withValues(alpha: 0.7),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                                  style: context.text.priceUnit,
                                 ),
                             ],
                           ),
@@ -222,7 +218,7 @@ class SearchListingCard extends StatelessWidget {
                         icon: Icons.access_time,
                         label: 'UPDATED',
                         value: listing.updatedLabel.toUpperCase(),
-                        valueColor: AppColors.ink,
+                        valueColor: onSurface,
                         crossAxisAlignment: CrossAxisAlignment.end,
                       ),
                     ),
@@ -233,16 +229,14 @@ class SearchListingCard extends StatelessWidget {
                   child: InkWell(
                     onTap: onViewDetails,
                     borderRadius: BorderRadius.circular(4),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: Text(
-                        'View Full Details',
-                        style: TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: AppText(
+                      'View Full Details',
+                      variant: AppTextVariant.bodyLarge,
+                      color: AppColors.mutedText,
+                      fontWeight: FontWeight.w800,
+                    ),
                     ),
                   ),
                 ),
@@ -324,24 +318,18 @@ class _ListingStatVertical extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              AppText(
                 label,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                ),
+                variant: AppTextVariant.microLabel,
+                color: context.colors.onSurface,
               ),
               const SizedBox(height: 2),
-              Text(
+              AppText(
                 value,
-                style: TextStyle(
-                  color: valueColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+                variant: AppTextVariant.microLabel,
+                color: valueColor,
+                fontWeight: FontWeight.w700,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -376,24 +364,19 @@ class _ListingStatAvailability extends StatelessWidget {
           children: [
             Icon(icon, size: 12, color: AppColors.mutedText),
             const SizedBox(width: 4),
-            Text(
+            AppText(
               label,
-              style: const TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
+              variant: AppTextVariant.caption,
+              color: AppColors.mutedText,
             ),
           ],
         ),
         const SizedBox(height: 4),
-        Text(
+        AppText(
           value,
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
+          variant: AppTextVariant.caption,
+          color: valueColor,
+          fontWeight: FontWeight.w900,
         ),
       ],
     );
@@ -415,11 +398,13 @@ class _ShortlistPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
     final canTap = onTap != null && !isWishlisted && !isLoading;
     final backgroundColor = isWishlisted
         ? AppColors.deepOrange.withValues(alpha: 0.95)
-        : AppColors.white.withValues(alpha: 0.95);
-    final foregroundColor = isWishlisted ? AppColors.white : AppColors.ink;
+        : scheme.surfaceContainerHighest.withValues(alpha: 0.95);
+    final foregroundColor =
+        isWishlisted ? scheme.onPrimary : scheme.onSurface;
 
     return Material(
       color: Colors.transparent,
@@ -434,7 +419,7 @@ class _ShortlistPill extends StatelessWidget {
             border: Border.all(
               color: isWishlisted
                   ? AppColors.deepOrange
-                  : AppColors.lightLine.withValues(alpha: 0.4),
+                  : scheme.outline.withValues(alpha: 0.4),
             ),
             boxShadow: <BoxShadow>[
               BoxShadow(
@@ -468,20 +453,17 @@ class _ShortlistPill extends StatelessWidget {
                           : foregroundColor,
                     ),
                     const SizedBox(width: 5),
-                    Text(
+                    AppText(
                       isWishlisted
                           ? 'WISHLISTED'
                           : isSelected
                           ? 'SELECTED'
                           : 'WISHLIST',
-                      style: TextStyle(
-                        color: isSelected && !isWishlisted
-                            ? AppColors.deepOrange
-                            : foregroundColor,
-                        fontSize: 8.2,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.35,
-                      ),
+                      variant: AppTextVariant.microLabel,
+                      color: isSelected && !isWishlisted
+                          ? AppColors.deepOrange
+                          : foregroundColor,
+                      letterSpacing: 0.35,
                     ),
                   ],
                 ),

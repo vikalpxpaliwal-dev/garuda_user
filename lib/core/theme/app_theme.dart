@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/theme/app_radius_theme.dart';
 import 'package:garuda_user_app/core/theme/app_spacing_theme.dart';
+import 'package:garuda_user_app/core/theme/app_text_styles.dart';
 
 final class AppTheme {
   AppTheme._();
@@ -21,6 +22,7 @@ final class AppTheme {
         surface: AppColors.canvas,
         onSurface: AppColors.ink,
         outline: AppColors.outline,
+        surfaceContainerHighest: AppColors.white,
         surfaceTint: Colors.transparent,
       );
 
@@ -36,6 +38,7 @@ final class AppTheme {
         surface: AppColors.midnight,
         onSurface: AppColors.mist,
         outline: const Color(0xFF51463D),
+        surfaceContainerHighest: AppColors.slate,
         surfaceTint: Colors.transparent,
       );
 
@@ -62,7 +65,7 @@ final class AppTheme {
       dividerColor: colorScheme.outline.withValues(alpha: 0.3),
       iconTheme: IconThemeData(color: colorScheme.onSurface),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: isDark ? AppColors.slate : AppColors.white,
+        backgroundColor: colorScheme.surfaceContainerHighest,
         indicatorColor: colorScheme.primary.withValues(alpha: 0.16),
         labelTextStyle: WidgetStatePropertyAll<TextStyle>(
           textTheme.labelMedium!.copyWith(fontWeight: FontWeight.w600),
@@ -88,9 +91,10 @@ final class AppTheme {
           ),
         ),
       ),
-      extensions: const <ThemeExtension<dynamic>>[
+      extensions: <ThemeExtension<dynamic>>[
         AppSpacingTheme.fallback,
         AppRadiusTheme.fallback,
+        isDark ? AppTextStyles.dark : AppTextStyles.light,
       ],
     );
   }

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/utils/context_extensions.dart';
+import 'package:garuda_user_app/core/widgets/app_content_width.dart';
+import 'package:garuda_user_app/core/widgets/app_mesh_background.dart';
+import 'package:garuda_user_app/core/widgets/app_page_shell.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
-import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
+import 'package:garuda_user_app/core/widgets/app_text.dart';
 import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_bloc.dart';
 import 'package:garuda_user_app/features/search/presentation/bloc/search_event.dart';
@@ -105,56 +109,21 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   )
                 : null,
-            body: Stack(
-              children: [
-                Positioned.fill(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.softBackground,
-                      gradient: RadialGradient(
-                        center: Alignment(0.8, -0.6),
-                        radius: 1.2,
-                        colors: [Color(0xFFFFF9F2), AppColors.softBackground],
-                        stops: [0.0, 1.0],
-                      ),
-                    ),
+            body: AppPageShell(
+              meshVariant: AppMeshBackgroundVariant.tab,
+              slivers: <Widget>[
+                AppContentWidthBox.sliver(
+                  padding: EdgeInsets.fromLTRB(
+                    context.spacing.screenPadding,
+                    context.spacing.md,
+                    context.spacing.screenPadding,
+                    _isFilterOpen
+                        ? context.spacing.contentBottom
+                        : context.spacing.lg,
                   ),
+                  child: _buildHeader(context),
                 ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(-0.9, 0.8),
-                        radius: 1.4,
-                        colors: [
-                          AppColors.primaryOrange.withValues(alpha: 0.05),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-                CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  slivers: <Widget>[
-                    const CommonSliverAppBar(),
-                    SliverToBoxAdapter(
-                      child: _constrained(
-                        padding: EdgeInsets.fromLTRB(
-                          18,
-                          18,
-                          18,
-                          _isFilterOpen ? 28 : 20,
-                        ),
-                        child: _buildHeader(context),
-                      ),
-                    ),
-                    ..._buildContentSlivers(context, state, isBulkWishlistLoading),
-                  ],
-                ),
+                ..._buildContentSlivers(context, state, isBulkWishlistLoading),
               ],
             ),
           );
@@ -163,15 +132,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _constrained({required Widget child, EdgeInsets? padding}) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 18),
-          child: child,
-        ),
-      ),
-    );
+    return AppContentWidthBox(padding: padding, child: child);
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -182,25 +143,14 @@ class _SearchPageState extends State<SearchPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
+              AppText(
                 'Search Land'.toUpperCase(),
-                style: const TextStyle(
-                  color: AppColors.deepOrange,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  height: 1.05,
-                  letterSpacing: -0.5,
-                ),
+                variant: AppTextVariant.sectionTitle,
               ),
-              const SizedBox(height: 6),
-              const Text(
+              SizedBox(height: context.spacing.xs - 2),
+              AppText(
                 'VERIFIED LISTINGS FROM DIRECT FARMER DATA.',
-                style: TextStyle(
-                  color: AppColors.mutedText,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
+                variant: AppTextVariant.microLabel,
               ),
             ],
           ),
@@ -245,11 +195,15 @@ class _SearchPageState extends State<SearchPage> {
     SearchState state,
     bool isBulkWishlistLoading,
   ) {
+    final horizontal = context.spacing.screenPadding;
+    final sectionBottom = context.spacing.contentBottom;
+    final listItemGap = context.spacing.lg;
+
     if (_isFilterOpen) {
       return <Widget>[
         SliverToBoxAdapter(
           child: _constrained(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+            padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, sectionBottom),
             child: SearchFilterPanel(
               onClose: () {
                 setState(() {
@@ -274,7 +228,7 @@ class _SearchPageState extends State<SearchPage> {
       return <Widget>[
         SliverToBoxAdapter(
           child: _constrained(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+            padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, sectionBottom),
             child: const _SearchSkeletonList(),
           ),
         ),
@@ -285,7 +239,7 @@ class _SearchPageState extends State<SearchPage> {
       return <Widget>[
         SliverToBoxAdapter(
           child: _constrained(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+            padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, sectionBottom),
             child: Center(
               child: Column(
                 children: [
@@ -314,7 +268,7 @@ class _SearchPageState extends State<SearchPage> {
       return <Widget>[
         SliverToBoxAdapter(
           child: _constrained(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+            padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, sectionBottom),
             child: const Center(
               child: Padding(
                 padding: EdgeInsets.all(40),
@@ -330,23 +284,18 @@ class _SearchPageState extends State<SearchPage> {
     // decoded until the card scrolls into view.
     return <Widget>[
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+        padding: EdgeInsets.fromLTRB(horizontal, 0, horizontal, sectionBottom),
         sliver: SliverList.builder(
           itemCount: state.lands.length,
           itemBuilder: (context, index) {
             final land = state.lands[index];
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: _buildListingCard(
-                    context,
-                    land,
-                    state,
-                    isBulkWishlistLoading,
-                  ),
-                ),
+            return AppContentWidthBox(
+              padding: EdgeInsets.only(bottom: listItemGap),
+              child: _buildListingCard(
+                context,
+                land,
+                state,
+                isBulkWishlistLoading,
               ),
             );
           },

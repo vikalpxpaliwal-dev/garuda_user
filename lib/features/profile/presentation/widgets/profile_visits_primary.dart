@@ -106,10 +106,8 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                           ),
                           child: Text(
                             availabilityBadge,
-                            style: const TextStyle(
+                            style: context.text.microLabel.copyWith(
                               color: AppColors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w900,
                               letterSpacing: 0.4,
                             ),
                           ),
@@ -125,12 +123,10 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                               color: AppColors.deepOrange,
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: const Text(
+                            child: Text(
                               'SHORTLISTED',
-                              style: TextStyle(
+                              style: context.text.microLabel.copyWith(
                                 color: AppColors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w900,
                                 letterSpacing: 0.4,
                               ),
                             ),
@@ -166,10 +162,8 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                             const SizedBox(width: 3),
                             Text(
                               subtitle,
-                              style: const TextStyle(
+                              style: context.text.microLabel.copyWith(
                                 color: AppColors.primaryOrange,
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w900,
                                 letterSpacing: 0.6,
                               ),
                             ),
@@ -191,10 +185,8 @@ class _PrimaryVisitLandRow extends StatelessWidget {
                             ),
                             child: Text(
                               badge,
-                              style: const TextStyle(
+                              style: context.text.microLabel.copyWith(
                                 color: AppColors.white,
-                                fontSize: 7.5,
-                                fontWeight: FontWeight.w900,
                                 letterSpacing: 0.4,
                               ),
                             ),
@@ -292,9 +284,11 @@ class _VisitTimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      decoration: BoxDecoration(
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 44),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
         color: isSelected
             ? AppColors.white
             : AppColors.softBackground.withValues(alpha: 0.5),
@@ -318,12 +312,11 @@ class _VisitTimeChip extends StatelessWidget {
       child: Center(
         child: Text(
           time,
-          style: TextStyle(
+          style: context.text.microLabel.copyWith(
             color: isSelected ? AppColors.deepOrange : AppColors.mutedText,
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
           ),
         ),
+      ),
       ),
     );
   }
@@ -344,11 +337,14 @@ class _VisitDateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        Container(
-          width: 32,
-          height: 32,
+    return SizedBox(
+      height: 44,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Container(
+            width: 32,
+            height: 32,
           decoration: BoxDecoration(
             color: isDisabled
                 ? AppColors.lightLine.withValues(alpha: 0.35)
@@ -377,31 +373,29 @@ class _VisitDateChip extends StatelessWidget {
           child: Center(
             child: Text(
               date,
-              style: TextStyle(
+              style: context.text.caption.copyWith(
                 color: isDisabled
                     ? AppColors.mutedText.withValues(alpha: 0.5)
                     : isSelected
                     ? AppColors.deepOrange
                     : AppColors.mutedText,
-                fontSize: 10,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           day,
-          style: TextStyle(
+          style: context.text.microLabel.copyWith(
             color: isDisabled
                 ? AppColors.mutedText.withValues(alpha: 0.5)
                 : AppColors.mutedText,
-            fontSize: 6,
-            fontWeight: FontWeight.w800,
             letterSpacing: 0.25,
           ),
         ),
       ],
+      ),
     );
   }
 }
@@ -426,19 +420,16 @@ class _PaymentSummaryRow extends StatelessWidget {
         Expanded(
           child: Text(
             label.toUpperCase(),
-            style: TextStyle(
+            style: context.text.microLabel.copyWith(
               color: isAccent ? AppColors.deepOrange : AppColors.mutedText,
-              fontSize: 7.5,
-              fontWeight: FontWeight.w900,
               letterSpacing: 0.8,
             ),
           ),
         ),
         Text(
           value,
-          style: TextStyle(
+          style: context.text.caption.copyWith(
             color: color,
-            fontSize: 10,
             fontWeight: FontWeight.w900,
           ),
         ),

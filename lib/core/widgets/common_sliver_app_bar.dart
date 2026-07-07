@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/constants/app_strings.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/utils/platform_blur.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:go_router/go_router.dart';
@@ -16,17 +17,28 @@ class CommonSliverAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useBlur = PlatformBlur.prefersBackdropBlur;
+    final scheme = Theme.of(context).colorScheme;
+    final barColor = scheme.surface.withValues(
+      alpha: useBlur ? 0.72 : 0.92,
+    );
+
     return SliverAppBar(
       pinned: true,
       toolbarHeight: 56,
-      backgroundColor: AppColors.softBackground.withValues(alpha: 0.72),
+      backgroundColor: barColor,
       surfaceTintColor: Colors.transparent,
-      flexibleSpace: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(color: Colors.transparent),
-        ),
-      ),
+      flexibleSpace: useBlur
+          ? ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: PlatformBlur.appBarSigma,
+                  sigmaY: PlatformBlur.appBarSigma,
+                ),
+                child: ColoredBox(color: barColor.withValues(alpha: 0.35)),
+              ),
+            )
+          : null,
       shape: Border(
         bottom: BorderSide(color: AppColors.lightLine.withValues(alpha: 0.4)),
       ),

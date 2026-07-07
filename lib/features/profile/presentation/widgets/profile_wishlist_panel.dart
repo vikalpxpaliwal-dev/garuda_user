@@ -5,6 +5,9 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final initial = state.user?.name.isNotEmpty == true
@@ -60,8 +63,8 @@ class _ProfileHeader extends StatelessWidget {
                                 child: Text(
                                   name,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppColors.ink,
+                                  style: TextStyle(
+                                    color: onSurface,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w900,
                                     height: 1,
@@ -89,12 +92,10 @@ class _ProfileHeader extends StatelessWidget {
                               ),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
+                            child: Text(
                               'ACTIVE MEMBER',
-                              style: TextStyle(
+                              style: context.text.microLabel.copyWith(
                                 color: AppColors.deepOrange,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w900,
                                 letterSpacing: 1.0,
                               ),
                             ),
@@ -117,13 +118,15 @@ class _ProfileHeader extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) {
+        final scheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: AppColors.white,
-        title: const Text(
+        backgroundColor: scheme.surfaceContainerHighest,
+        title: Text(
           'Logout',
           style: TextStyle(
-            color: AppColors.ink,
+            color: scheme.onSurface,
             fontWeight: FontWeight.w900,
             fontSize: 20,
           ),
@@ -179,7 +182,8 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
         ],
-      ),
+        );
+      },
     );
   }
 }
@@ -191,15 +195,20 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(12),
+    return Semantics(
+      button: true,
+      label: 'Log out',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            child: Container(
+              padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: context.surfaceCard,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFFFE1E1), width: 1.5),
             boxShadow: [
@@ -215,6 +224,8 @@ class _LogoutButton extends StatelessWidget {
             color: Color(0xFFD32F2F),
             size: 22,
           ),
+            ),
+          ),
         ),
       ),
     );
@@ -229,15 +240,19 @@ class _CollectionTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
+    final surfaceCard = context.surfaceCard;
+
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: AppColors.white.withValues(alpha: 0.94),
+        color: surfaceCard.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.04),
+            color: onSurface.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -283,34 +298,40 @@ class _CollectionTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
+    final surfaceCard = context.surfaceCard;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.white : Colors.transparent,
+            color: isSelected ? surfaceCard : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             gradient: isSelected
                 ? LinearGradient(
                     colors: [
-                      AppColors.white,
-                      AppColors.softBackground.withValues(alpha: 0.5),
+                      surfaceCard,
+                      scheme.surface.withValues(alpha: 0.5),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
                 : null,
             border: isSelected
-                ? Border.all(color: AppColors.lightLine.withValues(alpha: 0.6))
+                ? Border.all(color: scheme.outline.withValues(alpha: 0.35))
                 : null,
             boxShadow: isSelected
                 ? <BoxShadow>[
                     BoxShadow(
-                      color: AppColors.ink.withValues(alpha: 0.08),
+                      color: onSurface.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -331,7 +352,7 @@ class _CollectionTabButton extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isSelected ? AppColors.ink : AppColors.mutedText,
+                    color: isSelected ? onSurface : AppColors.mutedText,
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
                   ),
@@ -339,6 +360,7 @@ class _CollectionTabButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -442,47 +464,45 @@ class _WishlistEmptyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceCard = context.surfaceCard;
+    final onSurface = context.colors.onSurface;
+
     return CustomCard(
       key: key,
       gradient: LinearGradient(
         colors: [
-          AppColors.white,
-          AppColors.softBackground.withValues(alpha: 0.4),
+          surfaceCard,
+          context.colors.surface.withValues(alpha: 0.4),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      border: Border.all(color: context.colors.outline.withValues(alpha: 0.35)),
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
-      child: const Column(
+      child: Column(
         children: <Widget>[
-          Icon(
+          const Icon(
             Icons.favorite_border_rounded,
             size: 34,
             color: AppColors.deepOrange,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'YOUR WISHLIST IS EMPTY',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: AppColors.ink,
+              color: onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Add lands from the search details screen to see them here.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.mutedText,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              height: 1.4,
-            ),
+            style: context.text.caption.copyWith(height: 1.4),
           ),
         ],
       ),
@@ -497,17 +517,19 @@ class _MyLandsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = context.colors.onSurface;
+
     return Column(
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
           children: <Widget>[
-            const Expanded(
+            Expanded(
               child: Text(
                 'LIST OF LANDS',
                 style: TextStyle(
-                  color: AppColors.ink,
+                  color: onSurface,
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.7,
@@ -519,30 +541,35 @@ class _MyLandsPanel extends StatelessWidget {
               child: InkWell(
                 onTap: () {},
                 borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.deepOrangeAccent,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(Icons.add_rounded, size: 14, color: AppColors.white),
-                      SizedBox(width: 6),
-                      Text(
-                        'LIST NEW LAND',
-                        style: TextStyle(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 44),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrangeAccent,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const Icon(
+                          Icons.add_rounded,
+                          size: 14,
                           color: AppColors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.2,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          'LIST NEW LAND',
+                          style: context.text.microLabel.copyWith(
+                            color: AppColors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

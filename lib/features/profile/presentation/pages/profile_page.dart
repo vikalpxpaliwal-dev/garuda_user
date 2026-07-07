@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/utils/context_extensions.dart';
+import 'package:garuda_user_app/core/widgets/app_content_width.dart';
+import 'package:garuda_user_app/core/widgets/app_mesh_background.dart';
+import 'package:garuda_user_app/core/widgets/app_page_shell.dart';
 import 'package:garuda_user_app/core/widgets/app_scaffold_message.dart';
-import 'package:garuda_user_app/core/widgets/common_sliver_app_bar.dart';
 import 'package:garuda_user_app/core/widgets/custom_card.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
@@ -275,199 +278,67 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
           ],
-          child: Material(
-            color: AppColors.softBackground,
-            child: Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.softBackground,
-                      gradient: RadialGradient(
-                        center: Alignment(0.8, -0.6),
-                        radius: 1.2,
-                        colors: <Color>[
-                          Color(0xFFFFF9F2),
-                          AppColors.softBackground,
-                        ],
-                      ),
-                    ),
+          child: Scaffold(
+            backgroundColor: context.colors.surface,
+            floatingActionButton: _buildProfileFab(context, state),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.endFloat,
+            body: AppPageShell(
+              meshVariant: AppMeshBackgroundVariant.tab,
+              showSearchAction: false,
+              slivers: <Widget>[
+                AppContentWidthBox.sliver(
+                  padding: EdgeInsets.fromLTRB(
+                    context.spacing.screenPadding,
+                    context.spacing.xl,
+                    context.spacing.screenPadding,
+                    _profileScrollBottomPadding(context, state),
                   ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(-0.9, 0.8),
-                        radius: 1.4,
-                        colors: <Color>[
-                          AppColors.primaryOrange.withValues(alpha: 0.05),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  slivers: <Widget>[
-                    const CommonSliverAppBar(showSearchAction: false),
-                    SliverToBoxAdapter(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 420),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(18, 24, 18, 120),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                const _ProfileHeader(),
-                                const SizedBox(height: 18),
-                                _CollectionTabs(
-                                  selectedTab: _selectedTab,
-                                  onChanged: (tab) {
-                                    if (tab == _ProfileCollectionTab.wishlist) {
-                                      context.read<WishlistBloc>().add(
-                                        const WishlistRequested(),
-                                      );
-                                      context.read<AvailabilityBloc>().add(
-                                        const GetAvailabilitiesRequested(),
-                                      );
-                                    } else if (tab ==
-                                        _ProfileCollectionTab.myLands) {
-                                      context.read<ShortlistBloc>().add(
-                                        const GetFinalsRequested(),
-                                      );
-                                    }
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const _ProfileHeader(),
+                      const SizedBox(height: 18),
+                      _CollectionTabs(
+                        selectedTab: _selectedTab,
+                        onChanged: (tab) {
+                          if (tab == _ProfileCollectionTab.wishlist) {
+                            context.read<WishlistBloc>().add(
+                              const WishlistRequested(),
+                            );
+                            context.read<AvailabilityBloc>().add(
+                              const GetAvailabilitiesRequested(),
+                            );
+                          } else if (tab ==
+                              _ProfileCollectionTab.myLands) {
+                            context.read<ShortlistBloc>().add(
+                              const GetFinalsRequested(),
+                            );
+                          }
 
-                                    setState(() {
-                                      _selectedTab = tab;
-                                      _selectedLandIds.clear();
-                                      _selectedStage =
-                                          _TrackingStage.availability;
-                                      _selectedVisitsHubList =
-                                          _VisitsHubList.primaryVisit;
-                                      _isTrackingJourney = false;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 18),
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 220),
-                                  child: _buildActivePanel(
-                                    context: context,
-                                    state: state,
-                                    wishlistJourneys: wishlistJourneys,
-                                    activeJourneys: activeJourneys,
-                                    currentJourney: currentJourney,
-                                    finalLandsJourneys: finalLandsJourneys,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          setState(() {
+                            _selectedTab = tab;
+                            _selectedLandIds.clear();
+                            _selectedStage = _TrackingStage.availability;
+                            _selectedVisitsHubList =
+                                _VisitsHubList.primaryVisit;
+                            _isTrackingJourney = false;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        child: _buildActivePanel(
+                          context: context,
+                          state: state,
+                          wishlistJourneys: wishlistJourneys,
+                          activeJourneys: activeJourneys,
+                          currentJourney: currentJourney,
+                          finalLandsJourneys: finalLandsJourneys,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  right: 16,
-                  bottom: 18,
-                  child: SafeArea(
-                    top: false,
-                    child: _isTrackingJourney
-                        // On Visits Hub tab → show visit hub actions
-                        ? _selectedStage == _TrackingStage.visitsHub
-                              ? const _VisitsHubFloatingActions()
-                              // On Payment tab with payment success -> Schedule Visit FAB
-                              : _selectedStage == _TrackingStage.payment &&
-                                    state.paymentStatus ==
-                                        CreatePaymentStatus.success
-                              ? _AvailabilityArrowButton(
-                                  onTap: () {
-                                    if (_selectedVisitDate == null ||
-                                        _selectedVisitTime == null) {
-                                      AppScaffoldMessage.showError(
-                                        context,
-                                        'Please select a visit date and time from the card.',
-                                      );
-                                      return;
-                                    }
-
-                                    final parsedVisitDate = DateTime.tryParse(
-                                      _selectedVisitDate!,
-                                    );
-                                    final today = DateTime.now();
-                                    final todayDateOnly = DateTime(
-                                      today.year,
-                                      today.month,
-                                      today.day,
-                                    );
-                                    if (parsedVisitDate == null ||
-                                        DateTime(
-                                          parsedVisitDate.year,
-                                          parsedVisitDate.month,
-                                          parsedVisitDate.day,
-                                        ).isBefore(todayDateOnly)) {
-                                      AppScaffoldMessage.showError(
-                                        context,
-                                        'Please select today or a future visit date.',
-                                      );
-                                      return;
-                                    }
-
-                                    context.read<VisitsBloc>().add(
-                                      CreateVisitRequested(
-                                        landIds: state.cartItems
-                                            .map((e) => e.landId)
-                                            .toList(),
-                                        visitDate: _selectedVisitDate!,
-                                        time: _selectedVisitTime!,
-                                      ),
-                                    );
-                                  },
-                                  isLoading:
-                                      state.visitStatus ==
-                                      CreateVisitStatus.loading,
-                                )
-                              // On Availability tab with items in cart → PROCEED FAB
-                              : _selectedStage == _TrackingStage.availability &&
-                                    _cartLandIds.isNotEmpty
-                              ? _AvailabilityArrowButton(
-                                  onTap: () {
-                                    context.read<CartBloc>().add(
-                                      CreateCartRequested(
-                                        landIds: _cartLandIds.toList(),
-                                      ),
-                                    );
-                                  },
-                                  isLoading:
-                                      state.cartStatus ==
-                                      CreateCartStatus.loading,
-                                )
-                              // Otherwise → Back / close button
-                              : _TrackingFloatingButton(
-                                  onTap: _closeTrackingJourney,
-                                )
-                        // Selection view → Arrow FAB when lands selected
-                        : _selectedTab == _ProfileCollectionTab.wishlist &&
-                              _selectedLandIds.isNotEmpty
-                        ? _AvailabilityArrowButton(
-                            onTap: () {
-                              context.read<AvailabilityBloc>().add(
-                                CreateAvailabilityRequested(
-                                  landIds: _selectedLandIds.toList(),
-                                ),
-                              );
-                            },
-                            isLoading:
-                                state.availabilityStatus ==
-                                CreateAvailabilityStatus.loading,
-                          )
-                        : const SizedBox.shrink(),
+                    ],
                   ),
                 ),
               ],
@@ -665,5 +536,129 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     return _selectedTrackingIndex;
+  }
+
+  static const double _profilePrimaryFabSize = 62;
+  static const double _profileSecondaryFabSize = 44;
+  static const double _profileStackedFabGap = 10;
+  static const double _shellBottomNavContentHeight = 52;
+
+  double _shellBottomNavHeight(BuildContext context) {
+    return _shellBottomNavContentHeight +
+        MediaQuery.paddingOf(context).bottom;
+  }
+
+  double _activeFabHeight(ProfileFeatureState state) {
+    if (!_isTrackingJourney) {
+      if (_selectedTab == _ProfileCollectionTab.wishlist &&
+          _selectedLandIds.isNotEmpty) {
+        return _profilePrimaryFabSize;
+      }
+      return 0;
+    }
+
+    if (_selectedStage == _TrackingStage.visitsHub) {
+      return _profileSecondaryFabSize * 2 + _profileStackedFabGap;
+    }
+
+    if (_selectedStage == _TrackingStage.payment &&
+        state.paymentStatus == CreatePaymentStatus.success) {
+      return _profilePrimaryFabSize;
+    }
+
+    if (_selectedStage == _TrackingStage.availability &&
+        _cartLandIds.isNotEmpty) {
+      return _profilePrimaryFabSize;
+    }
+
+    return _profileSecondaryFabSize;
+  }
+
+  double _profileScrollBottomPadding(
+    BuildContext context,
+    ProfileFeatureState state,
+  ) {
+    final bottomNavHeight = _shellBottomNavHeight(context);
+    final fabHeight = _activeFabHeight(state);
+    if (fabHeight <= 0) {
+      return bottomNavHeight + context.spacing.lg;
+    }
+    return bottomNavHeight + fabHeight + context.spacing.lg;
+  }
+
+  Widget? _buildProfileFab(BuildContext context, ProfileFeatureState state) {
+    if (_isTrackingJourney) {
+      if (_selectedStage == _TrackingStage.visitsHub) {
+        return const _VisitsHubFloatingActions();
+      }
+
+      if (_selectedStage == _TrackingStage.payment &&
+          state.paymentStatus == CreatePaymentStatus.success) {
+        return _AvailabilityArrowButton(
+          onTap: () {
+            if (_selectedVisitDate == null || _selectedVisitTime == null) {
+              AppScaffoldMessage.showError(
+                context,
+                'Please select a visit date and time from the card.',
+              );
+              return;
+            }
+
+            final parsedVisitDate = DateTime.tryParse(_selectedVisitDate!);
+            final today = DateTime.now();
+            final todayDateOnly = DateTime(today.year, today.month, today.day);
+            if (parsedVisitDate == null ||
+                DateTime(
+                  parsedVisitDate.year,
+                  parsedVisitDate.month,
+                  parsedVisitDate.day,
+                ).isBefore(todayDateOnly)) {
+              AppScaffoldMessage.showError(
+                context,
+                'Please select today or a future visit date.',
+              );
+              return;
+            }
+
+            context.read<VisitsBloc>().add(
+              CreateVisitRequested(
+                landIds: state.cartItems.map((e) => e.landId).toList(),
+                visitDate: _selectedVisitDate!,
+                time: _selectedVisitTime!,
+              ),
+            );
+          },
+          isLoading: state.visitStatus == CreateVisitStatus.loading,
+        );
+      }
+
+      if (_selectedStage == _TrackingStage.availability &&
+          _cartLandIds.isNotEmpty) {
+        return _AvailabilityArrowButton(
+          onTap: () {
+            context.read<CartBloc>().add(
+              CreateCartRequested(landIds: _cartLandIds.toList()),
+            );
+          },
+          isLoading: state.cartStatus == CreateCartStatus.loading,
+        );
+      }
+
+      return _TrackingFloatingButton(onTap: _closeTrackingJourney);
+    }
+
+    if (_selectedTab == _ProfileCollectionTab.wishlist &&
+        _selectedLandIds.isNotEmpty) {
+      return _AvailabilityArrowButton(
+        onTap: () {
+          context.read<AvailabilityBloc>().add(
+            CreateAvailabilityRequested(landIds: _selectedLandIds.toList()),
+          );
+        },
+        isLoading: state.availabilityStatus == CreateAvailabilityStatus.loading,
+      );
+    }
+
+    return null;
   }
 }

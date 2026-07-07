@@ -66,6 +66,9 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final onSurface = scheme.onSurface;
+    final surfaceCard = context.surfaceCard;
     final visitDates = _dynamicVisitDates();
     final isPaymentCompleted = paymentStatus == CreatePaymentStatus.success;
     final isActionDisabled =
@@ -80,32 +83,30 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
       key: key,
       gradient: LinearGradient(
         colors: [
-          AppColors.white,
-          AppColors.softBackground.withValues(alpha: 0.5),
+          surfaceCard,
+          scheme.surface.withValues(alpha: 0.5),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      border: Border.all(color: scheme.outline.withValues(alpha: 0.35)),
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Row(
+          Row(
             children: <Widget>[
-              Icon(
+              const Icon(
                 Icons.access_time_rounded,
                 size: 15,
                 color: AppColors.deepOrange,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'CONSOLIDATED VISIT DATE',
-                style: TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+                style: context.text.microLabel.copyWith(
+                  color: onSurface,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -148,20 +149,18 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          const Row(
+          Row(
             children: <Widget>[
-              Icon(
+              const Icon(
                 Icons.schedule_rounded,
                 size: 15,
                 color: AppColors.deepOrange,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'VISIT TIME',
-                style: TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+                style: context.text.microLabel.copyWith(
+                  color: onSurface,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -205,20 +204,18 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Row(
+                  Row(
                     children: <Widget>[
-                      Icon(
+                      const Icon(
                         Icons.receipt_long_rounded,
                         size: 15,
                         color: AppColors.deepOrange,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'BATCH SUMMARY',
-                        style: TextStyle(
+                        style: context.text.microLabel.copyWith(
                           color: AppColors.ink,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
                           letterSpacing: 1.0,
                         ),
                       ),
@@ -334,8 +331,8 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
                               child: Text(
                                 buttonLabel,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 10.5,
+                                style: context.text.caption.copyWith(
+                                  color: AppColors.white,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 0.45,
                                 ),
@@ -348,14 +345,11 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Center(
+          Center(
             child: Text(
               'SECURE PAYMENT POWERED BY GARUDA. COORDINATION STARTS AFTER PAYMENT.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.mutedText,
-                fontSize: 5.8,
-                fontWeight: FontWeight.w900,
+              style: context.text.microLabel.copyWith(
                 letterSpacing: 0.2,
               ),
             ),
@@ -372,15 +366,12 @@ class _TrackedJourneyPaymentCard extends StatelessWidget {
               ),
             )
           else if (cartItems.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Center(
                 child: Text(
                   'NO ITEMS IN CART',
-                  style: TextStyle(
-                    color: AppColors.mutedText,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
+                  style: context.text.microLabel.copyWith(
                     letterSpacing: 0.6,
                   ),
                 ),
@@ -420,6 +411,8 @@ class _CartLandRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.colors;
+    final surfaceCard = context.surfaceCard;
     final land = item.land;
     final palette = _palettes[item.id % _palettes.length];
     final title = land.mandal.isEmpty ? 'Land' : land.mandal;
@@ -433,14 +426,14 @@ class _CartLandRow extends StatelessWidget {
     return CustomCard(
       gradient: LinearGradient(
         colors: [
-          AppColors.white,
-          AppColors.softBackground.withValues(alpha: 0.4),
+          surfaceCard,
+          scheme.surface.withValues(alpha: 0.4),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
       borderRadius: BorderRadius.circular(28),
-      border: Border.all(color: AppColors.lightLine.withValues(alpha: 0.6)),
+      border: Border.all(color: scheme.outline.withValues(alpha: 0.35)),
       padding: EdgeInsets.zero,
       child: Column(
         children: <Widget>[
@@ -493,10 +486,8 @@ class _CartLandRow extends StatelessWidget {
                       ),
                       child: Text(
                         badge,
-                        style: const TextStyle(
+                        style: context.text.microLabel.copyWith(
                           color: AppColors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
                           letterSpacing: 0.4,
                         ),
                       ),
@@ -530,10 +521,8 @@ class _CartLandRow extends StatelessWidget {
                             const SizedBox(width: 3),
                             Text(
                               subtitle,
-                              style: const TextStyle(
+                              style: context.text.microLabel.copyWith(
                                 color: AppColors.primaryOrange,
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w900,
                                 letterSpacing: 0.6,
                               ),
                             ),

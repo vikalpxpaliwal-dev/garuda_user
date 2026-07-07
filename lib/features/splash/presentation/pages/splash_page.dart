@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:garuda_user_app/core/constants/app_assets.dart';
 import 'package:garuda_user_app/core/constants/app_routes.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
+import 'package:garuda_user_app/core/widgets/app_mesh_background.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:garuda_user_app/features/auth/presentation/bloc/auth_state.dart';
@@ -19,6 +21,16 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   bool _animationCompleted = false;
+  bool _authBackgroundPrecached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_authBackgroundPrecached) {
+      _authBackgroundPrecached = true;
+      precacheImage(const AssetImage(AppAssets.authBackground), context);
+    }
+  }
 
   @override
   void initState() {
@@ -75,34 +87,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       child: Scaffold(
         body: Stack(
           children: [
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.softBackground,
-                  gradient: RadialGradient(
-                    center: Alignment(-0.5, -0.4),
-                    radius: 1.2,
-                    colors: [
-                      Color(0xFFFFF4EB),
-                      AppColors.softBackground,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: const Alignment(0.6, 0.7),
-                    radius: 1.5,
-                    colors: [
-                      AppColors.primaryOrange.withValues(alpha: 0.1),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
+            const Positioned.fill(
+              child: AppMeshBackground(variant: AppMeshBackgroundVariant.splash),
             ),
             Center(
               child: FadeTransition(
@@ -130,7 +116,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(22),
                           child: Image.asset(
-                            'assets/images/garuda_logo.png',
+                            AppAssets.logo,
                             fit: BoxFit.contain,
                           ),
                         ),

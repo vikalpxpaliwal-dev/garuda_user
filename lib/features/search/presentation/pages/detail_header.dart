@@ -145,7 +145,7 @@ class _DetailHeaderBlock extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text:
-                                    '₹${(land.landDetails.pricePerAcres / 100000).toStringAsFixed(1)}',
+                                    '${(land.landDetails.pricePerAcres / 100000).toStringAsFixed(1)}',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -222,7 +222,7 @@ class _DetailHeaderBlock extends StatelessWidget {
                   text: TextSpan(
                     children: [
                       TextSpan(
-                        text: '₹${totalValue.amount}',
+                        text: '${totalValue.amount}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,

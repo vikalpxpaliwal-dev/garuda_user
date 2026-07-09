@@ -118,6 +118,7 @@ class ProfileImagePicker extends StatelessWidget {
       return Image.file(
         File(selectedImage!.path),
         fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
       );
     } else if (currentImageUrl != null && currentImageUrl!.isNotEmpty) {
       return Image.network(

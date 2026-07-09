@@ -72,25 +72,10 @@ class SearchListingCard extends StatelessWidget {
                                 ),
                                 placeholder: (context, url) =>
                                     const _ListingImagePlaceholder(),
-                                errorWidget: (context, url, error) {
-                                  return switch (listing.artworkType) {
-                                    SearchListingArtworkType.cityWalk =>
-                                      const _CityWalkArtwork(),
-                                    SearchListingArtworkType.forestRoad =>
-                                      const _ForestRoadArtwork(),
-                                    SearchListingArtworkType.cityBridge =>
-                                      const _CityBridgeArtwork(),
-                                  };
-                                },
+                                errorWidget: (context, url, error) =>
+                                    const _ListingEmptyImage(),
                               )
-                            : switch (listing.artworkType) {
-                                SearchListingArtworkType.cityWalk =>
-                                  const _CityWalkArtwork(),
-                                SearchListingArtworkType.forestRoad =>
-                                  const _ForestRoadArtwork(),
-                                SearchListingArtworkType.cityBridge =>
-                                  const _CityBridgeArtwork(),
-                              },
+                            : const _ListingEmptyImage(),
                       ),
                       Positioned.fill(
                         child: DecoratedBox(
@@ -288,6 +273,24 @@ class _ListingImagePlaceholder extends StatelessWidget {
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+        ),
+      ),
+    );
+  }
+}
+
+class _ListingEmptyImage extends StatelessWidget {
+  const _ListingEmptyImage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: AppColors.lightLine,
+      child: Center(
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.grey,
+          size: 48,
         ),
       ),
     );

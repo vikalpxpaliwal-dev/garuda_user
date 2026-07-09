@@ -141,7 +141,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text(
               'CANCEL',
               style: TextStyle(
@@ -156,7 +156,7 @@ class _ProfileHeader extends StatelessWidget {
             margin: const EdgeInsets.only(left: 8),
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 context.read<AuthBloc>().add(UserLoggedOut());
               },
               style: ElevatedButton.styleFrom(

@@ -1,7 +1,7 @@
 name: garuda_user_app
 description: A production-ready Flutter scaffold for the Garuda Lands app.
 publish_to: 'none'
-version: 1.0.8+10
+version: 1.0.9+11
 
 environment:
   sdk: ^3.9.2

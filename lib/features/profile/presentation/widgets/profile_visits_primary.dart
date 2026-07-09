@@ -59,27 +59,39 @@ class _PrimaryVisitLandRow extends StatelessWidget {
         children: <Widget>[
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(27)),
-            child: Container(
+            child: SizedBox(
               height: 130,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: palette,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                image: land.imageUrl != null && land.imageUrl!.isNotEmpty
-                    ? DecorationImage(
-                        image: NetworkImage(Uri.encodeFull(land.imageUrl!)),
-                        fit: BoxFit.cover,
-                        onError: (error, stackTrace) {},
-                      )
-                    : null,
-              ),
               child: Stack(
+                fit: StackFit.expand,
                 children: <Widget>[
-                  if (land.imageUrl == null || land.imageUrl!.isEmpty)
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: palette,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ),
+                  if (land.imageUrl != null && land.imageUrl!.isNotEmpty)
+                    Image.network(
+                      Uri.encodeFull(land.imageUrl!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Center(
+                        child: Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Colors.white54,
+                          size: 32,
+                        ),
+                      ),
+                    )
+                  else
                     const Center(
-                      child: Icon(Icons.image_not_supported_outlined, color: Colors.white54, size: 32),
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.white54,
+                        size: 32,
+                      ),
                     ),
                   const Positioned(
                     top: 14,

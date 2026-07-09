@@ -21,16 +21,6 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   bool _animationCompleted = false;
-  bool _authBackgroundPrecached = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_authBackgroundPrecached) {
-      _authBackgroundPrecached = true;
-      precacheImage(const AssetImage(AppAssets.authBackground), context);
-    }
-  }
 
   @override
   void initState() {

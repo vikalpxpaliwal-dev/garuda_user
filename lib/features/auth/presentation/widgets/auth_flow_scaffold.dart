@@ -2,19 +2,16 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:garuda_user_app/core/constants/app_assets.dart';
 import 'package:garuda_user_app/core/theme/app_colors.dart';
 import 'package:garuda_user_app/core/utils/platform_blur.dart';
 import 'package:garuda_user_app/core/widgets/app_content_width.dart';
 
-/// Shared auth flow layout: asset background, gradient, keyboard-safe scroll.
+/// Shared auth flow layout: gradient background, keyboard-safe scroll.
 class AuthFlowScaffold extends StatelessWidget {
   const AuthFlowScaffold({
     required this.child,
     super.key,
   });
-
-  static const String backgroundAsset = AppAssets.authBackground;
 
   final Widget child;
 
@@ -27,22 +24,40 @@ class AuthFlowScaffold extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          Image.asset(
-            backgroundAsset,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return ColoredBox(
-                color: AppColors.primaryOrange.withValues(alpha: 0.85),
-              );
-            },
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: <Color>[
+                  Color(0xFF4A2208),
+                  AppColors.deepOrange,
+                  AppColors.forestGreen,
+                  Color(0xFF1A3320),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: <double>[0.0, 0.35, 0.72, 1.0],
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topRight,
+                radius: 1.1,
+                colors: <Color>[
+                  AppColors.warmAmber.withValues(alpha: 0.22),
+                  Colors.transparent,
+                ],
+              ),
+            ),
           ),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: <Color>[
-                  Colors.black.withValues(alpha: 0.6),
-                  Colors.black.withValues(alpha: 0.3),
-                  Colors.black.withValues(alpha: 0.7),
+                  Colors.black.withValues(alpha: 0.18),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.28),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,

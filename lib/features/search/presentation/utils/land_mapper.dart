@@ -68,10 +68,10 @@ class LandMapper {
 
   static String? _pickImageUrl(List<MediaEntity> media) {
     for (final m in media) {
-      if (m.type == 'image' && m.category == 'default') return m.url;
+      if (m.isBuyerFacingImage && m.category == 'default') return m.url;
     }
     for (final m in media) {
-      if (m.type == 'image') return m.url;
+      if (m.isBuyerFacingImage) return m.url;
     }
     return null;
   }

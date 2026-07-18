@@ -126,6 +126,18 @@ class MediaEntity extends Equatable {
 
   const MediaEntity({required this.url, required this.type, required this.category});
 
+  /// Categories that must not be shown to buyers (farmer identity / agreement docs).
+  /// Matches backend `land_media.category` enum in Garuda-Backend-2.
+  static const Set<String> buyerHiddenCategories = <String>{
+    'farmer_photo',
+    'farmer_aggrement', // backend spelling
+    'farmer_agreement',
+  };
+
+  /// Land images suitable for buyer listing cards and visual documentation.
+  bool get isBuyerFacingImage =>
+      type == 'image' && !buyerHiddenCategories.contains(category);
+
   @override
   List<Object?> get props => [url, type, category];
 }

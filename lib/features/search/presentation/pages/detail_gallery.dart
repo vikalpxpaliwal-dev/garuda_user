@@ -52,7 +52,8 @@ class _VisualDocumentationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final images = land.media.where((m) => m.type == 'image').toList();
+    final images =
+        land.media.where((m) => m.isBuyerFacingImage).toList();
     final videos = land.media.where((m) => m.type == 'video').toList();
 
     final displayImages = images.map((e) => e.url).toList();

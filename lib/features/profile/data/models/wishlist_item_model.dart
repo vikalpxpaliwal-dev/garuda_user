@@ -1,4 +1,5 @@
 import 'package:garuda_user_app/features/profile/domain/entities/wishlist_item_entity.dart';
+import 'package:garuda_user_app/features/search/domain/entities/land_entity.dart';
 
 class WishlistItemModel {
   const WishlistItemModel({
@@ -147,17 +148,23 @@ DateTime _parseDateTime(Object? value) {
 
 String? _parseImageUrl(Object? media) {
   if (media is List && media.isNotEmpty) {
-    // Prefer 'default' category image first, then any other image type
+    bool isBuyerFacingImage(Map<String, dynamic> item) {
+      final type = item['type'];
+      final category = item['category'] as String? ?? '';
+      return type == 'image' &&
+          !MediaEntity.buyerHiddenCategories.contains(category);
+    }
+
+    // Prefer 'default' category image first, then any other buyer-facing image
     for (final item in media) {
       if (item is Map<String, dynamic> &&
-          item['type'] == 'image' &&
+          isBuyerFacingImage(item) &&
           item['category'] == 'default') {
         return item['url'] as String?;
       }
     }
-    // Fallback to the first image of any category
     for (final item in media) {
-      if (item is Map<String, dynamic> && item['type'] == 'image') {
+      if (item is Map<String, dynamic> && isBuyerFacingImage(item)) {
         return item['url'] as String?;
       }
     }
